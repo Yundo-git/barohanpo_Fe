@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import MobileNavBar from "@/components/MobileNavBar";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -23,9 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+    <html lang="en" className="h-full w-full">
+      <body className="bg-white min-h-screen w-full flex flex-col">
+        <header className="py-2 text-center font-bold border-b">test</header>
+        <div className="pb-20 m-4">{children}</div>
+        <MobileNavBar />
       </body>
     </html>
   );
