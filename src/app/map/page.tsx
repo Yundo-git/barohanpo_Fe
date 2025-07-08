@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import PharmacyApiTest from "../api/Pharmacy/PharmacyApiTest";
+import PharmacyApi from "../api/Pharmacy/PharmacyApi";
 import KakaoMap from "../../components/KakaoMap";
 
 export default function PharmaciesPage() {
@@ -9,7 +9,7 @@ export default function PharmaciesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    PharmacyApiTest()
+    PharmacyApi()
       .then((data) => {
         if (Array.isArray(data)) {
           setPharmacies(data);

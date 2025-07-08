@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="en" className="h-full w-full">
       <body className="bg-white min-h-screen w-full flex flex-col">
         <header className="py-2 text-center font-bold border-b">test</header>
-        <div className="pb-26 m-4">{children}</div>
+        <div className="pb-26">{children}</div>
         <MobileNavBar />
       </body>
     </html>
