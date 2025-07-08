@@ -1,0 +1,132 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+interface BottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+export default function BottomSheet({
+  isOpen,
+  onClose,
+  children,
+}: BottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        sheetRef.current &&
+        !sheetRef.current.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    setStartY(clientY);
+    setCurrentY(clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    const newY = Math.max(0, deltaY);
+    setCurrentY(clientY);
+
+    if (contentRef.current) {
+      contentRef.current.style.transform = `translateY(${newY}px)`;
+      contentRef.current.style.transition = "none";
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+
+    const deltaY = currentY - startY;
+    const threshold = 100; // 픽셀 단위의 임계값
+
+    if (deltaY > threshold) {
+      onClose();
+    } else if (contentRef.current) {
+      contentRef.current.style.transform = "translateY(0)";
+      contentRef.current.style.transition = "transform 0.3s ease-out";
+    }
+
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    // 드래그 종료 시 애니메이션 초기화
+    const content = contentRef.current;
+    if (content && !isDragging) {
+      content.style.transform = "translateY(0)";
+      content.style.transition = "transform 0.3s ease-out";
+    }
+  }, [isDragging]);
+
+  if (!isOpen) return null;
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+  };
+
+  const handleContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 overflow-auto"
+      onClick={handleOverlayClick}
+    >
+      <div className="absolute inset-0 bg-black/50" />
+      <div
+        ref={sheetRef}
+        className="absolute bottom-0 left-0 right-0 h-[calc(100vh-3.5rem)]"
+        onClick={handleContentClick}
+      >
+        <div
+          ref={contentRef}
+          className="absolute bottom-14 left-0 right-0 bg-white rounded-t-3xl p-4 max-h-[calc(80vh-4rem)] overflow-y-auto"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleTouchStart}
+          onMouseMove={handleTouchMove}
+          onMouseUp={handleTouchEnd}
+          onMouseLeave={handleTouchEnd}
+        >
+          <div
+            className="flex justify-center mb-4 py-2 cursor-grab active:cursor-grabbing"
+            onTouchStart={handleTouchStart}
+            onMouseDown={handleTouchStart}
+          >
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
