@@ -153,7 +153,7 @@ export default function KakaoMap() {
 
   return (
     <>
-      <div id="map" className="w-screen h-screen z-0" />
+      <div id="map" className="w-screen h-screen z-0 " />
 
       <button
         className="fixed bottom-24 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow z-10"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from 'react';
 import dynamic from "next/dynamic";
 
 const KakaoMap = dynamic(() => import("@/components/KakaoMap"), {
@@ -12,8 +13,20 @@ const KakaoMap = dynamic(() => import("@/components/KakaoMap"), {
 });
 
 export default function MapPage() {
+  useEffect(() => {
+    // Prevent scrolling on the body
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // Cleanup function to re-enable scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'visible';
+      document.documentElement.style.overflow = 'visible';
+    };
+  }, []);
+
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen overflow-hidden">
       <KakaoMap />
     </div>
   );
