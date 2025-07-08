@@ -1,4 +1,4 @@
-const PharmacyApiTest = async () => {
+const PharmacyApi = async () => {
   const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const res = await fetch(`${API_URL}/api/pharmacy/`, {
@@ -13,4 +13,4 @@ const PharmacyApiTest = async () => {
   return data; // Pharmacy[]
 };
 
-export default PharmacyApiTest;
+export default PharmacyApi;

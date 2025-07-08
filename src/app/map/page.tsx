@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PharmacyApiTest from "../api/Pharmacy/PharmacyApiTest";
+import KakaoMap from "../../components/KakaoMap";
 
 export default function PharmaciesPage() {
   const [pharmacies, setPharmacies] = useState<any[]>([]);
@@ -27,19 +28,18 @@ export default function PharmaciesPage() {
   }, [pharmacies]);
 
   return (
-    <main>
-      <div className="w-full h-[40vh] bg-gray-200 text-center flex items-center justify-center">
-        지도영역
-      </div>
-      <p className="text-2xl font-bold mb-4">약국 목록</p>
-      {error && <p className="text-red-500">{error}</p>}
+    <main className="w-full h-full">
+      {/* Kakao Map Area */}
+      <KakaoMap />
+      {/* <p className="text-2xl font-bold mb-4">약국 목록</p> */}
+      {/* {error && <p className="text-red-500">{error}</p>}
       {!error && (
         <div className="mb-8 list-disc list-inside space-y-1">
           {(pharmacies[0]?.data ?? []).map((p: any, idx: number) => (
             <p key={p.id ?? idx}>{p.name}</p>
           ))}
         </div>
-      )}
+      )} */}
     </main>
   );
 }
