@@ -1,166 +1,127 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import BottomSheet from "./BottomSheet";
-
-declare global {
-  interface Window {
-    kakao: any;
-  }
-}
-
-interface Pharmacy {
-  id?: string;
-  name?: string;
-  address?: string;
-  phone?: string;
-  lat?: number | string;
-  lng?: number | string;
-  latitude?: number | string;
-  longitude?: number | string;
-  [key: string]: any;
-}
+import { useKakaoMap } from "@/hooks/useKakaoMap";
+import { usePharmacies } from "@/hooks/usePharmacies";
+import { Pharmacy } from "@/types/pharmacy";
+import { useRouter } from "next/navigation";
 
 export default function KakaoMap() {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
-  const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
-  const userMarkerRef = useRef<any>(null);
+  const router = useRouter();
 
-  // 버튼 클릭 시 내 주변 약국 검색
-  const findNearby = async () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation을 지원하지 않습니다.");
-      return;
-    }
+  const {
+    pharmacies,
+    isLoading,
+    error,
+    findNearbyPharmacies,
+    createPharmacyMarkers,
+    adjustMapBounds,
+  } = usePharmacies();
 
-    try {
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        }
-      );
-      // 기존 마커들 제거 (사용자 위치 마커 + 약국 마커)
-      if (userMarkerRef.current) {
-        userMarkerRef.current.setMap(null);
-        userMarkerRef.current = null;
-      }
-
-      if (markersRef.current && markersRef.current.length > 0) {
-        markersRef.current.forEach((marker) => {
-          if (marker) {
-            marker.setMap(null);
-          }
-        });
-        markersRef.current = [];
-      }
-
-      const { latitude, longitude } = position.coords;
-      if (!window.kakao?.maps || !mapRef.current) return;
-
-      const center = new window.kakao.maps.LatLng(latitude, longitude);
-      mapRef.current.setCenter(center);
-
-      // 약국 데이터 가져오기
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${latitude}&lng=${longitude}&radius=8000`
-      );
-      const data = await response.json();
-      const pharmacyList = Array.isArray(data) ? data : data?.data || [];
-      setPharmacies(pharmacyList);
-
-      // 새로운 약국 마커 추가
-      pharmacyList.forEach((pharmacy: Pharmacy) => {
-        const lat = parseFloat(String(pharmacy.lat ?? pharmacy.latitude));
-        const lng = parseFloat(String(pharmacy.lng ?? pharmacy.longitude));
-        if (isNaN(lat) || isNaN(lng)) return;
-
-        const position = new window.kakao.maps.LatLng(lat, lng);
-        const marker = new window.kakao.maps.Marker({ position });
-        marker.setMap(mapRef.current);
-        markersRef.current.push(marker);
-      });
-
-      // 지도 범위 조정
-      if (pharmacyList.length > 0) {
-        const bounds = new window.kakao.maps.LatLngBounds();
-        markersRef.current.forEach((marker) =>
-          bounds.extend(marker.getPosition())
+  const handleMarkerClick = useCallback(
+    (pharmacy: Pharmacy) => {
+      console.log("마커 클릭됨:", pharmacy);
+      // Navigate to pharmacy detail page
+      router.push(`/pharmacy/${pharmacy.p_id}`);
+      if (pharmacy.name) {
+        console.log(
+          `${pharmacy.name}이(가) 클릭되었습니다.\n주소: ${
+            pharmacy.address || "주소 없음"
+          }`
         );
-        bounds.extend(center);
-        mapRef.current.setBounds(bounds);
       }
+    },
+    [router]
+  );
 
-      // 바텀 시트 열기
-      setIsBottomSheetOpen(true);
-    } catch (error) {
-      console.error("Error finding nearby pharmacies:", error);
-      alert("약국을 찾는 중 오류가 발생했습니다.");
-    }
-  };
+  const handleMapLoad = useCallback((map: any) => {
+    // 지도가 로드되면 현재 위치만 표시하고, 약국은 표시하지 않습니다.
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const center = new window.kakao.maps.LatLng(latitude, longitude);
+          map.setCenter(center);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAPS_KEY}&autoload=false`;
-    script.async = true;
-    document.head.appendChild(script);
-
-    script.onload = () => {
-      window.kakao.maps.load(() => {
-        const container = document.getElementById("map");
-        if (!container) return;
-
-        const createMap = (lat: number, lng: number) => {
-          const center = new window.kakao.maps.LatLng(lat, lng);
-          mapRef.current = new window.kakao.maps.Map(container, {
-            center,
-            level: 3,
-          });
-          // 현재 위치 마커 생성 및 저장
-          userMarkerRef.current = new window.kakao.maps.Marker({
-            position: center,
-            map: mapRef.current,
-            clickable: true,
-          });
-        };
-
-        // 브라우저 Geolocation 사용
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              createMap(latitude, longitude);
-            },
-            () => {
-              // 기본 위치 (서울 시청)로 설정
-              createMap(37.5665, 126.978);
-            }
-          );
-        } else {
-          // Geolocation을 사용할 수 없는 경우
-          createMap(37.5665, 126.978);
+          // 사용자 위치 마커 업데이트
+          if (mapRefs.current.userMarker) {
+            mapRefs.current.userMarker.setPosition(center);
+          }
+        },
+        (error) => {
+          console.error("Error getting current location:", error);
+          // 기본 위치 (서울 시청)로 설정
+          const defaultCenter = new window.kakao.maps.LatLng(37.5665, 126.978);
+          map.setCenter(defaultCenter);
         }
-      });
-    };
-
-    return () => {
-      // Cleanup
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
+      );
+    }
   }, []);
 
+  const mapRefs = useKakaoMap(handleMapLoad);
+
+  const handleFindNearby = async (map: any, center?: any) => {
+    if (!map || !window.kakao?.maps) return;
+
+    // 기존 약국 마커만 제거 (사용자 위치 마커는 유지)
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = [];
+
+    // 현재 위치를 가져오거나 기본 위치 사용
+    let currentCenter = center;
+    if (!currentCenter) {
+      currentCenter = map.getCenter();
+    }
+
+    // 사용자 위치 마커 업데이트
+    if (mapRefs.current.userMarker) {
+      mapRefs.current.userMarker.setPosition(currentCenter);
+    }
+
+    // 주변 약국 찾기
+    const pharmacyList = await findNearbyPharmacies(
+      currentCenter.getLat(),
+      currentCenter.getLng()
+    );
+
+    if (pharmacyList.length > 0) {
+      // 약국 마커 생성
+      const markers = createPharmacyMarkers(
+        map,
+        pharmacyList,
+        handleMarkerClick
+      );
+
+      markersRef.current = markers.filter(Boolean) as any[];
+
+      // 지도 범위 조정
+      adjustMapBounds(map, markersRef.current, currentCenter);
+    }
+
+    // 바텀 시트 열기
+    setIsBottomSheetOpen(true);
+  };
+
   return (
-    <>
-      <div id="map" className="w-screen h-screen z-0 " />
+    <div className="relative w-full h-full">
+      <div id="map" className="w-full h-full"></div>
 
       <button
         className="fixed bottom-24 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow z-10"
-        onClick={findNearby}
+        onClick={() => handleFindNearby(mapRefs.current.map)}
+        disabled={isLoading}
       >
-        주변 약국
+        {isLoading ? "검색 중..." : "주변 약국"}
       </button>
+
+      {error && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-10">
+          {error}
+        </div>
+      )}
 
       <BottomSheet
         isOpen={isBottomSheetOpen}
@@ -169,11 +130,16 @@ export default function KakaoMap() {
         <div className="space-y-4">
           <h2 className="text-xl font-bold">주변 약국 ({pharmacies.length})</h2>
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-            {pharmacies.length > 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : pharmacies.length > 0 ? (
               pharmacies.map((pharmacy, index) => (
                 <div
                   key={pharmacy.id || index}
                   className="p-3 border-b border-gray-200 hover:bg-gray-50"
+                  onClick={() => handleMarkerClick(pharmacy)}
                 >
                   <h3 className="font-medium">
                     {pharmacy.name || "이름 없음"}
@@ -194,6 +160,6 @@ export default function KakaoMap() {
           </div>
         </div>
       </BottomSheet>
-    </>
+    </div>
   );
 }
