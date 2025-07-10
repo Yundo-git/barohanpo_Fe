@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
+import { useFormatAddress } from "@/hooks/useFormatAddress";
 import { Pharmacy } from "@/types/pharmacy";
 import { useRouter } from "next/navigation";
 
@@ -11,6 +12,8 @@ export default function KakaoMap() {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const markersRef = useRef<any[]>([]);
   const router = useRouter();
+  const { formatAddressToFit } = useFormatAddress();
+  const addressRefs = useRef<{[key: string]: HTMLSpanElement | null}>({});
 
   const {
     pharmacies,
@@ -50,6 +53,8 @@ export default function KakaoMap() {
           if (mapRefs.current.userMarker) {
             mapRefs.current.userMarker.setPosition(center);
           }
+          
+          // 약국 주소 포맷팅은 컴포넌트 렌더링 시 자동으로 처리됨
         },
         (error) => {
           console.error("Error getting current location:", error);
@@ -105,6 +110,54 @@ export default function KakaoMap() {
     setIsBottomSheetOpen(true);
   };
 
+  // 약국 리스트 렌더링
+  const renderPharmacyList = useCallback(() => {
+    return pharmacies.map((pharmacy, index) => {
+      const pharmacyId = pharmacy.id || `pharmacy-${index}`;
+      
+      // 주소 포맷팅 함수
+      const handleAddressRender = (element: HTMLSpanElement | null) => {
+        if (!element || !pharmacy.address) return;
+        
+        // 주소 포맷팅 적용
+        const formatted = formatAddressToFit(element, pharmacy.address);
+        if (formatted !== pharmacy.address) {
+          element.textContent = formatted;
+        }
+      };
+      
+      return (
+        <div
+          key={pharmacyId}
+          className="p-3 border-b border-gray-200 hover:bg-gray-50"
+          onClick={() => handleMarkerClick(pharmacy)}
+        >
+          <h3 className="font-medium">
+            {pharmacy.name || "이름 없음"}
+          </h3>
+          <div className="text-sm text-gray-600">
+            {pharmacy.address ? (
+              <span 
+                className="whitespace-pre-line"
+                ref={el => {
+                  addressRefs.current[pharmacyId] = el;
+                  if (el) handleAddressRender(el);
+                }}
+              >
+                {pharmacy.address}
+              </span>
+            ) : (
+              "주소 정보 없음"
+            )}
+          </div>
+          {pharmacy.phone && (
+            <p className="text-sm text-blue-600">{pharmacy.phone}</p>
+          )}
+        </div>
+      );
+    });
+  }, [pharmacies, handleMarkerClick, formatAddressToFit]);
+
   return (
     <div className="relative w-full h-full">
       <div id="map" className="w-full h-full"></div>
@@ -118,7 +171,7 @@ export default function KakaoMap() {
       </button>
 
       {error && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-10">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3">
           {error}
         </div>
       )}
@@ -128,30 +181,13 @@ export default function KakaoMap() {
         onClose={() => setIsBottomSheetOpen(false)}
       >
         <div className="space-y-4">
-          <h2 className="text-xl font-bold">주변 약국 ({pharmacies.length})</h2>
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {isLoading ? (
               <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : pharmacies.length > 0 ? (
-              pharmacies.map((pharmacy, index) => (
-                <div
-                  key={pharmacy.id || index}
-                  className="p-3 border-b border-gray-200 hover:bg-gray-50"
-                  onClick={() => handleMarkerClick(pharmacy)}
-                >
-                  <h3 className="font-medium">
-                    {pharmacy.name || "이름 없음"}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {pharmacy.address || "주소 정보 없음"}
-                  </p>
-                  {pharmacy.phone && (
-                    <p className="text-sm text-blue-600">{pharmacy.phone}</p>
-                  )}
-                </div>
-              ))
+              renderPharmacyList()
             ) : (
               <p className="text-gray-500 text-center py-4">
                 주변에 약국이 없습니다.

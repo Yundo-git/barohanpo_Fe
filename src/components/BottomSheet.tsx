@@ -39,6 +39,12 @@ export default function BottomSheet({
   }, [isOpen, onClose]);
 
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // 드래그 시작 지점이 핸들 영역인지 확인
+    const target = e.target as HTMLElement;
+    const isHandle = target.closest('.bottom-sheet-handle') !== null;
+    
+    if (!isHandle) return;
+    
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
     setStartY(clientY);
     setCurrentY(clientY);
@@ -100,7 +106,7 @@ export default function BottomSheet({
       className="fixed inset-0 z-50 overflow-auto"
       onClick={handleOverlayClick}
     >
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 " />
       <div
         ref={sheetRef}
         className="absolute bottom-0 left-0 right-0 h-[calc(100vh-3.5rem)]"
@@ -108,7 +114,7 @@ export default function BottomSheet({
       >
         <div
           ref={contentRef}
-          className="absolute bottom-14 left-0 right-0 bg-white rounded-t-3xl p-4 max-h-[calc(80vh-4rem)] overflow-y-auto"
+          className="absolute bottom-14 left-0 right-0 bg-white -3xl p-4 max-h-[calc(80vh-4rem)] overflow-y-auto"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -117,12 +123,14 @@ export default function BottomSheet({
           onMouseUp={handleTouchEnd}
           onMouseLeave={handleTouchEnd}
         >
-          <div
-            className="flex justify-center mb-4 py-2 cursor-grab active:cursor-grabbing"
-            onTouchStart={handleTouchStart}
-            onMouseDown={handleTouchStart}
-          >
-            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+          <div className="bottom-sheet-handle">
+            <div 
+              className="flex justify-center mb-4 py-2 cursor-grab active:cursor-grabbing"
+              onTouchStart={handleTouchStart}
+              onMouseDown={handleTouchStart}
+            >
+              <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+            </div>
           </div>
           {children}
         </div>
