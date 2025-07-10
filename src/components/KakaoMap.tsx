@@ -12,8 +12,7 @@ export default function KakaoMap() {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const markersRef = useRef<any[]>([]);
   const router = useRouter();
-  const { formatAddressToFit } = useFormatAddress();
-  const addressRefs = useRef<{[key: string]: HTMLSpanElement | null}>({});
+  const bottomSheetRef = useRef<{ reset: () => void } | null>(null);
 
   const {
     pharmacies,
@@ -54,7 +53,6 @@ export default function KakaoMap() {
             mapRefs.current.userMarker.setPosition(center);
           }
           
-          // 약국 주소 포맷팅은 컴포넌트 렌더링 시 자동으로 처리됨
         },
         (error) => {
           console.error("Error getting current location:", error);
@@ -106,57 +104,12 @@ export default function KakaoMap() {
       adjustMapBounds(map, markersRef.current, currentCenter);
     }
 
-    // 바텀 시트 열기
+    // 바텀 시트 열기 및 초기화
     setIsBottomSheetOpen(true);
+    if (bottomSheetRef.current) {
+      bottomSheetRef.current.reset();
+    }
   };
-
-  // 약국 리스트 렌더링
-  const renderPharmacyList = useCallback(() => {
-    return pharmacies.map((pharmacy, index) => {
-      const pharmacyId = pharmacy.id || `pharmacy-${index}`;
-      
-      // 주소 포맷팅 함수
-      const handleAddressRender = (element: HTMLSpanElement | null) => {
-        if (!element || !pharmacy.address) return;
-        
-        // 주소 포맷팅 적용
-        const formatted = formatAddressToFit(element, pharmacy.address);
-        if (formatted !== pharmacy.address) {
-          element.textContent = formatted;
-        }
-      };
-      
-      return (
-        <div
-          key={pharmacyId}
-          className="p-3 border-b border-gray-200 hover:bg-gray-50"
-          onClick={() => handleMarkerClick(pharmacy)}
-        >
-          <h3 className="font-medium">
-            {pharmacy.name || "이름 없음"}
-          </h3>
-          <div className="text-sm text-gray-600">
-            {pharmacy.address ? (
-              <span 
-                className="whitespace-pre-line"
-                ref={el => {
-                  addressRefs.current[pharmacyId] = el;
-                  if (el) handleAddressRender(el);
-                }}
-              >
-                {pharmacy.address}
-              </span>
-            ) : (
-              "주소 정보 없음"
-            )}
-          </div>
-          {pharmacy.phone && (
-            <p className="text-sm text-blue-600">{pharmacy.phone}</p>
-          )}
-        </div>
-      );
-    });
-  }, [pharmacies, handleMarkerClick, formatAddressToFit]);
 
   return (
     <div className="relative w-full h-full">
@@ -177,17 +130,35 @@ export default function KakaoMap() {
       )}
 
       <BottomSheet
+        ref={bottomSheetRef}
         isOpen={isBottomSheetOpen}
         onClose={() => setIsBottomSheetOpen(false)}
       >
         <div className="space-y-4">
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-2 max-h-[60vh] ">
+            {/* 약국 로딩 중 */}
             {isLoading ? (
               <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : pharmacies.length > 0 ? (
-              renderPharmacyList()
+              pharmacies.map((pharmacy, index) => (
+                <div
+                  key={pharmacy.id || index}
+                  className="p-3 border-b border-gray-200 hover:bg-gray-50"
+                  onClick={() => handleMarkerClick(pharmacy)}
+                >
+                  <h3 className="font-medium">
+                    {pharmacy.name || "이름 없음"}
+                  </h3>
+                  <div className="text-sm text-gray-600 whitespace-pre-line">
+                    {pharmacy.address || "주소 정보 없음"}
+                  </div>
+                  {pharmacy.phone && (
+                    <p className="text-sm text-blue-600">{pharmacy.phone}</p>
+                  )}
+                </div>
+              ))
             ) : (
               <p className="text-gray-500 text-center py-4">
                 주변에 약국이 없습니다.

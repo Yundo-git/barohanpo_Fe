@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -8,16 +8,29 @@ interface BottomSheetProps {
   children: React.ReactNode;
 }
 
-export default function BottomSheet({
+export interface BottomSheetRef {
+  reset: () => void;
+}
+
+const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(({
   isOpen,
   onClose,
   children,
-}: BottomSheetProps) {
+}, ref) => {
+  const resetSheet = useCallback(() => {
+    setIsExpanded(false);
+    const content = contentRef.current;
+    if (content) {
+      content.style.transform = "translateY(0)";
+      content.style.transition = "transform 0.3s ease-out";
+    }
+  }, []);
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [startY, setStartY] = useState(0);
   const [currentY, setCurrentY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,8 +87,11 @@ export default function BottomSheet({
     if (deltaY > threshold) {
       onClose();
     } else if (contentRef.current) {
+      // 마우스 업 시 확장 상태로 전환
+      setIsExpanded(true);
       contentRef.current.style.transform = "translateY(0)";
       contentRef.current.style.transition = "transform 0.3s ease-out";
+      contentRef.current.style.height = '100%';
     }
 
     setIsDragging(false);
@@ -90,6 +106,11 @@ export default function BottomSheet({
     }
   }, [isDragging]);
 
+  // Expose reset function to parent
+  useImperativeHandle(ref, () => ({
+    reset: resetSheet
+  }), [resetSheet]);
+
   if (!isOpen) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -103,7 +124,7 @@ export default function BottomSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-auto"
+      className="fixed inset-0 z-50 "
       onClick={handleOverlayClick}
     >
       <div className="absolute inset-0 " />
@@ -114,7 +135,7 @@ export default function BottomSheet({
       >
         <div
           ref={contentRef}
-          className="absolute bottom-14 left-0 right-0 bg-white -3xl p-4 max-h-[calc(80vh-4rem)] overflow-y-auto"
+          className={`absolute left-0 right-0 bg-white -3xl p-4 overflow-y-auto ${isExpanded ? 'top-0 bottom-0' : 'bottom-14 max-h-[50vh]'}`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -137,4 +158,8 @@ export default function BottomSheet({
       </div>
     </div>
   );
-}
+});
+
+BottomSheet.displayName = 'BottomSheet';
+
+export default BottomSheet;
