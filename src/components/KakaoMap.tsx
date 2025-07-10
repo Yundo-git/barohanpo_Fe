@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
-import { useFormatAddress } from "@/hooks/useFormatAddress";
 import { Pharmacy } from "@/types/pharmacy";
 import { useRouter } from "next/navigation";
 
@@ -143,9 +142,10 @@ export default function KakaoMap() {
               </div>
             ) : pharmacies.length > 0 ? (
               pharmacies.map((pharmacy, index) => (
+                <div key={`pharmacy-${pharmacy.id || index}`} className="flex bottom-14 items-center">
+                <div className="w-[5rem] h-[5rem] rounded-lg bg-gray-200"/>
                 <div
-                  key={pharmacy.id || index}
-                  className="p-3 border-b border-gray-200 hover:bg-gray-50"
+                  className="p-3 border-b border-gray-200 hover:bg-gray-50 w-[60vw]"
                   onClick={() => handleMarkerClick(pharmacy)}
                 >
                   <h3 className="font-medium">
@@ -157,6 +157,7 @@ export default function KakaoMap() {
                   {pharmacy.phone && (
                     <p className="text-sm text-blue-600">{pharmacy.phone}</p>
                   )}
+                </div>
                 </div>
               ))
             ) : (

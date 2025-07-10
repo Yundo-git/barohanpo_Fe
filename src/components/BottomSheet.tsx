@@ -135,7 +135,7 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(({
       >
         <div
           ref={contentRef}
-          className={`absolute left-0 right-0 bg-white -3xl p-4 overflow-y-auto ${isExpanded ? 'top-0 bottom-0' : 'bottom-14 max-h-[50vh]'}`}
+          className={`absolute left-0 right-0 bg-white -3xl p-4 overflow-y-auto ${isExpanded ? 'top-0 bottom-14' : 'bottom-14 max-h-[50vh]'}`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}

@@ -1,92 +1,93 @@
 "use client";
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Pharmacy } from '@/types/pharmacy';
 
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-
-interface Pharmacy {
-  id: string;
-  name: string;
-  address: string;
-  phone?: string;
-  lat?: number;
-  lng?: number;
-}
 
 export default function PharmacyDetail() {
-  const { p_id } = useParams();
+  const params = useParams();
+  const pharmacyId = params.id; // 여기서 id를 가져옴
   const [pharmacy, setPharmacy] = useState<Pharmacy | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
+
 
   useEffect(() => {
     const fetchPharmacy = async () => {
-      if (!p_id) return;
-
+      if (!pharmacyId) return;
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/${p_id}`
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/${pharmacyId}`
+        );
+        const resposeUser = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/${pharmacyId}`
         );
         if (!response.ok) {
           throw new Error("약국 정보를 불러오는데 실패했습니다.");
         }
         const data = await response.json();
         setPharmacy(data);
+        console.log(data);
       } catch (err) {
         console.error("Error fetching pharmacy:", err);
-        setError(
-          err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다."
-        );
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchPharmacy();
-  }, [p_id]);
+  }, [pharmacyId]);
 
-  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error || !pharmacy) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-lg text-red-500">
-            {error || "약국 정보를 불러오는 데 실패했습니다."}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">{pharmacy.name}</h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="mb-4">
-          <h2 className="font-semibold">주소</h2>
-          <p className="text-gray-700">{pharmacy.address}</p>
-        </div>
-        {pharmacy.phone && (
-          <div className="mb-4">
-            <h2 className="font-semibold">전화번호</h2>
-            <p className="text-blue-600">{pharmacy.phone}</p>
-          </div>
-        )}
-        {pharmacy.lat && pharmacy.lng && (
-          <div className="h-64 bg-gray-200 rounded-lg">
-            {/* Map will be added here */}
-            <div className="flex items-center justify-center h-full text-gray-500">
-              지도 영역
+        <div className='flex flex-col m-4 overflow-y-auto'>
+          <div className='flex justify-center items-center'>
+            <div className='w-[90vw] h-[50vh] bg-gray-200 rounded-lg flex justify-center items-center'>이미지영역</div>
             </div>
+            {pharmacy && (
+                <div>
+                    <h1 className="text-2xl font-bold mt-4">{pharmacy.data.name}</h1>
+                    <p>{pharmacy.data.address}</p>
+                    <p>영업시간 영역</p> 
+                    <p>전화번호 영역</p>
+                </div>
+            )}
+
+                      {/* 탭 메뉴 */}
+          <div className="flex border-b mt-4 w-full">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={`py-2 px-4 w-[50vw] font-medium ${
+                activeTab === 'info'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              약국 정보
+            </button>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className={`py-2 px-4 w-[50vw] font-medium ${
+                activeTab === 'reviews'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              후기
+            </button>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
+
+          {/* 탭 내용 */}
+          <div className="mt-4 overflow-y-auto h-[calc(100vh-3.5rem)]">
+            {activeTab === 'info' ? (
+              <div>
+                <h3 className="text-lg  font-semibold mb-2">약국 정보</h3>
+                <p>약국 소개 내용이 들어갑니다.</p>
+                {/* 여기에 추가적인 약국 정보를 표시하세요 */}
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">후기</h3>
+                <p>후기 내용이 표시됩니다.</p>
+                {/* 여기에 후기 목록을 표시하세요 */}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    
