@@ -1,5 +1,5 @@
 export interface Pharmacy {
-  id?: string;
+  p_id: string;
   name?: string;
   address?: string;
   phone?: string;
@@ -8,6 +8,19 @@ export interface Pharmacy {
   latitude?: number | string;
   longitude?: number | string;
   [key: string]: any;
+}
+
+export interface PharmacyUser {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  pharmacyId?: string;
+  [key: string]: any;
+}
+
+export interface PharmacyWithUser extends Pharmacy {
+  user?: PharmacyUser | null;
 }
 
 export interface KakaoMapRefs {
