@@ -12,6 +12,8 @@
     "@heroicons/react": "^2.0.18",
     "@nestjs/swagger": "^11.2.0",
     "autoprefixer": "^10.4.19",
+    "axios": "^1.10.0",
+    "dayjs": "^1.11.13",
     "next": "15.3.5",
     "postcss": "^8.4.35",
     "react": "^19.0.0",

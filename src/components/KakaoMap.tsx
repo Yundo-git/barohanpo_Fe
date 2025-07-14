@@ -6,12 +6,14 @@ import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import { Pharmacy } from "@/types/pharmacy";
 import { useRouter } from "next/navigation";
+import Bookbtn from "./Bookbtn";
 
 export default function KakaoMap() {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const markersRef = useRef<any[]>([]);
   const router = useRouter();
   const bottomSheetRef = useRef<{ reset: () => void } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const {
     pharmacies,
@@ -66,6 +68,8 @@ export default function KakaoMap() {
   const mapRefs = useKakaoMap(handleMapLoad);
 
   const handleFindNearby = async (map: any, center?: any) => {
+    if (isSearching) return; // 중복 방지
+    setIsSearching(true);
     console.log("handleFindNearby called");
     if (!map || !window.kakao?.maps) {
       console.error("Map or Kakao Maps not available");
@@ -202,9 +206,9 @@ export default function KakaoMap() {
       <button
         className="fixed bottom-24 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow z-10"
         onClick={() => handleFindNearby(mapRefs.current.map)}
-        disabled={isLoading}
+        disabled={isLoading || isSearching}
       >
-        {isLoading ? "검색 중..." : "주변 약국"}
+        {isLoading || isSearching ? "검색 중..." : "주변 약국"}
       </button>
 
       {error && (
@@ -227,10 +231,11 @@ export default function KakaoMap() {
               </div>
             ) : pharmacies.length > 0 ? (
               pharmacies.map((pharmacy, index) => (
-                <div key={`pharmacy-${pharmacy.id || index}`}>
-                  <div
-                    className="flex bottom-14 gap-2 p-2 h-[6.25rem] border border-gray-200 rounded-md"
-                  >
+                <div
+                  key={`pharmacy-${pharmacy.id || index}`}
+                  className="border border-gray-200 rounded-md h-full"
+                >
+                  <div className="flex bottom-14 gap-2 p-2 h-[6.25rem] ">
                     <div className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center">
                       이미지 영역
                     </div>
@@ -249,8 +254,8 @@ export default function KakaoMap() {
                       )}
                     </div>
                   </div>
-                  <div className="w-full h-[1.25rem] bg-gray-200">
-                    예약 버튼 영역
+                  <div className="w-full h-full ">
+                    <Bookbtn pharmacyId={Number(pharmacy.p_id)} />
                   </div>
                 </div>
               ))
