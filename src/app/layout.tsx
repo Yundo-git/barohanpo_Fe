@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import MobileNavBar from "@/components/MobileNavBar";
 import { UserProvider } from "@/app/auth/user-signin/UserContext";
-import ReduxProvider from "@/store/Provider";
+import Providers from "@/store/Provider";
 
 export const metadata: Metadata = {
   title: "바로한포~",
@@ -18,13 +18,13 @@ export default function RootLayout({
     <html lang="en" className="h-full w-full">
       <body className="bg-white min-h-screen w-full flex flex-col">
         <UserProvider>
-          <ReduxProvider>
+          <Providers>
             <header className="py-2 text-center font-bold border-b">
               test
             </header>
             <div className="pb-26">{children}</div>
             <MobileNavBar />
-          </ReduxProvider>
+          </Providers>
         </UserProvider>
       </body>
     </html>
