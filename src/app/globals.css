@@ -1,3 +1,5 @@
+@import "react-datepicker/dist/react-datepicker.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,8 +10,12 @@
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .animate-slide-up {
@@ -52,4 +58,26 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* calendar 스타일 나중에 수정할거*/
+.react-calendar {
+  width: 100%;
+  background: white;
+  border: none;
+  font-family: sans-serif;
+  line-height: 1.125em;
+}
+.react-calendar__tile--now {
+  background: none;
+  color: #333;
+}
+.react-calendar__tile--active {
+  background: #2563eb;
+  color: white;
+  border-radius: 9999px;
+}
+.react-calendar__tile:disabled {
+  background-color: #f3f4f6;
+  color: #d1d5db;
 }

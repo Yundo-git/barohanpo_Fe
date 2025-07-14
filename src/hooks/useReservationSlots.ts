@@ -7,6 +7,7 @@ interface ReservationSlot {
   date: string; // YYYY-MM-DD
   is_available: boolean;
 }
+const ongoingRequests = new Set<number>();
 
 export function useReservationSlots(pharmacyId: number) {
   const [slots, setSlots] = useState<ReservationSlot[]>([]);
@@ -26,6 +27,7 @@ export function useReservationSlots(pharmacyId: number) {
     const fetchSlots = async () => {
       setLoading(true);
       setError(null);
+      ongoingRequests.add(pharmacyId); // 중복 방지
 
       const today = dayjs();
       const from = today.format("YYYY-MM-DD");
