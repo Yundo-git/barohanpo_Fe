@@ -9,7 +9,7 @@ export default function Header() {
   const showBackButton = !['/', '/map', '/mypage'].includes(pathname);
 
   return (
-    <header className="flex items-center px-4 py-2 border-b">
+    <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-4 py-2 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
       {showBackButton ? (
         <>
           <div className="flex-1">

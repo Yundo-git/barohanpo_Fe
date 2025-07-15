@@ -8,6 +8,7 @@ import {
   useState,
   forwardRef,
 } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -110,6 +111,14 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       }
     }, [isDragging]);
 
+    useEffect(() => {
+      if (sheetRef.current) {
+        sheetRef.current.style.height = isOpen ? "auto" : "10rem";
+        sheetRef.current.style.opacity = isOpen ? "1" : "0.9";
+        sheetRef.current.style.transition = "height 0.3s ease, opacity 0.3s ease";
+      }
+    }, [isOpen]);
+
     // Expose reset function to parent
     useImperativeHandle(
       ref,
@@ -131,38 +140,41 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     };
 
     return (
-      <div className="fixed inset-0 z-50 " onClick={handleOverlayClick}>
-        <div className="absolute inset-0 " />
-        <div
-          ref={sheetRef}
-          className="absolute bottom-0 left-0 right-0 h-[calc(100vh-3.5rem)]"
-          onClick={handleContentClick}
-        >
-          <div
-            ref={contentRef}
-            className={`absolute left-0 right-0 bg-white -3xl p-4 overflow-y-auto ${
-              isExpanded ? "top-0 bottom-14" : "bottom-14 max-h-[50vh]"
-            }`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleTouchStart}
-            onMouseMove={handleTouchMove}
-            onMouseUp={handleTouchEnd}
-            onMouseLeave={handleTouchEnd}
-          >
-            <div className="bottom-sheet-handle">
-              <div
-                className="flex justify-center mb-4 py-2 cursor-grab active:cursor-grabbing"
-                onTouchStart={handleTouchStart}
-                onMouseDown={handleTouchStart}
-              >
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+      <div className="fixed inset-0  z-50" onClick={handleOverlayClick}>
+        <div className="absolute inset-0" />
+        <AnimatePresence mode="wait">
+          {isOpen && (
+            <motion.div
+              ref={sheetRef}
+              className="fixed bottom-14 left-0 right-0 bg-white rounded-t-lg shadow-lg overflow-y-auto"
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "90%", opacity: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                opacity: { duration: 0.2 }
+              }}
+            >
+              <div className="bottom-sheet-handle">
+                <div
+                  className="flex justify-center mb-4 py-2 cursor-grab active:cursor-grabbing w-full"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={handleTouchStart}
+                  onMouseMove={handleTouchMove}
+                  onMouseUp={handleTouchEnd}
+                >
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
               </div>
-            </div>
-            {children}
-          </div>
-        </div>
+              
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }

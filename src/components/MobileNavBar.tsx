@@ -17,7 +17,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/", label: "홈", Icon: HomeIcon },
   { href: "/map", label: "지도", Icon: BuildingStorefrontIcon },
-  { href: "/mypage", label: "마이", Icon: UserIcon },
+  { href: "/auth", label: "마이", Icon: UserIcon },
 ];
 
 export default function MobileNavBar() {

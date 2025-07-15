@@ -42,26 +42,35 @@ export const usePharmacies = (): UsePharmaciesReturn => {
   const findNearbyPharmacies = useCallback(
     async (lat: number, lng: number, radius = 8000) => {
       console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
+      setIsLoading(true);
+      setError(null);
+  
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
         );
-
+  
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
-
+  
         const data = await response.json();
         const result = Array.isArray(data) ? data : data?.data || [];
+  
         console.log(`Found ${result.length} pharmacies`);
+        setPharmacies(result); // ✅ 여기 추가
         return result;
       } catch (err) {
         console.error("Error in findNearbyPharmacies:", err);
+        setError("약국 정보를 불러오는 중 오류가 발생했습니다.");
         return [];
+      } finally {
+        setIsLoading(false);
       }
     },
     []
   );
+  
 
   // 단일 약국의 사용자 데이터 가져오기
   const getPharmacyUser = useCallback(
