@@ -16,13 +16,13 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", label: "홈", Icon: HomeIcon },
-  { href: "/map", label: "지도", Icon: BuildingStorefrontIcon },
+  { href: "/map", label: "약국", Icon: BuildingStorefrontIcon },
   { href: "/auth", label: "마이", Icon: UserIcon },
 ];
 
 export default function MobileNavBar() {
   const pathname = usePathname();
-
+ 
   return (
     <nav
       style={{ bottom: 0 }}

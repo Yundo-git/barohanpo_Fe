@@ -2,10 +2,15 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const UserSignupPage = () => {
+  const router = useRouter();
+  const [email, setEmail] = React.useState("test@test.com");
+  const [password, setPassword] = React.useState("test123");
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    router.push("/");
     // Handle user signup logic here
   };
 
@@ -31,7 +36,11 @@ const UserSignupPage = () => {
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="이메일 주소"
-              />
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
+                />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
@@ -45,6 +54,10 @@ const UserSignupPage = () => {
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="비밀번호"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                }}
               />
             </div>
           </div>
@@ -58,9 +71,7 @@ const UserSignupPage = () => {
             </button>
           </div>
         </form>
-        <div className="text-center">
-          <Link href="/auth/pharmacist-signup">약사회원으로 로그인</Link>
-        </div>
+       
       </div>
     </div>
   );

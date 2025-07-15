@@ -1,9 +1,10 @@
-"use client";
 
-export default function ReserveComplete() {
-    return (
-        <div>
-            <h1>예약이 완료되었습니다!</h1>
-        </div>
-    );
+import ReserveCompleteClient from "./ReserveCompleteClient";
+
+interface Props {
+  params: { p_id: string };
+}
+
+export default function ReserveCompletePage({ params }: Props) {
+  return <ReserveCompleteClient p_id={params.p_id} />;
 }

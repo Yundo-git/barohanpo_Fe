@@ -36,7 +36,10 @@ export const useReservation = (p_id: string) => {
 
       const result = await response.json();
       alert('예약이 완료되었습니다!');
-      router.push(`/reserve/${[p_id]}/complete`);
+      router.push(
+        `/reserve/${p_id}/complete?date=${formattedDate}&time=${formattedTime}&status=success`
+      );
+
       return result;
     } catch (error) {
       console.error('예약 중 오류 발생:', error);
