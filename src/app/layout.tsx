@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 import "./globals.css";
 import MobileNavBar from "@/components/MobileNavBar";
+import Header from "@/components/Header";
 import { UserProvider } from "@/app/auth/user-signin/UserContext";
 import Providers from "@/store/Provider";
 
@@ -14,14 +15,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" className="h-full w-full">
       <body className="bg-white min-h-screen w-full flex flex-col">
         <UserProvider>
           <Providers>
-            <header className="py-2 text-center font-bold border-b">
-              test
-            </header>
+            <Header />
             <div className="pb-26">{children}</div>
             <MobileNavBar />
           </Providers>
