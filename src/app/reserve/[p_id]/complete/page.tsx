@@ -1,10 +1,9 @@
-
 import ReserveCompleteClient from "./ReserveCompleteClient";
 
-interface Props {
+export default function ReserveCompletePage({
+  params,
+}: {
   params: { p_id: string };
-}
-
-export default function ReserveCompletePage({ params }: Props) {
+}) {
   return <ReserveCompleteClient p_id={params.p_id} />;
 }
