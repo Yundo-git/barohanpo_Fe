@@ -24,7 +24,7 @@ export interface PharmacyWithUser extends Pharmacy {
 }
 
 export interface KakaoMapRefs {
-  map: any;
-  markers: any[];
-  userMarker: any;
+  map: kakao.maps.Map | null;
+  userMarker: kakao.maps.Marker | null;
+  markers: kakao.maps.Marker[];
 }

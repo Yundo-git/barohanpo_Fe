@@ -23,7 +23,6 @@ export interface BottomSheetRef {
 const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
   ({ isOpen, onClose, children }, ref) => {
     const resetSheet = useCallback(() => {
-      setIsExpanded(false);
       const content = contentRef.current;
       if (content) {
         content.style.transform = "translateY(0)";
@@ -35,7 +34,6 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     const [startY, setStartY] = useState(0);
     const [currentY, setCurrentY] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
       function handleClickOutside(event: MouseEvent) {
@@ -93,7 +91,6 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
         onClose();
       } else if (contentRef.current) {
         // 마우스 업 시 확장 상태로 전환
-        setIsExpanded(true);
         contentRef.current.style.transform = "translateY(0)";
         contentRef.current.style.transition = "transform 0.3s ease-out";
         contentRef.current.style.height = "100%";
@@ -115,7 +112,8 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       if (sheetRef.current) {
         sheetRef.current.style.height = isOpen ? "auto" : "10rem";
         sheetRef.current.style.opacity = isOpen ? "1" : "0.9";
-        sheetRef.current.style.transition = "height 0.3s ease, opacity 0.3s ease";
+        sheetRef.current.style.transition =
+          "height 0.3s ease, opacity 0.3s ease";
       }
     }, [isOpen]);
 
@@ -135,10 +133,6 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       onClose();
     };
 
-    const handleContentClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-    };
-
     return (
       <div className="fixed inset-0  z-50" onClick={handleOverlayClick}>
         <div className="absolute inset-0" />
@@ -154,7 +148,7 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
                 type: "spring",
                 stiffness: 300,
                 damping: 30,
-                opacity: { duration: 0.2 }
+                opacity: { duration: 0.2 },
               }}
             >
               <div className="bottom-sheet-handle">
@@ -170,7 +164,7 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
                   <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
                 </div>
               </div>
-              
+
               {children}
             </motion.div>
           )}

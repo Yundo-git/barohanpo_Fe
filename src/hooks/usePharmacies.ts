@@ -19,11 +19,11 @@ interface UsePharmaciesReturn {
     lng?: number
   ) => Promise<PharmacyWithUser[]>;
   createPharmacyMarkers: (
-    map: any,
+    map: kakao.maps.Map,
     pharmacies: PharmacyWithUser[],
     onClick: (pharmacy: PharmacyWithUser) => void
-  ) => any[];
-  adjustMapBounds: (map: any, pharmacies: PharmacyWithUser[]) => void;
+  ) => kakao.maps.Marker[];
+  adjustMapBounds: (map: kakao.maps.Map, markers: kakao.maps.Marker[]) => void;
 }
 
 export const usePharmacies = (): UsePharmaciesReturn => {
@@ -32,7 +32,7 @@ export const usePharmacies = (): UsePharmaciesReturn => {
   const [error, setError] = useState<string | null>(null);
 
   // API 오류 처리를 위한 헬퍼 함수
-  const handleError = (error: any, defaultMessage: string) => {
+  const handleError = (error: Error, defaultMessage: string) => {
     console.error(error);
     setError(defaultMessage);
     return [];
@@ -44,24 +44,24 @@ export const usePharmacies = (): UsePharmaciesReturn => {
       console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
       setIsLoading(true);
       setError(null);
-  
+
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
         );
-  
+
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
-  
+
         const data = await response.json();
         const result = Array.isArray(data) ? data : data?.data || [];
-  
+
         console.log(`Found ${result.length} pharmacies`);
         setPharmacies(result); // ✅ 여기 추가
         return result;
       } catch (err) {
-        console.error("Error in findNearbyPharmacies:", err);
+        console.error("Error in findNearbyPharmacies:", err as Error);
         setError("약국 정보를 불러오는 중 오류가 발생했습니다.");
         return [];
       } finally {
@@ -70,7 +70,6 @@ export const usePharmacies = (): UsePharmaciesReturn => {
     },
     []
   );
-  
 
   // 단일 약국의 사용자 데이터 가져오기
   const getPharmacyUser = useCallback(
@@ -159,7 +158,10 @@ export const usePharmacies = (): UsePharmaciesReturn => {
         setPharmacies(pharmaciesWithUsers);
         return pharmaciesWithUsers;
       } catch (err) {
-        return handleError(err, "약사 정보를 불러오는 중 오류가 발생했습니다.");
+        return handleError(
+          err as Error,
+          "약사 정보를 불러오는 중 오류가 발생했습니다."
+        );
       } finally {
         setIsLoading(false);
       }

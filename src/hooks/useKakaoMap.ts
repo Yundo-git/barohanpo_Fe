@@ -3,18 +3,17 @@ import { KakaoMapRefs } from "@/types/pharmacy";
 
 declare global {
   interface Window {
-    kakao: any;
+    kakao: typeof kakao;
   }
 }
 
-export const useKakaoMap = (onMapLoad?: (map: any) => void) => {
+export const useKakaoMap = (onMapLoad?: (map: kakao.maps.Map) => void) => {
   const mapRefs = useRef<KakaoMapRefs>({
     map: null,
     markers: [],
     userMarker: null,
   });
 
-  // Initialize the map
   useEffect(() => {
     const script = document.createElement("script");
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAPS_KEY}&autoload=false`;
@@ -51,7 +50,7 @@ export const useKakaoMap = (onMapLoad?: (map: any) => void) => {
 
           const marker = new window.kakao.maps.Marker({
             position: center,
-            map: map,
+            map,
             image: dotImage,
             zIndex: 3,
           });
@@ -60,7 +59,7 @@ export const useKakaoMap = (onMapLoad?: (map: any) => void) => {
 
           map.setCenter(center);
 
-          if (onMapLoad) onMapLoad(map);
+          onMapLoad?.(map);
         };
 
         if (navigator.geolocation) {
@@ -75,21 +74,16 @@ export const useKakaoMap = (onMapLoad?: (map: any) => void) => {
           );
         } else {
           createMap(37.5665, 126.978);
-          createMap(37.5665, 126.978);
         }
       });
     };
 
     return () => {
-      // Cleanup
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
-      // Clear markers
       mapRefs.current.markers.forEach((marker) => marker.setMap(null));
-      if (mapRefs.current.userMarker) {
-        mapRefs.current.userMarker.setMap(null);
-      }
+      mapRefs.current.userMarker?.setMap(null);
     };
   }, [onMapLoad]);
 
