@@ -1,14 +1,13 @@
+// src/app/reserve/[p_id]/page.tsx
+
 import ReserveDetailPage from "./ReserveDetailClient";
 
-interface Props {
-  params: { p_id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
+type PageParams = Promise<{ p_id: string }>;
 
-export default function Page({ params }: Props) {
-  return (
-    <div className="overflow-y-auto">
-      <ReserveDetailPage p_id={params.p_id} />
-    </div>
-  );
-}
+const Page = async ({ params }: { params: PageParams }) => {
+  const { p_id } = await params;
+
+  return <ReserveDetailPage p_id={p_id} />;
+};
+
+export default Page;

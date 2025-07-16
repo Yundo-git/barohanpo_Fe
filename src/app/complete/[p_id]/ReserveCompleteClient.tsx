@@ -47,18 +47,18 @@ export default function ReserveCompleteClient({ p_id }: Props) {
         예약 상태: {reservationInfo.status === "success" ? "성공" : "실패"}
       </p>
       <div className="flex w-full justify-center gap-2">
-      <button
-        onClick={() => router.push(`/`)}
-        className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-      >
-        홈으로 돌아가기
-      </button>
-      <button
-        onClick={() => router.push(`/auth`)}
-        className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-      >
-        내 예약 확인하기
-      </button>
+        <button
+          onClick={() => router.push(`/`)}
+          className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          홈으로 돌아가기
+        </button>
+        <button
+          onClick={() => router.push(`/auth`)}
+          className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          내 예약 확인하기
+        </button>
       </div>
     </div>
   );

@@ -3,10 +3,14 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pharmacy } from "@/types/pharmacy";
 
+interface PharmacyResponse {
+  data: Pharmacy;
+}
+
 export default function PharmacyDetail() {
   const params = useParams();
   const pharmacyId = params.id; // 여기서 id를 가져옴
-  const [pharmacy, setPharmacy] = useState<Pharmacy | null>(null);
+  const [pharmacy, setPharmacy] = useState<PharmacyResponse | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews">("info");
 
   useEffect(() => {
