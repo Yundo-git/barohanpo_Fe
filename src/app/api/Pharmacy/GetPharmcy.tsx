@@ -1,9 +1,7 @@
 const GetPharmacy = async () => {
   const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const res = await fetch(`${API_URL}/api/pharmacy/`, {
-    cache: "no-store",
-  });
+  const res = await fetch(`${API_URL}/api/pharmacy/local`);
   const data = await res.json();
 
   console.log(data);

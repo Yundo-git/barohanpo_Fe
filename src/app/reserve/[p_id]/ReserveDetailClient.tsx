@@ -9,23 +9,33 @@ import { Value } from "react-calendar/dist/shared/types.js";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 import { useReservation } from "@/hooks/useReservation";
+import type { Pharmacy } from "@/types/pharmacy";
 
 interface Props {
   p_id: string;
 }
 
+type AvailableDate = {
+  is_availabl?: string;
+  is_available?: boolean;
+  [key: string]: any;
+};
 export default function ReserveDetailPage({ p_id }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [availableSlots, setAvailableSlots] = useState<Record<string, string[]>>({});
+  const [availableSlots, setAvailableSlots] = useState<
+    Record<string, string[]>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Redux에서 약국 목록 가져오기
-  const pharmacies = useSelector((state: RootState) => state.pharmacy.pharmacies);
-  const currentPharmacy = pharmacies.find((pha: any) => pha.p_id === Number(p_id));
+  const pharmacies = useSelector(
+    (state: RootState) => state.pharmacy.pharmacies
+  );
+  const currentPharmacy = pharmacies.find((pha: Pharmacy) => pha.p_id === p_id);
 
   // 로그인된 유저 정보 가져오기 (세션에서)
   const userData = localStorage.getItem("test_user");
@@ -46,12 +56,13 @@ export default function ReserveDetailPage({ p_id }: Props) {
         const data = await res.json();
         const slots: Record<string, string[]> = {};
         const rawData = Array.isArray(data) ? data : data?.dates || [];
-
-        const availableItems = rawData.filter((item: any) =>
-          item.is_available === '1' || item.is_available === true
+        console.log("type", rawData);
+        const availableItems = rawData.filter(
+          (item: AvailableDate) =>
+            item.is_availabl === "1" || item.is_available === true
         );
 
-        availableItems.forEach((item: any) => {
+        availableItems.forEach((item: AvailableDate) => {
           slots[item.date] = item.times || [];
         });
 
@@ -83,13 +94,16 @@ export default function ReserveDetailPage({ p_id }: Props) {
     }
   };
 
-  if (isLoading) return <p className="p-4">예약 가능한 날짜를 불러오는 중...</p>;
+  if (isLoading)
+    return <p className="p-4">예약 가능한 날짜를 불러오는 중...</p>;
   if (Object.keys(availableSlots).length === 0)
     return <p className="p-4">예약 가능한 날짜가 없습니다.</p>;
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">{currentPharmacy?.name || "약국 정보"}</h2>
+      <h2 className="text-xl font-bold mb-4">
+        {currentPharmacy?.name || "약국 정보"}
+      </h2>
 
       <Calendar
         onChange={handleDateChange}
@@ -108,25 +122,27 @@ export default function ReserveDetailPage({ p_id }: Props) {
         }
       />
 
-{selectedDate && (
+      {selectedDate && (
         <div className="mt-6">
           <h3 className="text-md font-medium mb-3">예약 시간 선택</h3>
           <div className="grid grid-cols-3 gap-2 mb-6">
-            {['09:00', '10:00','11:00', '14:00', '15:00'].map((time) => {
+            {["09:00", "10:00", "11:00", "14:00", "15:00"].map((time) => {
               const isAvailable = availableTimes.includes(time);
               const isSelected = selectedTime === time;
-              
+
               return (
                 <button
                   key={time}
-                  onClick={() => isAvailable && setSelectedTime(isSelected ? null : time)}
+                  onClick={() =>
+                    isAvailable && setSelectedTime(isSelected ? null : time)
+                  }
                   disabled={!isAvailable}
                   className={`py-2 px-4 rounded-md text-center transition-colors ${
                     isSelected
-                      ? 'bg-blue-600 text-white'
+                      ? "bg-blue-600 text-white"
                       : isAvailable
-                        ? 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   {time}
@@ -134,7 +150,6 @@ export default function ReserveDetailPage({ p_id }: Props) {
               );
             })}
           </div>
-          
 
           <button
             onClick={() => {
@@ -152,7 +167,10 @@ export default function ReserveDetailPage({ p_id }: Props) {
             } transition-colors`}
           >
             {selectedTime
-              ? `${format(selectedDate, "yyyy년 MM월 dd일")} ${selectedTime} 예약하기`
+              ? `${format(
+                  selectedDate,
+                  "yyyy년 MM월 dd일"
+                )} ${selectedTime} 예약하기`
               : "시간을 선택해주세요"}
           </button>
         </div>
