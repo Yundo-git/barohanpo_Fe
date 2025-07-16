@@ -5,6 +5,6 @@ interface PageProps {
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default async function ReserveCompletePage({ params }: PageProps) {
+export default function ReserveCompletePage({ params }: PageProps) {
   return <ReserveCompleteClient p_id={params.p_id} />;
 }
