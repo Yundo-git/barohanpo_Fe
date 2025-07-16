@@ -1,10 +1,11 @@
+// src/app/reserve/[p_id]/complete/page.tsx
+
 import ReserveCompleteClient from "./ReserveCompleteClient";
 
-interface PageProps {
+export default function ReserveCompletePage({
+  params,
+}: {
   params: { p_id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-export default function ReserveCompletePage({ params }: PageProps) {
+}) {
   return <ReserveCompleteClient p_id={params.p_id} />;
 }
