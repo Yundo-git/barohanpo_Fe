@@ -18,7 +18,8 @@ interface Props {
 type AvailableDate = {
   is_availabl?: string;
   is_available?: boolean;
-  [key: string]: any;
+  date: string;
+  times: string[];
 };
 export default function ReserveDetailPage({ p_id }: Props) {
   const router = useRouter();

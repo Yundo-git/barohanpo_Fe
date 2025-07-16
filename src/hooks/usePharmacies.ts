@@ -12,7 +12,6 @@ interface UsePharmaciesReturn {
     radius?: number
   ) => Promise<PharmacyWithUser[]>;
   getPharmacyUser: (pharmacyId: string) => Promise<PharmacyUser | null>;
-
   getPharmaciesWithUsers: (
     pharmacyIds: string[],
     lat?: number,
@@ -31,14 +30,12 @@ export const usePharmacies = (): UsePharmaciesReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // API 오류 처리를 위한 헬퍼 함수
   const handleError = (error: Error, defaultMessage: string) => {
     console.error(error);
     setError(defaultMessage);
     return [];
   };
 
-  // 주변 약국 찾기
   const findNearbyPharmacies = useCallback(
     async (lat: number, lng: number, radius = 8000) => {
       console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
@@ -58,10 +55,10 @@ export const usePharmacies = (): UsePharmaciesReturn => {
         const result = Array.isArray(data) ? data : data?.data || [];
 
         console.log(`Found ${result.length} pharmacies`);
-        setPharmacies(result); // ✅ 여기 추가
+        setPharmacies(result);
         return result;
       } catch (err) {
-        console.error("Error in findNearbyPharmacies:", err as Error);
+        console.error("Error in findNearbyPharmacies:", err);
         setError("약국 정보를 불러오는 중 오류가 발생했습니다.");
         return [];
       } finally {
@@ -71,7 +68,6 @@ export const usePharmacies = (): UsePharmaciesReturn => {
     []
   );
 
-  // 단일 약국의 사용자 데이터 가져오기
   const getPharmacyUser = useCallback(
     async (pharmacyId: string): Promise<PharmacyUser | null> => {
       if (!pharmacyId) return null;
@@ -83,7 +79,9 @@ export const usePharmacies = (): UsePharmaciesReturn => {
 
         const data = await response.json();
         console.log("getPharmacyUser", data);
-        return data;
+
+        // API에서 user 정보가 data.data로 내려온다면
+        return data?.data ?? null;
       } catch (err) {
         console.error(
           `Error fetching user data for pharmacy ${pharmacyId}:`,
@@ -95,7 +93,6 @@ export const usePharmacies = (): UsePharmaciesReturn => {
     []
   );
 
-  // 여러 약국들의 사용자 데이터와 함께 가져오기
   const getPharmaciesWithUsers = useCallback(
     async (
       pharmacyIds: string[],
@@ -109,52 +106,31 @@ export const usePharmacies = (): UsePharmaciesReturn => {
 
       setIsLoading(true);
       try {
-        // 1. 약국 정보 가져오기 (기존 상태에 의존하지 않음)
-        const searchLat = lat !== undefined ? lat : 37.5665; // 기본값: 서울 시청
-        const searchLng = lng !== undefined ? lng : 126.978;
+        const searchLat = lat ?? 37.5665;
+        const searchLng = lng ?? 126.978;
 
-        console.log(
-          `Searching for pharmacies near lat: ${searchLat}, lng: ${searchLng}`
-        );
         const nearbyPharmacies = await findNearbyPharmacies(
           searchLat,
           searchLng
         );
 
-        if (nearbyPharmacies.length === 0) {
-          console.log("No matching pharmacies found");
-          return [];
-        }
+        if (nearbyPharmacies.length === 0) return [];
 
-        // 3. 각 약국에 대한 사용자 정보 병렬 조회
-        console.log("Fetching user data for pharmacies...");
         const pharmaciesWithUsers = await Promise.all(
           nearbyPharmacies.map(async (pharmacy: Pharmacy) => {
-            console.log(`Fetching user for pharmacy ${pharmacy.p_id}...`);
             const userData = await getPharmacyUser(pharmacy.p_id);
-            console.log(`User data for ${pharmacy.p_id}:`, userData?.data);
 
-            // 3. 약국 정보와 사용자 정보 결합
             const result: PharmacyWithUser = {
               ...pharmacy,
-              p_id: pharmacy.p_id,
-              name: pharmacy.name || "",
-              address: pharmacy.address || "",
               latitude: pharmacy.latitude || pharmacy.lat || 0,
               longitude: pharmacy.longitude || pharmacy.lng || 0,
-              user: userData?.data
-                ? {
-                    p_name: userData.data.p_name,
-                    number: userData.data.number,
-                  }
-                : null,
+              user: userData ?? null,
             };
-            console.log(`Merged data for ${pharmacy.p_id}:`, result);
+
             return result;
           })
         );
 
-        // 4. 상태 업데이트
         setPharmacies(pharmaciesWithUsers);
         return pharmaciesWithUsers;
       } catch (err) {
@@ -169,7 +145,6 @@ export const usePharmacies = (): UsePharmaciesReturn => {
     [pharmacies]
   );
 
-  // 마커 관련 훅 사용
   const { createPharmacyMarkers, adjustMapBounds } = usePharmacyMarkers();
 
   return {

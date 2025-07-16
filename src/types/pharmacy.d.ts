@@ -3,11 +3,12 @@ export interface Pharmacy {
   name?: string;
   address?: string;
   phone?: string;
+  number?: string;
   lat?: number | string;
   lng?: number | string;
   latitude?: number | string;
   longitude?: number | string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PharmacyUser {
@@ -15,8 +16,9 @@ export interface PharmacyUser {
   name?: string;
   email?: string;
   phone?: string;
+  number?: string;
   pharmacyId?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PharmacyWithUser extends Pharmacy {

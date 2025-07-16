@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const UserSignupPage = () => {
@@ -40,7 +39,7 @@ const UserSignupPage = () => {
                 onChange={(e) => {
                   setEmail(e.target.value);
                 }}
-                />
+              />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
@@ -71,7 +70,6 @@ const UserSignupPage = () => {
             </button>
           </div>
         </form>
-       
       </div>
     </div>
   );

@@ -1,8 +1,24 @@
-// src/types/kakao.d.ts
-
 declare namespace kakao {
   namespace maps {
     function load(callback: () => void): void;
+
+    interface MapOptions {
+      center: LatLng;
+      level?: number;
+    }
+
+    interface MarkerOptions {
+      position: LatLng;
+      map?: Map;
+      title?: string;
+      image?: MarkerImage;
+      zIndex?: number;
+      clickable?: boolean;
+    }
+
+    interface MarkerImageOptions {
+      offset?: Point;
+    }
 
     class LatLng {
       constructor(lat: number, lng: number);
@@ -14,20 +30,20 @@ declare namespace kakao {
     }
 
     class Map {
-      constructor(container: HTMLElement, options: any);
+      constructor(container: HTMLElement, options: MapOptions);
       setCenter(latlng: LatLng): void;
       setBounds(bounds: LatLngBounds): void;
     }
 
     class Marker {
-      constructor(options: any);
+      constructor(options: MarkerOptions);
       setMap(map: Map | null): void;
       setPosition(position: LatLng): void;
       getPosition(): LatLng;
     }
 
     class MarkerImage {
-      constructor(src: string, size: Size, options?: any);
+      constructor(src: string, size: Size, options?: MarkerImageOptions);
     }
 
     class Size {
@@ -39,10 +55,10 @@ declare namespace kakao {
     }
 
     namespace event {
-      function addListener<T = any>(
+      function addListener<T = unknown>(
         target: T,
         type: string,
-        handler: (event?: any) => void
+        handler: (event?: unknown) => void
       ): void;
     }
   }

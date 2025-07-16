@@ -43,7 +43,7 @@ export function useReservationSlots(pharmacyId: number) {
         );
 
         setSlots(response.data);
-      } catch (err: any) {
+      } catch (err) {
         if (!axios.isCancel(err)) {
           console.error("예약 정보 오류:", err);
           setError("예약 정보를 불러오지 못했습니다.");

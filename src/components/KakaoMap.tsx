@@ -6,7 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
-import { Pharmacy } from "@/types/pharmacy";
+import { Pharmacy, PharmacyUser } from "@/types/pharmacy";
 import Bookbtn from "./Bookbtn";
 
 export default function KakaoMap() {
@@ -78,8 +78,7 @@ export default function KakaoMap() {
       adjustMapBounds,
     ]
   );
-
-  const mapRefs = useKakaoMap(handleMapLoad);
+  useKakaoMap(handleMapLoad);
 
   return (
     <div className="relative w-full h-full">
@@ -113,8 +112,10 @@ export default function KakaoMap() {
                   <p className="text-xs text-gray-600">
                     {selectedPharmacy.address || "주소 정보 없음"}
                   </p>
-                  {selectedPharmacy.user?.number && (
-                    <p className="text-xs">{selectedPharmacy.user.number}</p>
+                  {(selectedPharmacy.user as PharmacyUser)?.number && (
+                    <p className="text-xs">
+                      {(selectedPharmacy.user as PharmacyUser)?.number}
+                    </p>
                   )}
                 </div>
               </div>
@@ -144,8 +145,10 @@ export default function KakaoMap() {
                     <p className="text-xs text-gray-600">
                       {pharmacy.address || "주소 정보 없음"}
                     </p>
-                    {pharmacy.user?.number && (
-                      <p className="text-xs">{pharmacy.user.number}</p>
+                    {(pharmacy.user as PharmacyUser)?.number && (
+                      <p className="text-xs">
+                        {(pharmacy.user as PharmacyUser)?.number}
+                      </p>
                     )}
                   </div>
                 </div>
