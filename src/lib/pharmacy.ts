@@ -37,7 +37,7 @@ export const findNearbyPharmaciesOnServer = async (
     }
 
     const responseData = await response.json();
-  const data: Pharmacy[] = responseData.data;
+    const data: Pharmacy[] = responseData.data;
 
     const pharmaciesWithUsers = await Promise.all(
       data.map(async (pharmacy) => {
@@ -47,8 +47,12 @@ export const findNearbyPharmaciesOnServer = async (
     );
 
     return pharmaciesWithUsers;
-  } catch (err: any) {
-    console.error(err.message);
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error(" 에러:", err.message);
+    } else {
+      console.error("예상치 못한 에러:", err);
+    }
     return [];
   }
 };

@@ -60,11 +60,19 @@ declare namespace kakao {
     }
 
     namespace event {
-      function addListener<T = unknown>(
+      function addListener<T extends object>(
         target: T,
         type: string,
         handler: (event?: unknown) => void
       ): void;
+      
+      function removeListener(
+        target: object,
+        type: string,
+        handler: (event?: unknown) => void
+      ): void;
+      
+      function removeListener(target: object): void;
     }
   }
 }

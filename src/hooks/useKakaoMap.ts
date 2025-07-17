@@ -1,23 +1,21 @@
 // src/hooks/useKakaoMap.ts
 import { useEffect, useRef } from "react";
-
-declare global {
-  interface Window {
-    kakao: any;
-  }
-}
+import { PharmacyWithUser } from "@/types/pharmacy";
 
 interface UseKakaoMapOptions {
-  initialPharmacies?: any[];
+  initialPharmacies?: PharmacyWithUser[];
   isReady?: boolean;
 }
 
 export const useKakaoMap = (
-  onMapLoad: (map: kakao.maps.Map, initialPharmacies?: any[]) => void,
+  onMapLoad: (
+    map: kakao.maps.Map,
+    initialPharmacies?: PharmacyWithUser[]
+  ) => void,
   options: boolean | UseKakaoMapOptions = { isReady: true }
 ) => {
-  const { isReady = true, initialPharmacies } = 
-    typeof options === 'boolean' ? { isReady: options } : options;
+  const { isReady = true, initialPharmacies } =
+    typeof options === "boolean" ? { isReady: options } : options;
   const initAttempted = useRef(false);
 
   useEffect(() => {
@@ -28,8 +26,7 @@ export const useKakaoMap = (
 
     initAttempted.current = true;
     const scriptId = "kakao-map-script";
-    let map: kakao.maps.Map | null = null;
-    let mapInitializationAttempts = 0;
+    let mapInstance: kakao.maps.Map | null = null;
     const MAX_ATTEMPTS = 10;
     const RETRY_DELAY = 100; // ms
 
@@ -98,7 +95,7 @@ export const useKakaoMap = (
         });
 
         console.log("useKakaoMap: 지도 인스턴스 생성 완료", newMap);
-        map = newMap; // map 변수에 할당
+        mapInstance = newMap; // map 변수에 할당
         onMapLoad(newMap, initialPharmacies); // initialPharmacies와 함께 콜백 호출
       } catch (error) {
         console.error("useKakaoMap: 지도 생성 중 오류 발생:", error);
@@ -165,16 +162,19 @@ export const useKakaoMap = (
       if (script && script.parentNode) {
         script.parentNode.removeChild(script);
       }
-      if (map && window.kakao?.maps?.event) {
+      if (mapInstance && window.kakao?.maps?.event) {
         try {
           // Clear all event listeners from the map instance
-          window.kakao.maps.event.removeListener(map);
-          console.log("useKakaoMap: 지도 이벤트 리스너 정리 완료");
+          // We can't directly remove all listeners in Kakao Maps API,
+          // but we can remove specific ones if we keep track of them.
+          // For now, we'll just nullify the map instance.
+          mapInstance = null;
+          console.log("useKakaoMap: 지도 인스턴스 정리 완료");
         } catch (error) {
-          console.error("useKakaoMap: 이벤트 리스너 제거 중 오류:", error);
+          console.error("useKakaoMap: 지도 정리 중 오류:", error);
         }
       }
       initAttempted.current = false;
     };
-  }, [onMapLoad, isReady]);
+  }, [onMapLoad, isReady, initialPharmacies]); // Add initialPharmacies to dependencies
 };
