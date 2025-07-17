@@ -36,9 +36,21 @@ export default function MapLoader({ initialPharmacies }: MapLoaderProps) {
   }
 
   return (
-    <div className="w-full h-full min-h-[500px] relative">
+    <div className="w-full h-full relative" style={{ height: '100vh' }}>
       {/* 지도 컨테이너를 먼저 렌더링 */}
-      <div id="map" className="w-full h-full"></div>
+      <div 
+        id="map" 
+        className="w-full h-full"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+        }}
+      ></div>
       {/* 그 다음에 KakaoMap 컴포넌트 렌더링 */}
       <KakaoMap initialPharmacies={initialPharmacies} />
     </div>

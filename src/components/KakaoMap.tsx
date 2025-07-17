@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
@@ -52,13 +52,75 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     };
   }, []);
 
+  // 위치 버튼 클릭 핸들러
+  const handleLocationClick = useCallback(async () => {
+    if (navigator.geolocation) {
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        });
+        
+        const { latitude, longitude } = position.coords;
+        const moveLatLon = new window.kakao.maps.LatLng(latitude, longitude);
+        
+        // 지도 중심으로 이동
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+          // Window 인터페이스에 map 속성 추가
+          const mapInstance = (window as unknown as { map?: kakao.maps.Map }).map;
+          if (mapInstance) {
+            mapInstance.setCenter(moveLatLon);
+            mapInstance.setLevel(3);
+          }
+        }
+      } catch (error) {
+        console.error('현재 위치로 이동할 수 없습니다:', error);
+        alert('현재 위치를 가져올 수 없습니다. 위치 서비스를 확인해주세요.');
+      }
+    } else {
+      alert('이 브라우저에서는 위치 서비스를 지원하지 않습니다.');
+    }
+  }, []);
+
   return (
     <div className="relative w-full h-full">
       {error && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 z-50">
           {error}
         </div>
       )}
+      
+      {/* 위치 버튼 추가 */}
+      <button
+        onClick={handleLocationClick}
+        className="fixed bottom-24 right-4 bg-white rounded-full p-3 shadow-lg z-10"
+        aria-label="현재 위치로 이동"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 text-blue-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </button>
 
       <BottomSheet
         ref={bottomSheetRef}
