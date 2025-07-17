@@ -33,23 +33,39 @@ export default function PharmacyList({}: PharmacyListProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // 이미 약국 데이터가 있으면 위치 조회를 하지 않음
+    if (pharmacies.length > 0) {
+      return;
+    }
+
     if (navigator.geolocation) {
       setIsSearching(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          await findNearbyPharmacies(latitude, longitude);
+          try {
+            await findNearbyPharmacies(latitude, longitude);
+          } catch (error) {
+            console.error("약국 정보를 가져오는 중 오류가 발생했습니다:", error);
+          } finally {
+            setIsSearching(false);
+          }
+        },
+        (error) => {
+          console.error("위치 정보를 가져오지 못했습니다.", error);
           setIsSearching(false);
         },
-        () => {
-          console.error("위치 정보를 가져오지 못했습니다.");
-          setIsSearching(false);
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     }
   }, [findNearbyPharmacies]);
 
-  if (isLoading || isSearching) {
+  // pharmacies가 비어있고 로딩 중이거나 검색 중인 경우에만 로딩 표시
+  if ((pharmacies.length === 0 && isLoading) || isSearching) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-2">
