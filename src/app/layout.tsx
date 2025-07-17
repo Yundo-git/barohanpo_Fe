@@ -18,14 +18,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en" className="h-full w-full">
-      <body className="bg-white min-h-screen w-full">
+      <body className="bg-white min-h-screen h-full w-full">
         <UserProvider>
           <Providers>
             <Header />
-            <main className="min-h-[calc(100vh-14rem)] min-h-screen absolute top-14 left-0 right-0 overflow-y-auto">
+            <main className="min-h-[calc(100vh-14rem)] h-full min-h-screen absolute flex-grow top-14 left-0 right-0 ">
               {children}
             </main>
             <MobileNavBar />

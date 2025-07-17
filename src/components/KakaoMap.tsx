@@ -2,14 +2,19 @@
 
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
-import { Pharmacy, PharmacyUser } from "@/types/pharmacy";
+import { useMapHandlers } from "@/hooks/useMapHandlers";
+import { Pharmacy, PharmacyUser, PharmacyWithUser } from "@/types/pharmacy";
 import Bookbtn from "./Bookbtn";
 
-export default function KakaoMap() {
+interface KakaoMapProps {
+  initialPharmacies?: PharmacyWithUser[];
+}
+
+export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(true);
   const markersRef = useRef<kakao.maps.Marker[]>([]);
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(
@@ -25,65 +30,30 @@ export default function KakaoMap() {
     adjustMapBounds,
   } = usePharmacies();
 
-  const handleMarkerClick = useCallback((pharmacy: Pharmacy) => {
+  const handleMarkerClick = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
     setIsBottomSheetOpen(true);
+  };
+
+  const { handleMapLoad } = useMapHandlers({
+    createPharmacyMarkers,
+    adjustMapBounds,
+    handleMarkerClick,
+    findNearbyPharmacies,
+  });
+  useKakaoMap(handleMapLoad, { initialPharmacies });
+
+  // 마커 참조를 위한 useEffect 추가
+  useEffect(() => {
+    return () => {
+      // 컴포넌트 언마운트 시 마커 정리
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current = [];
+    };
   }, []);
-
-  const handleMapLoad = useCallback(
-    (map: kakao.maps.Map) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            const center = new window.kakao.maps.LatLng(latitude, longitude);
-            map.setCenter(center);
-
-            // 기존 마커 제거
-            markersRef.current.forEach((marker) => marker.setMap(null));
-            markersRef.current = [];
-
-            // 약국 정보 요청
-            const nearbyPharmacies = await findNearbyPharmacies(
-              latitude,
-              longitude
-            );
-
-            if (nearbyPharmacies.length > 0) {
-              const markers = createPharmacyMarkers(
-                map,
-                nearbyPharmacies,
-                handleMarkerClick
-              );
-              markersRef.current = markers.filter(
-                Boolean
-              ) as kakao.maps.Marker[];
-              adjustMapBounds(map, markersRef.current);
-            }
-          },
-          () => {
-            const defaultCenter = new window.kakao.maps.LatLng(
-              37.5665,
-              126.978
-            );
-            map.setCenter(defaultCenter);
-          }
-        );
-      }
-    },
-    [
-      handleMarkerClick,
-      findNearbyPharmacies,
-      createPharmacyMarkers,
-      adjustMapBounds,
-    ]
-  );
-  useKakaoMap(handleMapLoad);
 
   return (
     <div className="relative w-full h-full">
-      <div id="map" className="w-full h-full"></div>
-
       {error && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3">
           {error}
@@ -99,7 +69,7 @@ export default function KakaoMap() {
         }}
       >
         {selectedPharmacy ? (
-          <div className="space-y-2 max-h-[60vh] px-2">
+          <div className="space-y-2 max-h-[50vh] px-2">
             <div className="border border-gray-200 rounded-md">
               <div className="flex gap-2 p-2">
                 <div className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center">

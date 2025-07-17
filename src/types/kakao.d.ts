@@ -33,6 +33,11 @@ declare namespace kakao {
       constructor(container: HTMLElement, options: MapOptions);
       setCenter(latlng: LatLng): void;
       setBounds(bounds: LatLngBounds): void;
+      setZoom(level: number): void; // 추가된 부분
+      getZoom(): number; // 추가: 필요할 수 있으니 함께 추가
+      getLevel(): number;
+      setLevel(level: number): void;
+      relayout(): void;
     }
 
     class Marker {
