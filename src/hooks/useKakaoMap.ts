@@ -1,10 +1,14 @@
 // src/hooks/useKakaoMap.ts
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { PharmacyWithUser } from "@/types/pharmacy";
 
 interface UseKakaoMapOptions {
   initialPharmacies?: PharmacyWithUser[];
   isReady?: boolean;
+}
+
+interface UseKakaoMapReturn {
+  getMap: () => kakao.maps.Map | null;
 }
 
 export const useKakaoMap = (
@@ -13,10 +17,16 @@ export const useKakaoMap = (
     initialPharmacies?: PharmacyWithUser[]
   ) => void,
   options: boolean | UseKakaoMapOptions = { isReady: true }
-) => {
+): UseKakaoMapReturn => {
+  const mapRef = useRef<kakao.maps.Map | null>(null);
+  const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
   const { isReady = true, initialPharmacies } =
     typeof options === "boolean" ? { isReady: options } : options;
   const initAttempted = useRef(false);
+  const scriptId = 'kakao-maps-sdk';
+
+  // getMap 함수를 메모이제이션
+  const getMap = useCallback(() => mapRef.current, []);
 
   useEffect(() => {
     if (!isReady || initAttempted.current) {
@@ -26,7 +36,6 @@ export const useKakaoMap = (
 
     initAttempted.current = true;
     const scriptId = "kakao-map-script";
-    let mapInstance: kakao.maps.Map | null = null;
     const MAX_ATTEMPTS = 10;
     const RETRY_DELAY = 100; // ms
 
@@ -87,16 +96,28 @@ export const useKakaoMap = (
       }
 
       try {
-        console.log("useKakaoMap: 지도 인스턴스 생성 중...");
-        const center = new window.kakao.maps.LatLng(37.5665, 126.978);
+        // 카카오맵 스크립트가 로드되었는지 확인
+        if (!window.kakao || !window.kakao.maps) {
+          throw new Error('Kakao Maps SDK not loaded');
+        }
+
+        // 지도 컨테이너가 있는지 확인
+        const container = document.getElementById('map');
+        if (!container) {
+          throw new Error('Map container not found');
+        }
+
+        // 지도 생성
+        const center = new window.kakao.maps.LatLng(37.5665, 126.978); // 기본 위치: 서울 시청
         const newMap = new window.kakao.maps.Map(container, {
           center,
-          level: 3,
+          level: 6,
         });
 
-        console.log("useKakaoMap: 지도 인스턴스 생성 완료", newMap);
-        mapInstance = newMap; // map 변수에 할당
-        onMapLoad(newMap, initialPharmacies); // initialPharmacies와 함께 콜백 호출
+        console.log('useKakaoMap: 지도 인스턴스 생성 완료', newMap);
+        mapInstanceRef.current = newMap;
+        mapRef.current = newMap; // ref에 map 인스턴스 저장
+        onMapLoad(newMap, initialPharmacies);
       } catch (error) {
         console.error("useKakaoMap: 지도 생성 중 오류 발생:", error);
       }
@@ -154,21 +175,23 @@ export const useKakaoMap = (
     };
 
     initMap();
+  }, [onMapLoad, isReady, initialPharmacies]);
 
-    // 클린업
+  useEffect(() => {
     return () => {
-      console.log("useKakaoMap: 클린업 실행");
+      // 스크립트 제거
       const script = document.getElementById(scriptId);
       if (script && script.parentNode) {
         script.parentNode.removeChild(script);
       }
-      if (mapInstance && window.kakao?.maps?.event) {
+      
+      // ref 정리
+      mapRef.current = null;
+      
+      if (mapInstanceRef.current && window.kakao?.maps?.event) {
         try {
-          // Clear all event listeners from the map instance
-          // We can't directly remove all listeners in Kakao Maps API,
-          // but we can remove specific ones if we keep track of them.
-          // For now, we'll just nullify the map instance.
-          mapInstance = null;
+          // 지도 인스턴스 정리
+          mapInstanceRef.current = null;
           console.log("useKakaoMap: 지도 인스턴스 정리 완료");
         } catch (error) {
           console.error("useKakaoMap: 지도 정리 중 오류:", error);
@@ -176,5 +199,9 @@ export const useKakaoMap = (
       }
       initAttempted.current = false;
     };
-  }, [onMapLoad, isReady, initialPharmacies]); // Add initialPharmacies to dependencies
+  }, [isReady]);
+
+  return {
+    getMap,
+  };
 };

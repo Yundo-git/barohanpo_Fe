@@ -41,7 +41,8 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     handleMarkerClick,
     findNearbyPharmacies,
   });
-  useKakaoMap(handleMapLoad, { initialPharmacies });
+  
+  const { getMap } = useKakaoMap(handleMapLoad, { initialPharmacies });
 
   // 마커 참조를 위한 useEffect 추가
   useEffect(() => {
@@ -67,15 +68,11 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
         const { latitude, longitude } = position.coords;
         const moveLatLon = new window.kakao.maps.LatLng(latitude, longitude);
         
-        // 지도 중심으로 이동
-        const mapContainer = document.getElementById('map');
-        if (mapContainer) {
-          // Window 인터페이스에 map 속성 추가
-          const mapInstance = (window as unknown as { map?: kakao.maps.Map }).map;
-          if (mapInstance) {
-            mapInstance.setCenter(moveLatLon);
-            mapInstance.setLevel(3);
-          }
+        // useKakaoMap 훅을 통해 map 인스턴스 가져오기
+        const mapInstance = getMap();
+        if (mapInstance) {
+          mapInstance.setCenter(moveLatLon);
+          mapInstance.setLevel(3);
         }
       } catch (error) {
         console.error('현재 위치로 이동할 수 없습니다:', error);
@@ -84,7 +81,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     } else {
       alert('이 브라우저에서는 위치 서비스를 지원하지 않습니다.');
     }
-  }, []);
+  }, [getMap]);
 
   return (
     <div className="relative w-full h-full">
