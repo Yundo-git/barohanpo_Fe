@@ -15,75 +15,87 @@ export const useKakaoMap = (onMapLoad?: (map: kakao.maps.Map) => void) => {
   });
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAPS_KEY}&autoload=false`;
-    script.async = true;
-    document.head.appendChild(script);
+    const KAKAO_MAP_SCRIPT_ID = "kakao-map-script";
 
-    script.onload = () => {
-      window.kakao.maps.load(() => {
-        const container = document.getElementById("map");
-        if (!container) return;
+    const createMap = (lat: number, lng: number) => {
+      const container = document.getElementById("map");
+      if (!container || !window.kakao) return;
 
-        const createMap = (lat: number, lng: number) => {
-          const center = new window.kakao.maps.LatLng(lat, lng);
-          const map = new window.kakao.maps.Map(container, {
-            center,
-            level: 3,
-          });
-
-          mapRefs.current.map = map;
-
-          const dotImage = new window.kakao.maps.MarkerImage(
-            "data:image/svg+xml;charset=utf-8," +
-              encodeURIComponent(
-                '<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
-                  '<circle cx="12" cy="12" r="12" fill="%23FF6B6B" fill-opacity="0.3"/>' +
-                  '<circle cx="12" cy="12" r="6" fill="%23FF0000"/>' +
-                  "</svg>"
-              ),
-            new window.kakao.maps.Size(24, 24),
-            {
-              offset: new window.kakao.maps.Point(12, 12),
-            }
-          );
-
-          const marker = new window.kakao.maps.Marker({
-            position: center,
-            map,
-            image: dotImage,
-            zIndex: 3,
-          });
-
-          mapRefs.current.userMarker = marker;
-
-          map.setCenter(center);
-
-          onMapLoad?.(map);
-        };
-
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              createMap(latitude, longitude);
-            },
-            () => {
-              createMap(37.5665, 126.978);
-            }
-          );
-        } else {
-          createMap(37.5665, 126.978);
-        }
+      const center = new window.kakao.maps.LatLng(lat, lng);
+      const map = new window.kakao.maps.Map(container, {
+        center,
+        level: 3,
       });
+
+      mapRefs.current.map = map;
+
+      const dotImage = new window.kakao.maps.MarkerImage(
+        "data:image/svg+xml;charset=utf-8," +
+          encodeURIComponent(
+            '<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+              '<circle cx="12" cy="12" r="12" fill="%23FF6B6B" fill-opacity="0.3"/>' +
+              '<circle cx="12" cy="12" r="6" fill="%23FF0000"/>' +
+              "</svg>"
+          ),
+        new window.kakao.maps.Size(24, 24),
+        {
+          offset: new window.kakao.maps.Point(12, 12),
+        }
+      );
+
+      const marker = new window.kakao.maps.Marker({
+        position: center,
+        map,
+        image: dotImage,
+        zIndex: 3,
+      });
+
+      mapRefs.current.userMarker = marker;
+      map.setCenter(center);
+      onMapLoad?.(map);
     };
 
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+    const initMap = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            createMap(latitude, longitude);
+          },
+          () => {
+            createMap(37.5665, 126.978); // 기본 위치 (서울시청)
+          }
+        );
+      } else {
+        createMap(37.5665, 126.978); // 기본 위치 (서울시청)
       }
+    };
+
+    const loadScript = () => {
+      window.kakao.maps.load(initMap);
+    };
+
+    let script = document.getElementById(KAKAO_MAP_SCRIPT_ID) as HTMLScriptElement;
+
+    if (!script) {
+      script = document.createElement("script");
+      script.id = KAKAO_MAP_SCRIPT_ID;
+      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAPS_KEY}&autoload=false`;
+      script.async = true;
+      script.onload = loadScript;
+      document.head.appendChild(script);
+    } else if (window.kakao && window.kakao.maps) {
+      loadScript();
+    } else {
+      script.addEventListener("load", loadScript);
+    }
+
+    return () => {
       mapRefs.current.markers.forEach((marker) => marker.setMap(null));
       mapRefs.current.userMarker?.setMap(null);
+      if (script) {
+        script.removeEventListener("load", loadScript);
+      }
     };
   }, [onMapLoad]);
 
