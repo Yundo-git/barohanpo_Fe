@@ -1,6 +1,6 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pharmacy } from "@/types/pharmacy";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
@@ -59,7 +59,7 @@ export default function PharmacyDetail() {
           <h1 className="text-2xl font-bold mt-4">{pharmacy.name}</h1>
           <p>{pharmacy.address}</p>
           <p>영업시간 영역</p>
-          <p>{pharmacy.user?.number}</p>
+          <p>전화 : {pharmacy.user?.number}</p>
         </div>
       )}
 
@@ -102,6 +102,12 @@ export default function PharmacyDetail() {
             {/* 여기에 후기 목록을 표시하세요 */}
           </div>
         )}
+        <button
+          onClick={() => alert("기능개발중입니다.")}
+          className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg"
+        >
+          예약하기
+        </button>
       </div>
     </div>
   );
