@@ -2,37 +2,50 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pharmacy } from "@/types/pharmacy";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 
-interface PharmacyResponse {
-  data: Pharmacy;
-}
+// interface PharmacyResponse {
+//   data: Pharmacy;
+// }
 
 export default function PharmacyDetail() {
   const params = useParams();
-  const pharmacyId = params.id; // 여기서 id를 가져옴
-  const [pharmacy, setPharmacy] = useState<PharmacyResponse | null>(null);
+  const pharmacyId = Number(params.id); // 여기서 id를 가져옴
+  console.log(typeof pharmacyId);
+  // const [pharmacy, setPharmacy] = useState<PharmacyResponse | null>(null);
   const [activeTab, setActiveTab] = useState<"info" | "reviews">("info");
+  const pharmacies = useSelector(
+    (state: RootState) => state.pharmacy.pharmacies
+  );
 
-  useEffect(() => {
-    const fetchPharmacy = async () => {
-      if (!pharmacyId) return;
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/${pharmacyId}`
-        );
+  console.log(pharmacies);
+  const pharmacy = pharmacies.find(
+    (pharmacy: Pharmacy) => Number(pharmacy.p_id) === pharmacyId
+  );
 
-        if (!response.ok) {
-          throw new Error("약국 정보를 불러오는데 실패했습니다.");
-        }
-        const data = await response.json();
-        setPharmacy(data);
-        console.log(data);
-      } catch (err) {
-        console.error("Error fetching pharmacy:", err);
-      }
-    };
-    fetchPharmacy();
-  }, [pharmacyId]);
+  console.log(pharmacy);
+
+  // useEffect(() => {
+  //   const fetchPharmacy = async () => {
+  //     if (!pharmacyId) return;
+  //     try {
+  //       const response = await fetch(
+  //         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/${pharmacyId}`
+  //       );
+
+  //       if (!response.ok) {
+  //         throw new Error("약국 정보를 불러오는데 실패했습니다.");
+  //       }
+  //       const data = await response.json();
+  //       setPharmacy(data);
+  //       console.log(data);
+  //     } catch (err) {
+  //       console.error("Error fetching pharmacy:", err);
+  //     }
+  //   };
+  //   fetchPharmacy();
+  // }, [pharmacyId]);
 
   return (
     <div className="flex flex-col m-4 overflow-y-auto">
@@ -43,10 +56,10 @@ export default function PharmacyDetail() {
       </div>
       {pharmacy && (
         <div>
-          <h1 className="text-2xl font-bold mt-4">{pharmacy.data.name}</h1>
-          <p>{pharmacy.data.address}</p>
+          <h1 className="text-2xl font-bold mt-4">{pharmacy.name}</h1>
+          <p>{pharmacy.address}</p>
           <p>영업시간 영역</p>
-          <p>전화번호 영역</p>
+          <p>{pharmacy.user?.number}</p>
         </div>
       )}
 
