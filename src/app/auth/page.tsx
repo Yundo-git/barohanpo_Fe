@@ -38,7 +38,7 @@ export default function SignupChoice() {
 
             <Link
               href="/auth/user-signin"
-              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium   hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               이메일로 로그인
             </Link>
@@ -48,7 +48,7 @@ export default function SignupChoice() {
           <div className="text-center text-sm">
             <span className="text-gray-600">처음오셨나요? </span>
             <Link
-              href="/signup"
+              href="/auth/user-signup"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               회원가입
