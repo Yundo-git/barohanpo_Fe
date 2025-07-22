@@ -39,28 +39,30 @@ const AgreementItem: React.FC<AgreementItemProps> = ({
   </div>
 );
 
+interface AgreementItem {
+  id: string;
+  label: string;
+  required: boolean;
+  checked: boolean;
+}
+
 interface TermsAgreementProps {
-  agreements: {
-    id: string;
-    label: string;
-    required: boolean;
-    checked: boolean;
-  }[];
+  agreements: AgreementItem[];
   onAgreementChange: (id: string, checked: boolean) => void;
   onViewAgreement: (id: string) => void;
+  onAllAgree: (checked: boolean) => void;
 }
 
 const TermsAgreement: React.FC<TermsAgreementProps> = ({
   agreements,
   onAgreementChange,
   onViewAgreement,
+  onAllAgree,
 }) => {
   const allChecked = agreements.every((item) => item.checked);
   
   const handleAllAgree = (checked: boolean) => {
-    agreements.forEach((item) => {
-      onAgreementChange(item.id, checked);
-    });
+    onAllAgree(checked);
   };
 
   return (
