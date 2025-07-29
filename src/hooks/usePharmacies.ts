@@ -55,7 +55,7 @@ export const usePharmacies = (): UsePharmaciesReturn => {
 
   const initializePharmacies = useCallback(
     (initialPharmacies: PharmacyWithUser[]) => {
-      dispatch(setPharmacies(initialPharmacies));
+      dispatch(setPharmacies({ pharmacies: initialPharmacies }));
     },
     [dispatch]
   );

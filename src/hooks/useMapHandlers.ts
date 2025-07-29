@@ -46,12 +46,43 @@ export const useMapHandlers = ({
         try {
           // 위치 기반으로 약국 검색 (타임아웃 10초, 캐시 5분)
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            // Check if geolocation is supported
+            if (!navigator.geolocation) {
+              const error = new Error('Geolocation is not supported by your browser');
+              console.error('Geolocation not supported');
+              reject(error);
+              return;
+            }
+
+            const success = (pos: GeolocationPosition) => {
+              console.log('Geolocation success:', pos);
+              resolve(pos);
+            };
+
+            const error = (err: GeolocationPositionError) => {
+              let errorMessage = '위치 정보를 가져오는 중 오류가 발생했습니다.';
+              
+              switch(err.code) {
+                case err.PERMISSION_DENIED:
+                  errorMessage = '위치 정보 사용 권한이 거부되었습니다. 설정에서 위치 서비스를 허용해주세요.';
+                  break;
+                case err.POSITION_UNAVAILABLE:
+                  errorMessage = '현재 위치 정보를 사용할 수 없습니다. 인터넷 연결을 확인해주세요.';
+                  break;
+                case err.TIMEOUT:
+                  errorMessage = '위치 정보 요청이 시간 초과되었습니다. 다시 시도해주세요.';
+                  break;
+              }
+              
+              console.error('Geolocation error:', errorMessage, err);
+              // You might want to show this error to the user using a toast or alert
+              // For now, we'll just log it and reject with a more descriptive error
+              reject(new Error(errorMessage));
+            };
+
             navigator.geolocation.getCurrentPosition(
-              resolve,
-              (error) => {
-                console.error('Geolocation error:', error);
-                reject(error);
-              },
+              success,
+              error,
               {
                 enableHighAccuracy: true,
                 timeout: 10000,

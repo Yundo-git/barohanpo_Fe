@@ -46,7 +46,10 @@ export default function PharmacyList({}: PharmacyListProps) {
           try {
             await findNearbyPharmacies(latitude, longitude);
           } catch (error) {
-            console.error("약국 정보를 가져오는 중 오류가 발생했습니다:", error);
+            console.error(
+              "약국 정보를 가져오는 중 오류가 발생했습니다:",
+              error
+            );
           } finally {
             setIsSearching(false);
           }
@@ -58,11 +61,11 @@ export default function PharmacyList({}: PharmacyListProps) {
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
+          maximumAge: 0,
         }
       );
     }
-  }, [findNearbyPharmacies]);
+  }, [findNearbyPharmacies, pharmacies.length]);
 
   // pharmacies가 비어있고 로딩 중이거나 검색 중인 경우에만 로딩 표시
   if ((pharmacies.length === 0 && isLoading) || isSearching) {

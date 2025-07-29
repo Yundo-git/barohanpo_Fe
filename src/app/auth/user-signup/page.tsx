@@ -20,8 +20,7 @@ export default function UserSignupPage() {
     e.preventDefault(); // 폼 제출 방지
     const success = await submitSignup(); // 회원가입 제출
     if (success) {
-      // 회원가입 성공 시 로그인 페이지로 리다이렉트
-      router.push("/auth/signin");
+      router.push("/");
     }
   };
 

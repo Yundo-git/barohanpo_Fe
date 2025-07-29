@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 import {
   HomeIcon,
   BuildingStorefrontIcon,
@@ -14,22 +16,24 @@ interface NavItem {
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
-const navItems: NavItem[] = [
+const navItems = (isLoggedIn: boolean): NavItem[] => [
   { href: "/", label: "홈", Icon: HomeIcon },
   { href: "/map", label: "약국", Icon: BuildingStorefrontIcon },
-  { href: "/auth", label: "마이", Icon: UserIcon },
+  { href: isLoggedIn ? "/mypage" : "/auth", label: "마이", Icon: UserIcon },
 ];
 
 export default function MobileNavBar() {
   const pathname = usePathname();
- 
+  const user = useSelector((state: RootState) => state.user?.user ?? null);
+  const isLoggedIn = Boolean(user);
+
   return (
     <nav
       style={{ bottom: 0 }}
       className="fixed z-50 h-14 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden"
     >
       <ul className="flex h-full divide-x divide-gray-100">
-        {navItems.map(({ href, label, Icon }) => {
+        {navItems(isLoggedIn).map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
             <li

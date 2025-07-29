@@ -2,6 +2,20 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { PharmacyWithUser } from "@/types/pharmacy";
 
+// Persist rehydration action type
+type PersistRehydrateAction = {
+  type: string;
+  payload?: {
+    pharmacy?: PharmacyState;
+  };
+  meta?: {
+    arg?: {
+      lat: number;
+      lng: number;
+    };
+  };
+};
+
 // 비동기 Thunk 정의
 export const fetchNearbyPharmacies = createAsyncThunk<
   PharmacyWithUser[], // 성공 시 반환될 타입
@@ -63,7 +77,10 @@ export const fetchNearbyPharmacies = createAsyncThunk<
 
       return pharmaciesWithUser;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '약국 정보를 불러오는 데 실패했습니다.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "약국 정보를 불러오는 데 실패했습니다.";
       return rejectWithValue(errorMessage);
     }
   }
@@ -73,20 +90,34 @@ interface PharmacyState {
   pharmacies: PharmacyWithUser[];
   isLoading: boolean;
   error: string | null;
+  lastFetched: number | null;
+  lastLocation: { lat: number; lng: number } | null;
 }
 
 const initialState: PharmacyState = {
   pharmacies: [],
   isLoading: false,
   error: null,
+  lastFetched: null,
+  lastLocation: null,
 };
 
 const pharmacySlice = createSlice({
   name: "pharmacy",
   initialState,
   reducers: {
-    setPharmacies(state, action: PayloadAction<PharmacyWithUser[]>) {
-      state.pharmacies = action.payload;
+    setPharmacies: (
+      state,
+      action: PayloadAction<{
+        pharmacies: PharmacyWithUser[];
+        location?: { lat: number; lng: number };
+      }>
+    ) => {
+      state.pharmacies = action.payload.pharmacies;
+      state.lastFetched = Date.now();
+      if (action.payload.location) {
+        state.lastLocation = action.payload.location;
+      }
       state.isLoading = false;
       state.error = null;
     },
@@ -100,17 +131,22 @@ const pharmacySlice = createSlice({
       .addCase(fetchNearbyPharmacies.fulfilled, (state, action) => {
         state.isLoading = false;
         state.pharmacies = action.payload;
+        state.lastFetched = Date.now();
+        if (action.meta?.arg) {
+          state.lastLocation = {
+            lat: action.meta.arg.lat,
+            lng: action.meta.arg.lng,
+          };
+        }
       })
       .addCase(fetchNearbyPharmacies.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || "알 수 없는 오류가 발생했습니다.";
+        state.error = action.payload as string;
       })
-      // redux-persist REHYDRATE 액션 처리
-      .addCase("persist/REHYDRATE", (state, action) => {
-        // API 로딩 중이 아닐 때만 상태를 복원합니다.
-        const payload = (action as { payload?: { pharmacy?: PharmacyState } }).payload;
-        if (!state.isLoading && payload?.pharmacy) {
-          return { ...state, ...payload.pharmacy };
+      .addCase("persist/REHYDRATE", (state, action: PersistRehydrateAction) => {
+        // Handle rehydration
+        if (action.payload?.pharmacy) {
+          return { ...state, ...action.payload.pharmacy };
         }
         return state;
       });
