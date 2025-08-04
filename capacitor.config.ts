@@ -2,11 +2,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.barohanpo.app',
-  appName: 'Barohanpo',
+  appName: 'barohanpo',
   webDir: 'public',
   server: {
-    url: 'https://barohanpo.xyz',
-    cleartext: false,
+    url: 'http://10.0.2.2:3000',
+    cleartext: true,
   },
 };
 
