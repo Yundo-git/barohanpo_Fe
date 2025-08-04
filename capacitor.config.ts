@@ -1,11 +1,13 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
+import * as dotenv from "dotenv";
 
+dotenv.config();
 const config: CapacitorConfig = {
-  appId: 'com.barohanpo.app',
-  appName: 'barohanpo',
-  webDir: 'public',
+  appId: "com.barohanpo.app",
+  appName: "barohanpo",
+  webDir: "public",
   server: {
-    url: 'http://10.0.2.2:3000',
+    url: `${process.env.APP_LOCAL_IP}:3000`,
     cleartext: true,
   },
 };

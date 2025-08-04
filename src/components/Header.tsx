@@ -14,10 +14,10 @@ export default function Header() {
           <div className="flex-1">
             <BackButton />
           </div>
-          <h1 className="flex-1  font-bold">바로한포~</h1>
+          <h1 className="flex-1  font-bold">바로한포</h1>
         </>
       ) : (
-        <h1 className="flex-1  font-bold">바로한포~</h1>
+        <h1 className="flex-1  font-bold">바로한포</h1>
       )}
     </header>
   );

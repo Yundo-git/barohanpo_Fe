@@ -3,15 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy:android": "npm run build && npx cap sync android && npx cap open android",
+    "deploy:ios": "npm run build && npx cap sync ios && npx cap open ios"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.2",
     "@capacitor/cli": "^7.4.2",
     "@capacitor/core": "^7.4.2",
+    "@capacitor/geolocation": "^7.1.4",
+    "@capacitor/ios": "^7.4.2",
     "@heroicons/react": "^2.0.18",
     "@nestjs/swagger": "^11.2.0",
     "@reduxjs/toolkit": "^2.8.2",
@@ -19,6 +23,7 @@
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "dotenv": "^17.2.1",
     "framer-motion": "^12.23.5",
     "next": "15.3.5",
     "postcss": "^8.4.35",

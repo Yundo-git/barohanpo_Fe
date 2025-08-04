@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import "./globals.css";
 import MobileNavBar from "@/components/MobileNavBar";
 import Header from "@/components/Header";
-// import { UserProvider } from "@/app/auth/user-signin/UserContext";
 import Providers from "@/store/Provider";
+import LocalPermission from "@/components/LocalPermission";
 
 export const metadata: Metadata = {
   title: "바로한포",
@@ -23,6 +23,7 @@ export default function RootLayout({
       <body className="bg-white min-h-screen h-full w-full">
         {/* <UserProvider> */}
         <Providers>
+          <LocalPermission />
           <Header />
           <main className="min-h-[calc(100vh-14rem)] h-full min-h-screen absolute flex-grow top-14 left-0 right-0 bottom-14">
             {children}
