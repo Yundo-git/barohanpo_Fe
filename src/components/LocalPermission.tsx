@@ -13,6 +13,6 @@ export default function LocalPermission() {
         console.log("위치 권한이 허용되었습니다.");
       }
     });
-  }, []);
+  }, [requestLocationPermission]);
   return null;
 }

@@ -5,7 +5,7 @@ dotenv.config();
 const config: CapacitorConfig = {
   appId: "com.barohanpo.app",
   appName: "barohanpo",
-  webDir: "public",
+  webDir: ".next",
   server: {
     url: `${process.env.APP_LOCAL_IP}:3000`,
     cleartext: true,

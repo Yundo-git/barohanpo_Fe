@@ -1,11 +1,64 @@
 // src/store/store.ts
-import { configureStore } from "@reduxjs/toolkit";
-import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import { configureStore, Action, Middleware, UnknownAction } from "@reduxjs/toolkit";
+import { persistStore, persistReducer, createTransform } from "redux-persist";
+import { WebStorage } from 'redux-persist/es/types';
 import { combineReducers } from "redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import { ThunkAction } from "redux-thunk";
 import pharmacyReducer from "./pharmacySlice";
 import userReducer from "./userSlice";
+import { PharmacyWithUser } from "@/types/pharmacy";
+
+// Define the UserData interface
+export interface UserData {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+// Define the PharmacyState interface
+export interface PharmacyState {
+  pharmacies: PharmacyWithUser[];
+  isLoading: boolean;
+  error: string | null;
+  lastFetched: number | null;
+  lastLocation: { lat: number; lng: number } | null;
+  lat?: number;
+  lng?: number;
+}
+
+// Define the UserState interface
+export interface UserState {
+  user: UserData | null;
+  accessToken: string | null;
+  lastUpdated: number | null;
+}
+
+// Create a noop storage for server-side rendering
+const createNoopStorage = (): WebStorage => ({
+  getItem: () => Promise.resolve(null),
+  setItem: () => Promise.resolve(),
+  removeItem: () => Promise.resolve(),
+});
+
+// Initialize storage with noop by default
+let storage: WebStorage = createNoopStorage();
+
+// In browser environment, try to use web storage
+if (typeof window !== 'undefined') {
+  import('redux-persist/lib/storage/createWebStorage')
+    .then(({ default: createWebStorage }) => {
+      storage = createWebStorage('local');
+    })
+    .catch(() => {
+      console.warn('Using noop storage as fallback');
+    });
+}
+
+// State interfaces are now defined at the top of the file
 
 // 리듀서들을 결합
 const rootReducer = combineReducers({
@@ -13,32 +66,88 @@ const rootReducer = combineReducers({
   user: userReducer,
 });
 
-// persist 설정
+// Define the shape of the persisted state
+interface PersistedRootState extends RootState {
+  _persist: {
+    version: number;
+    rehydrated: boolean;
+  };
+}
+
+// Persist configuration
 const persistConfig = {
-  key: "root", // 저장소에 저장될 때의 키 값
-  storage, // 로컬 스토리지 사용
-  whitelist: ["pharmacy", "user"], // 유지하고 싶은 리듀서만 명시
+  key: "root",
+  storage,
+  whitelist: ["pharmacy", "user"] as Array<keyof RootState>,
+  version: 1,
+  timeout: 0,
+  // Use a transform to handle potential circular references
+  transforms: [
+    createTransform<unknown, string, RootState, unknown>(
+      (state) => JSON.stringify(state),
+      (state) => JSON.parse(state as string)
+    ),
+  ],
+  // Handle state migration
+  migrate: (state: unknown): Promise<PersistedRootState> => {
+    if (!state) {
+      return Promise.resolve(undefined as unknown as PersistedRootState);
+    }
+    // Ensure the state has the required _persist property
+    const persistedState = state as PersistedRootState;
+    if (!persistedState._persist) {
+      persistedState._persist = {
+        version: 1,
+        rehydrated: false,
+      };
+    }
+    return Promise.resolve(persistedState);
+  },
+  debug: process.env.NODE_ENV === 'development',
 };
 
-// 영속화된 리듀서 생성
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+// Create persisted reducer with proper typing
+const persistedReducer = persistReducer<ReturnType<typeof rootReducer>>(persistConfig, rootReducer);
+
+// Define root state type
+export type RootState = ReturnType<typeof rootReducer>;
+
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  unknown,
+  Action<string>
+>;
+
+// Custom middleware for logging
+export const logger: Middleware = (store) => (next) => (action: unknown) => {
+  if (process.env.NODE_ENV === "development") {
+    const typedAction = action as UnknownAction;
+    console.group(typedAction.type);
+    console.info("dispatching", typedAction);
+    const result = next(typedAction);
+    console.log("next state", store.getState());
+    console.groupEnd();
+    return result;
+  }
+  return next(action as UnknownAction);
+};
 
 // 스토어 생성
 export const store = configureStore({
   reducer: persistedReducer,
+  devTools: process.env.NODE_ENV !== "production",
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // redux-persist의 액션 타입을 직렬화 검사에서 제외
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    }),
+    }).concat(logger),
 });
 
 export const persistor = persistStore(store);
 
 // 타입 정의
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 // 타입이 지정된 훅들

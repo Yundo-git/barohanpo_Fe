@@ -26,19 +26,87 @@ export const fetchNearbyPharmacies = createAsyncThunk<
   async ({ lat, lng, radius = 8000 }, { rejectWithValue }) => {
     try {
       console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
+      console.log('API URL:', apiUrl);
+      
+      let response;
+      try {
+        response = await fetch(apiUrl);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'Unknown network error';
+        console.error('Network error when fetching pharmacies:', errorMessage);
+        throw new Error(`Network error: ${errorMessage}`);
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          errorText
+        });
+        throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('Error parsing JSON response:', jsonError);
+        throw new Error('Invalid JSON response from server');
+      }
+      
       const pharmacyList = Array.isArray(data) ? data : data?.data || [];
-      console.log(`Found ${pharmacyList.length} pharmacies`);
+      
+      // API 응답 로깅
+      console.log('🔍 [API Response] Full Response:', {
+        rawData: data,
+        extractedList: pharmacyList,
+        isArray: Array.isArray(pharmacyList),
+        length: pharmacyList.length
+      });
+
+      // 로깅을 위한 임시 인터페이스
+      interface PharmacyForLogging {
+        p_id: string;
+        name: string;
+        latitude?: string | number;
+        longitude?: string | number;
+        lat?: string | number;
+        lng?: string | number;
+      }
+
+      // 각 약국의 좌표 로깅
+      pharmacyList.forEach((pharmacy: PharmacyForLogging, index: number) => {
+        const latValue = pharmacy.latitude ?? pharmacy.lat ?? 0;
+        const lngValue = pharmacy.longitude ?? pharmacy.lng ?? 0;
+        const lat = typeof latValue === 'string' ? parseFloat(latValue) : Number(latValue);
+        const lng = typeof lngValue === 'string' ? parseFloat(lngValue) : Number(lngValue);
+        
+        console.log(`📌 [Pharmacy ${index + 1}] Coordinates:`, {
+          p_id: pharmacy.p_id,
+          name: pharmacy.name,
+          latitude: lat,
+          longitude: lng,
+          hasNegative: lat < 0 || lng < 0,
+          rawLatitude: pharmacy.latitude,
+          rawLongitude: pharmacy.longitude,
+          rawLat: pharmacy.lat,
+          rawLng: pharmacy.lng,
+          rawTypes: {
+            latitude: typeof pharmacy.latitude,
+            longitude: typeof pharmacy.longitude,
+            lat: typeof pharmacy.lat,
+            lng: typeof pharmacy.lng
+          }
+        });
+      });
 
       if (!Array.isArray(pharmacyList)) {
+        console.error('❌ [API Error] Invalid response format - expected array:', data);
         return rejectWithValue("API response's data property is not an array");
       }
 
