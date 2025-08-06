@@ -21,36 +21,52 @@ interface UsePharmaciesReturn {
 
 export const usePharmacies = (): UsePharmaciesReturn => {
   const dispatch: AppDispatch = useDispatch();
-  const { pharmacies, isLoading, error } = useSelector(
+  const { pharmacies, isLoading, error, lastFetched } = useSelector(
     (state: RootState) => state.pharmacy
   );
 
   const findNearbyPharmacies = useCallback(
     async (lat: number, lng: number): Promise<PharmacyWithUser[]> => {
-      // 이미 데이터가 있는 경우에는 기존 데이터 반환
-      if (pharmacies.length > 0) {
+      // Check if we have fresh data (less than 5 minutes old)
+      const isDataFresh = lastFetched && (Date.now() - lastFetched < 5 * 60 * 1000);
+      
+      // If we have pharmacies in the store and the data is fresh, return them
+      if (pharmacies.length > 0 && isDataFresh) {
+        console.log('Using cached pharmacy data');
         return pharmacies;
       }
 
       try {
-        // 데이터가 없는 경우에만 API 호출
+        console.log('Fetching fresh pharmacy data...');
         const result = await dispatch(fetchNearbyPharmacies({ lat, lng }));
         
         // Type guard to check if the result is a fulfilled action
         if (fetchNearbyPharmacies.fulfilled.match(result)) {
-          return Array.isArray(result.payload) ? result.payload : [];
+          const fetchedPharmacies = Array.isArray(result.payload) ? result.payload : [];
+          console.log(`Fetched ${fetchedPharmacies.length} pharmacies`);
+          return fetchedPharmacies;
         } else if (fetchNearbyPharmacies.rejected.match(result)) {
           console.error('Error fetching pharmacies:', result.error);
+          // If we have stale data, return it instead of throwing
+          if (pharmacies.length > 0) {
+            console.log('Using stale pharmacy data due to fetch error');
+            return pharmacies;
+          }
           throw new Error(result.error.message || 'Failed to fetch pharmacies');
         }
         
         return [];
       } catch (error) {
         console.error('Error in findNearbyPharmacies:', error);
+        // If we have any data, return it even if there was an error
+        if (pharmacies.length > 0) {
+          console.log('Using existing pharmacy data after error');
+          return pharmacies;
+        }
         throw error;
       }
     },
-    [dispatch, pharmacies]
+    [dispatch, pharmacies, lastFetched]
   );
 
   const initializePharmacies = useCallback(

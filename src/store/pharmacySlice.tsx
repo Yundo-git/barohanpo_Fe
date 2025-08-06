@@ -211,13 +211,32 @@ const pharmacySlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      .addCase("persist/REHYDRATE", (state, action: PersistRehydrateAction) => {
-        // Handle rehydration
-        if (action.payload?.pharmacy) {
-          return { ...state, ...action.payload.pharmacy };
+      .addMatcher(
+        (action): action is { type: string; payload?: any } => 
+          action.type === 'persist/REHYDRATE' && action.payload?.pharmacy,
+        (state, action) => {
+          console.log('Rehydrating pharmacy state:', action.payload.pharmacy);
+          const persistedState = action.payload.pharmacy;
+          
+          // Only update state if we have valid persisted data
+          if (persistedState) {
+            // Preserve the existing state and merge with persisted state
+            return {
+              ...state,
+              ...persistedState,
+              // Don't override loading/error states with potentially stale data
+              isLoading: state.isLoading,
+              error: state.error,
+              // Only update pharmacies if we have a valid array
+              pharmacies: Array.isArray(persistedState.pharmacies) && 
+                         persistedState.pharmacies.length > 0 
+                           ? persistedState.pharmacies 
+                           : state.pharmacies
+            };
+          }
+          return state;
         }
-        return state;
-      });
+      );
   },
 });
 

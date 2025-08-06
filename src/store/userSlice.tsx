@@ -77,6 +77,17 @@ const isValidRefreshToken = (): boolean => {
   }
 };
 
+// Helper function to safely parse JSON
+const safeParse = (value: string | null) => {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    console.error('Failed to parse JSON:', e);
+    return null;
+  }
+};
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -161,27 +172,48 @@ const userSlice = createSlice({
   },
   // Handle rehydration
   extraReducers: (builder) => {
-    // rehydration이 완료된 후 실행
-    builder.addCase("persist/REHYDRATE", (state, action: PersistAction) => {
-      if (action.payload?.user) {
-        const { user, accessToken, lastUpdated } = action.payload.user;
-        if (user && accessToken && lastUpdated) {
-          // 클라이언트 사이드에서만 axios 헤더 설정
-          if (typeof window !== "undefined") {
-            axios.defaults.headers.common[
-              "Authorization"
-            ] = `Bearer ${accessToken}`;
-          }
-          return {
-            ...state,
-            user,
-            accessToken,
-            lastUpdated,
-          };
+    // Handle rehydration from persisted state
+    builder.addMatcher(
+      (action): action is { type: string; payload?: any } =>
+        action.type === 'persist/REHYDRATE',
+      (state, action) => {
+        console.log('Rehydrating user state:', action.payload);
+        
+        // If no payload, keep current state
+        if (!action.payload) {
+          console.log('No rehydration payload');
+          return state;
         }
+        
+        // Check if we have persisted user state
+        const persistedState = action.payload;
+        if (!persistedState.user) {
+          console.log('No user data in rehydration payload');
+          return state;
+        }
+        
+        // Create new state with merged data
+        const newState = {
+          ...state,
+          // Only update if the rehydrated values are not undefined
+          user: persistedState.user.user !== undefined ? persistedState.user.user : state.user,
+          accessToken: persistedState.user.accessToken !== undefined ? persistedState.user.accessToken : state.accessToken,
+          lastUpdated: persistedState.user.lastUpdated !== undefined ? persistedState.user.lastUpdated : state.lastUpdated,
+        };
+        
+        // Update axios headers if we have an access token
+        if (typeof window !== 'undefined' && newState.accessToken) {
+          console.log('Updating axios authorization header with stored token');
+          axios.defaults.headers.common['Authorization'] = `Bearer ${newState.accessToken}`;
+        } else if (typeof window !== 'undefined') {
+          console.log('No access token found in rehydrated state');
+          delete axios.defaults.headers.common['Authorization'];
+        }
+        
+        console.log('Rehydrated user state:', newState);
+        return newState;
       }
-      return state || initialState;
-    });
+    );
   },
 });
 

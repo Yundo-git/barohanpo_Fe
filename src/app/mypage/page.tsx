@@ -2,13 +2,15 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearAuth } from "@/store/userSlice";
 import { logout as logoutApi } from "@/services/authService";
+import type { RootState } from "@/store/store";
 
 export default function MyPage() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.user.user);
 
   const handleLogout = async () => {
     try {
@@ -26,14 +28,29 @@ export default function MyPage() {
       router.refresh(); // Next.js 캐시 초기화
     }
   };
+  const handleMyBook = () => {
+    router.push("/mybook/" + user?.user_id);
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+    <div className="flex flex-col  min-h-screen p-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg ">
         <h1 className="text-2xl font-bold text-center">마이페이지</h1>
+        {/* 유저 정보 */}
+        <div className="text-gray-600 text-sm">
+          <p>유저 ID: {user?.name || "N/A"}</p>
+          <p>전화번호: {user?.phone || "N/A"}</p>
+          <p>이메일: {user?.email || "N/A"}</p>
+        </div>{" "}
+        <button
+          onClick={handleMyBook}
+          className="w-full px-4 py-2 font-medium  rounded-md border border-gray-300"
+        >
+          내 예약
+        </button>
         <button
           onClick={handleLogout}
-          className="w-full px-4 py-2 font-medium  rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          className="w-full px-4 py-2 font-medium  rounded-md border border-gray-300"
         >
           로그아웃
         </button>

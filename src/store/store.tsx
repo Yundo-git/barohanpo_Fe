@@ -78,32 +78,62 @@ interface PersistedRootState extends RootState {
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["pharmacy", "user"] as Array<keyof RootState>,
+  whitelist: ["user", "pharmacy"], // user와 pharmacy 상태 모두 유지
   version: 1,
-  timeout: 0,
-  // Use a transform to handle potential circular references
-  transforms: [
-    createTransform<unknown, string, RootState, unknown>(
-      (state) => JSON.stringify(state),
-      (state) => JSON.parse(state as string)
-    ),
-  ],
-  // Handle state migration
-  migrate: (state: unknown): Promise<PersistedRootState> => {
-    if (!state) {
-      return Promise.resolve(undefined as unknown as PersistedRootState);
-    }
-    // Ensure the state has the required _persist property
-    const persistedState = state as PersistedRootState;
-    if (!persistedState._persist) {
-      persistedState._persist = {
-        version: 1,
-        rehydrated: false,
+  // 상태 재수화를 위한 리콘실리에이터
+  stateReconciler: (inboundState: any, originalState: any) => {
+    if (!inboundState) return originalState;
+    
+    // 상태가 존재하는 경우에만 병합
+    const newState = { ...originalState };
+    
+    if (inboundState.user) {
+      newState.user = {
+        ...originalState.user,
+        ...inboundState.user,
+        // 중요한 필드가 누락되지 않도록 보장
+        user: inboundState.user.user || originalState.user.user,
+        accessToken: inboundState.user.accessToken || originalState.user.accessToken,
+        lastUpdated: inboundState.user.lastUpdated || originalState.user.lastUpdated
       };
     }
-    return Promise.resolve(persistedState);
+    
+    if (inboundState.pharmacy) {
+      newState.pharmacy = {
+        ...originalState.pharmacy,
+        ...inboundState.pharmacy,
+        // 중요한 필드 유지
+        lastFetched: inboundState.pharmacy.lastFetched || originalState.pharmacy.lastFetched,
+        lastLocation: inboundState.pharmacy.lastLocation || originalState.pharmacy.lastLocation
+      };
+    }
+    
+    return newState;
+  },
+  // 상태 마이그레이션 처리
+  migrate: async (state: unknown): Promise<PersistedRootState> => {
+    try {
+      if (!state) return undefined as unknown as PersistedRootState;
+      
+      // 여기에 마이그레이션 로직 추가 (필요한 경우)
+      // 예: 상태 구조가 변경된 경우 변환 로직 작성
+      
+      return state as PersistedRootState;
+    } catch (err) {
+      console.error('상태 마이그레이션 중 오류:', err);
+      return undefined as unknown as PersistedRootState;
+    }
   },
   debug: process.env.NODE_ENV === 'development',
+  // 직렬화 검사 비활성화 (복잡한 객체를 다룰 때 유용)
+  serialize: false,
+  deserialize: false,
+  // 쓰기 타임아웃 설정 (ms 단위)
+  timeout: 5000,
+  // 쓰기 큐 사이즈 제한
+  writeFailHandler: (err: Error) => {
+    console.error('상태 저장 실패:', err);
+  }
 };
 
 // Create persisted reducer with proper typing
@@ -151,7 +181,11 @@ export const persistor = persistStore(store);
 export type AppDispatch = typeof store.dispatch;
 
 // 타입이 지정된 훅들
-export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppDispatch = (): AppDispatch => {
+  const dispatch = useDispatch<AppDispatch>();
+  return dispatch;
+};
+
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 // store는 named export로 유지

@@ -4,7 +4,8 @@
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 interface Props {
   p_id: string;
 }
@@ -12,7 +13,7 @@ interface Props {
 export default function ReserveCompleteClient({ p_id }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
-
+  const user = useSelector((state: RootState) => state.user.user);
   const [reservationInfo, setReservationInfo] = useState<{
     date: string;
     time: string;
@@ -54,7 +55,7 @@ export default function ReserveCompleteClient({ p_id }: Props) {
           홈으로 돌아가기
         </button>
         <button
-          onClick={() => router.push(`/auth`)}
+          onClick={() => router.push(`/mybook/${user?.user_id}`)}
           className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
           내 예약 확인하기
