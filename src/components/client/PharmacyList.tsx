@@ -8,6 +8,8 @@ import { Pharmacy } from "@/types/pharmacy";
 import { useRouter } from "next/navigation";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
 
+//주변에 약국없을때 화면 필요
+
 interface PharmacyListProps {
   searchParams?: {
     date?: string;
