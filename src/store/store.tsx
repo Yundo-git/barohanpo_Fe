@@ -1,8 +1,8 @@
 // src/store/store.ts
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // ✅ 동기 import
-import userReducer from "./userSlice";
+import { persistStore, persistReducer, createTransform } from "redux-persist";
+import storage from "redux-persist/lib/storage"; // 동기 import
+import userReducer, { UserState } from "./userSlice";
 import pharmacyReducer from "./pharmacySlice";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
@@ -12,13 +12,30 @@ const rootReducer = combineReducers({
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
-export type AppDispatch = ReturnType<typeof store.dispatch>;
+
+// Transform function to exclude accessToken from being persisted
+const userTransform = createTransform<UserState, Partial<UserState>>(
+  // Transform state to be persisted
+  (inboundState) => {
+    const { accessToken, ...stateWithoutToken } = inboundState;
+    return stateWithoutToken;
+  },
+  // Transform state being rehydrated
+  (persistedState) => {
+    return {
+      ...persistedState,
+      accessToken: null, // Always set accessToken to null on rehydration
+    } as UserState;
+  },
+  // Only apply to the user slice
+  { whitelist: ['user'] }
+);
 
 const persistConfig = {
   key: "root",
   storage,
   whitelist: ["user", "pharmacy"],
-  // 커스텀 stateReconciler는 가급적 제거(기본 merge로 충분). 꼭 필요하면 타입 안전하게 작성
+  transforms: [userTransform],
 };
 
 const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
@@ -26,8 +43,8 @@ const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
 export const store = configureStore({
   reducer: persistedReducer,
   devTools: process.env.NODE_ENV !== "production",
-  middleware: (gDM) =>
-    gDM({
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
@@ -36,8 +53,10 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
-// typed hooks
+// Infer the `RootState` and `AppDispatch` types from the store itself
+export type AppDispatch = typeof store.dispatch;
+
+// Typed hooks
 export type AppStore = typeof store;
-export type AppDispatchType = typeof store.dispatch;
-export const useAppDispatch = () => useDispatch<AppDispatchType>();
+export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
