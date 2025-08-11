@@ -2,19 +2,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { PharmacyWithUser } from "@/types/pharmacy";
 
-// Persist rehydration action type
-type PersistRehydrateAction = {
-  type: string;
-  payload?: {
-    pharmacy?: PharmacyState;
-  };
-  meta?: {
-    arg?: {
-      lat: number;
-      lng: number;
-    };
-  };
-};
 
 // 비동기 Thunk 정의
 export const fetchNearbyPharmacies = createAsyncThunk<
@@ -212,7 +199,7 @@ const pharmacySlice = createSlice({
         state.error = action.payload as string;
       })
       .addMatcher(
-        (action): action is { type: string; payload?: any } => 
+        (action): action is { type: string; payload: { pharmacy?: PharmacyState } } => 
           action.type === 'persist/REHYDRATE' && action.payload?.pharmacy,
         (state, action) => {
           console.log('Rehydrating pharmacy state:', action.payload.pharmacy);

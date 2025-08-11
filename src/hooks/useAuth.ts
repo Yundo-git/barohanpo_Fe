@@ -3,7 +3,6 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { updateAccessToken, clearAuth, setAuth } from "@/store/userSlice";
-import type { AppDispatch } from "@/store/store";
 import axios, { AxiosError } from "axios";
 import { refreshToken as refreshTokenApi } from "@/services/authService";
 import type { ErrorResponse, User } from "@/types/user";
@@ -134,11 +133,11 @@ const useAuth = () => {
         }
 
         // 이미 재시도한 경우
-        if ((originalRequest as any)._retry) {
+        if (originalRequest._retry) {
           return Promise.reject(error);
         }
 
-        (originalRequest as any)._retry = true;
+        originalRequest._retry = true;
 
         try {
           const newAccessToken = await refreshAuth();

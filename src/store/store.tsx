@@ -18,6 +18,7 @@ const userTransform = createTransform<UserState, Partial<UserState>>(
   // Transform state to be persisted
   (inboundState) => {
     const { accessToken, ...stateWithoutToken } = inboundState;
+    void accessToken; // Explicitly mark as unused
     return stateWithoutToken;
   },
   // Transform state being rehydrated
