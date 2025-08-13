@@ -83,11 +83,39 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     }
   }, [getMap]);
 
+  const handleRetry = useCallback(() => {
+    if (window.kakao && window.kakao.maps) {
+      const map = getMap();
+      if (map) {
+        try {
+          // Get the current center using the Kakao Maps API
+          const center = (map as any).getCenter();
+          if (center && typeof center.getLat === 'function' && typeof center.getLng === 'function') {
+            findNearbyPharmacies(center.getLat(), center.getLng());
+          } else {
+            // Fallback to default coordinates if center can't be determined
+            findNearbyPharmacies(37.5665, 126.978); // Default to Seoul City Hall
+          }
+        } catch (error) {
+          console.error('Error getting map center:', error);
+          // Fallback to default coordinates if there's an error
+          findNearbyPharmacies(37.5665, 126.978); // Default to Seoul City Hall
+        }
+      }
+    }
+  }, [findNearbyPharmacies, getMap]);
+
   return (
     <div className="relative w-full h-full">
       {error && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 z-50">
-          {error}
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 z-50 rounded-md shadow-lg flex items-center gap-4">
+          <span>{error}</span>
+          <button 
+            onClick={handleRetry}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+          >
+            다시 시도
+          </button>
         </div>
       )}
       
