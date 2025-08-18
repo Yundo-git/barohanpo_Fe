@@ -41,7 +41,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     handleMarkerClick,
     findNearbyPharmacies,
   });
-  
+
   const { getMap } = useKakaoMap(handleMapLoad, { initialPharmacies });
 
   // 마커 참조를 위한 useEffect 추가
@@ -57,17 +57,18 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
   const handleLocationClick = useCallback(async () => {
     if (navigator.geolocation) {
       try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            resolve,
-            reject,
-            { enableHighAccuracy: true, timeout: 10000 }
-          );
-        });
-        
+        const position = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+            });
+          }
+        );
+
         const { latitude, longitude } = position.coords;
         const moveLatLon = new window.kakao.maps.LatLng(latitude, longitude);
-        
+
         // useKakaoMap 훅을 통해 map 인스턴스 가져오기
         const mapInstance = getMap();
         if (mapInstance) {
@@ -75,11 +76,11 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
           mapInstance.setLevel(3);
         }
       } catch (error) {
-        console.error('현재 위치로 이동할 수 없습니다:', error);
-        alert('현재 위치를 가져올 수 없습니다. 위치 서비스를 확인해주세요.');
+        console.error("현재 위치로 이동할 수 없습니다:", error);
+        alert("현재 위치를 가져올 수 없습니다. 위치 서비스를 확인해주세요.");
       }
     } else {
-      alert('이 브라우저에서는 위치 서비스를 지원하지 않습니다.');
+      alert("이 브라우저에서는 위치 서비스를 지원하지 않습니다.");
     }
   }, [getMap]);
 
@@ -98,7 +99,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
             findNearbyPharmacies(37.5665, 126.978); // Default to Seoul City Hall
           }
         } catch (error) {
-          console.error('Error getting map center:', error);
+          console.error("Error getting map center:", error);
           // Fallback to default coordinates if there's an error
           findNearbyPharmacies(37.5665, 126.978); // Default to Seoul City Hall
         }
@@ -111,7 +112,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
       {error && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 z-50 rounded-md shadow-lg flex items-center gap-4">
           <span>{error}</span>
-          <button 
+          <button
             onClick={handleRetry}
             className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
           >
@@ -119,7 +120,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
           </button>
         </div>
       )}
-      
+
       {/* 위치 버튼 추가 */}
       <button
         onClick={handleLocationClick}
