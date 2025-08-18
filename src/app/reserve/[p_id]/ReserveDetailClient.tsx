@@ -38,13 +38,17 @@ export default function ReserveDetailPage({ p_id }: Props) {
   );
   const currentPharmacy = pharmacies.find((pha: Pharmacy) => pha.p_id === p_id);
 
-  // 로그인된 유저 정보 가져오기 (세션에서)
-  const userData = localStorage.getItem("test_user");
-  const user = userData ? JSON.parse(userData) : null;
+  // 로그인된 유저 정보 가져오기 (리덕스에서)
+  const user = useSelector((state: RootState) => state.user.user);
+  console.log(user);
   const userId = user?.user_id;
   console.log(userId);
+  console.log(user?.user_id);
 
   const { handleReservation } = useReservation(p_id);
+
+  // 기본 시간대 설정 (API에서 제공되지 않는 경우 사용)
+  const defaultTimes = ["09:00", "10:00", "11:00", "14:00", "15:00"];
 
   // 예약 가능한 날짜/시간 가져오기
   useEffect(() => {
@@ -55,17 +59,21 @@ export default function ReserveDetailPage({ p_id }: Props) {
         if (!res.ok) throw new Error(`API 요청 실패: ${res.status}`);
 
         const data = await res.json();
+        console.log("API 응답 데이터:", data);
+
         const slots: Record<string, string[]> = {};
         const rawData = Array.isArray(data) ? data : data?.dates || [];
-        console.log("type", rawData);
-        const availableItems = rawData.filter(
-          (item: AvailableDate) =>
-            item.is_availabl === "1" || item.is_available === true
-        );
+        console.log("처리된 데이터:", rawData);
 
-        availableItems.forEach((item: AvailableDate) => {
-          slots[item.date] = item.times || [];
+        // API 응답이 있고 is_available이 true인 날짜에 대해 기본 시간대 할당
+        rawData.forEach((item: AvailableDate) => {
+          if (item.is_available === true || item.is_availabl === "1") {
+            // times 배열이 없으면 기본 시간대 사용
+            slots[item.date] = item.times?.length ? item.times : defaultTimes;
+          }
         });
+
+        console.log("사용 가능한 슬롯:", slots);
 
         setAvailableSlots(slots);
       } catch (error) {
@@ -127,29 +135,35 @@ export default function ReserveDetailPage({ p_id }: Props) {
         <div className="mt-6">
           <h3 className="text-md font-medium mb-3">예약 시간 선택</h3>
           <div className="grid grid-cols-3 gap-2 mb-6">
-            {["09:00", "10:00", "11:00", "14:00", "15:00"].map((time) => {
-              const isAvailable = availableTimes.includes(time);
-              const isSelected = selectedTime === time;
+            {availableTimes.length > 0 ? (
+              availableTimes.map((time) => {
+                const isAvailable = availableTimes.includes(time);
+                const isSelected = selectedTime === time;
 
-              return (
-                <button
-                  key={time}
-                  onClick={() =>
-                    isAvailable && setSelectedTime(isSelected ? null : time)
-                  }
-                  disabled={!isAvailable}
-                  className={`py-2 px-4 rounded-md text-center transition-colors ${
-                    isSelected
-                      ? "bg-blue-600 text-white"
-                      : isAvailable
-                      ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {time}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={time}
+                    onClick={() =>
+                      isAvailable && setSelectedTime(isSelected ? null : time)
+                    }
+                    disabled={!isAvailable}
+                    className={`py-2 px-4 rounded-md text-center transition-colors ${
+                      isSelected
+                        ? "bg-blue-600 text-white"
+                        : isAvailable
+                        ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {time}
+                  </button>
+                );
+              })
+            ) : (
+              <p className="col-span-3 text-center text-gray-500 py-4">
+                예약 가능한 시간이 없습니다.
+              </p>
+            )}
           </div>
 
           <button

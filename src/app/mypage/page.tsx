@@ -11,7 +11,7 @@ export default function MyPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.user);
-
+  console.log(user);
   const handleLogout = async () => {
     try {
       // 서버에 로그아웃 요청

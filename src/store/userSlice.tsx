@@ -18,22 +18,33 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     // 사용자 정보만 설정 (accessToken 없이)
-    setUser: (state, action: PayloadAction<User | null>) => {
-      state.user = action.payload;
-      state.lastUpdated = action.payload ? Date.now() : null;
+    setUser: (state, action: PayloadAction<any | null>) => {
+      if (!action.payload) {
+        state.user = null;
+        state.lastUpdated = null;
+        return;
+      }
+      
+      // id 필드를 제거하고 user_id만 유지
+      const { id, ...userWithoutId } = action.payload;
+      state.user = {
+        ...userWithoutId,
+        user_id: userWithoutId.user_id || id
+      };
+      state.lastUpdated = Date.now();
     },
-    
+
     // 사용자 정보와 accessToken을 설정
     setAuth: (
       state,
       action: PayloadAction<{
-        user: User;
+        user: any; // 임시로 any 타입 사용
         accessToken: string;
-        refreshToken?: string; // Optional since we're using HTTP-only cookies
-        expiresIn?: number;    // Optional since we're using HTTP-only cookies
+        refreshToken?: string;
+        expiresIn?: number;
       }>
     ) => {
-      const { user, accessToken } = action.payload;
+      const { user: rawUser, accessToken } = action.payload;
 
       // 상태가 없으면 초기 상태로 초기화
       if (!state) {
@@ -44,8 +55,19 @@ const userSlice = createSlice({
         };
       }
 
+      // id 필드를 제거하고 user_id만 유지
+      const mappedUser = rawUser
+        ? (() => {
+            const { id, ...userWithoutId } = rawUser;
+            return {
+              ...userWithoutId,
+              user_id: userWithoutId.user_id || id
+            };
+          })()
+        : null;
+
       // Update user state with the new data
-      state.user = user;
+      state.user = mappedUser;
       state.accessToken = accessToken;
       state.lastUpdated = Date.now();
       // Note: refreshToken and axios header management are handled in useAuth hook
@@ -68,7 +90,7 @@ const userSlice = createSlice({
     updateAccessToken: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload;
       state.lastUpdated = Date.now();
-      
+
       // Note: axios 헤더는 useAuth 훅의 인터셉터에서 관리됨
     },
   },
@@ -77,12 +99,12 @@ const userSlice = createSlice({
     // Handle rehydration from persisted state
     builder.addMatcher(
       (action): action is { type: string; payload?: { user?: UserState } } =>
-        action.type === 'persist/REHYDRATE',
+        action.type === "persist/REHYDRATE",
       (state, action) => {
         if (!action.payload?.user) {
           return state;
         }
-        
+
         // Only restore user data, not accessToken (it will be refreshed)
         return {
           ...state,
