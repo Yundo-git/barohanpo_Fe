@@ -89,8 +89,9 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
       if (map) {
         try {
           // Get the current center using the Kakao Maps API
-          const center = (map as any).getCenter();
-          if (center && typeof center.getLat === 'function' && typeof center.getLng === 'function') {
+          const center = map.getCenter();
+          if (center) {
+            // Use the LatLng object directly with the Kakao Maps API
             findNearbyPharmacies(center.getLat(), center.getLng());
           } else {
             // Fallback to default coordinates if center can't be determined

@@ -57,7 +57,16 @@ export const logout = async (): Promise<boolean> => {
       }
     );
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<ErrorResponse>;
+    
+    // If the error is 401 (Unauthorized), the token is likely expired
+    // but we can still consider the logout successful since the user will be logged out on the client side
+    if (axiosError.response?.status === 401) {
+      console.log('Session already expired, proceeding with client-side cleanup');
+      return true;
+    }
+    
     console.error("Logout error:", error);
     return false;
   }
@@ -90,7 +99,7 @@ export const refreshToken = async (): Promise<RefreshTokenResponse> => {
     );
 
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     const axiosError = error as AxiosError<ErrorResponse>;
 
     if (axiosError.response?.status === 401) {
