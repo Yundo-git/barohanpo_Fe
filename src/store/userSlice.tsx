@@ -18,18 +18,22 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     // 사용자 정보만 설정 (accessToken 없이)
-    setUser: (state, action: PayloadAction<any | null>) => {
+    setUser: (state, action: PayloadAction<Omit<User, 'id'> & { id?: number } | null>) => {
       if (!action.payload) {
         state.user = null;
         state.lastUpdated = null;
         return;
       }
       
-      // id 필드를 제거하고 user_id만 유지
-      const { id, ...userWithoutId } = action.payload;
+      // Ensure required fields are present
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, ...userData } = action.payload;
       state.user = {
-        ...userWithoutId,
-        user_id: userWithoutId.user_id || id
+        email: userData.email,
+        name: userData.name,
+        phone: userData.phone,
+        user_id: userData.user_id,
+        role: userData.role || 'user' // Default to 'user' if not specified
       };
       state.lastUpdated = Date.now();
     },
@@ -38,7 +42,7 @@ const userSlice = createSlice({
     setAuth: (
       state,
       action: PayloadAction<{
-        user: any; // 임시로 any 타입 사용
+        user: Omit<User, 'id'> & { id?: number }; // Allow both id and user_id for backward compatibility
         accessToken: string;
         refreshToken?: string;
         expiresIn?: number;
@@ -55,19 +59,21 @@ const userSlice = createSlice({
         };
       }
 
-      // id 필드를 제거하고 user_id만 유지
-      const mappedUser = rawUser
-        ? (() => {
-            const { id, ...userWithoutId } = rawUser;
-            return {
-              ...userWithoutId,
-              user_id: userWithoutId.user_id || id
-            };
-          })()
-        : null;
+      // Map user data to ensure consistent structure
+if (rawUser) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...userData } = rawUser;
+        state.user = {
+          email: userData.email,
+          name: userData.name,
+          phone: userData.phone,
+          user_id: userData.user_id,
+          role: userData.role || 'user'
+        };
+      } else {
+        state.user = null;
+      }
 
-      // Update user state with the new data
-      state.user = mappedUser;
       state.accessToken = accessToken;
       state.lastUpdated = Date.now();
       // Note: refreshToken and axios header management are handled in useAuth hook

@@ -47,12 +47,12 @@ export default function ReserveDetailPage({ p_id }: Props) {
 
   const { handleReservation } = useReservation(p_id);
 
-  // 기본 시간대 설정 (API에서 제공되지 않는 경우 사용)
-  const defaultTimes = ["09:00", "10:00", "11:00", "14:00", "15:00"];
-
   // 예약 가능한 날짜/시간 가져오기
   useEffect(() => {
     const fetchAvailableDates = async () => {
+      // 기본 시간대 설정 (API에서 제공되지 않는 경우 사용)
+      const defaultTimes = ["09:00", "10:00", "11:00", "14:00", "15:00"];
+      
       try {
         const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${p_id}/available-dates`;
         const res = await fetch(apiUrl);
