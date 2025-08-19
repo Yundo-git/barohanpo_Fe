@@ -11,10 +11,9 @@ export const useReservation = (p_id: string) => {
     memo?: string
   ) => {
     if (!selectedDate || !selectedTime) return;
-
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     const formattedTime = selectedTime; // already 'HH:mm' 형식이라고 가정
-
+    console.log(userId, formattedDate, formattedTime, p_id);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation`,
@@ -25,7 +24,7 @@ export const useReservation = (p_id: string) => {
           },
           body: JSON.stringify({
             user_id: userId,
-            pharmacy_id: p_id,
+            p_id: p_id,
             date: formattedDate,
             time: formattedTime,
             memo: memo || null,

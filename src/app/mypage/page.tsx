@@ -28,9 +28,9 @@ export default function MyPage() {
       router.refresh(); // Next.js 캐시 초기화
     }
   };
-  const handleMyBook = () => {
-    router.push("/mybook/" + user?.user_id);
-  };
+  // const handleMyBook = () => {
+  //   router.push("/mybook/" + user?.user_id);
+  // };
 
   return (
     <div className="flex flex-col  min-h-screen p-4">
@@ -42,12 +42,12 @@ export default function MyPage() {
           <p>전화번호: {user?.phone || "N/A"}</p>
           <p>이메일: {user?.email || "N/A"}</p>
         </div>{" "}
-        <button
+        {/* <button
           onClick={handleMyBook}
           className="w-full px-4 py-2 font-medium  rounded-md border border-gray-300"
         >
           내 예약
-        </button>
+        </button> */}
         <button
           onClick={handleLogout}
           className="w-full px-4 py-2 font-medium  rounded-md border border-gray-300"

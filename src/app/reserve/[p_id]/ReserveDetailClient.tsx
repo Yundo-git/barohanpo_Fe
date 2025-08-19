@@ -17,7 +17,7 @@ interface Props {
 
 type AvailableDate = {
   is_availabl?: string;
-  is_available?: boolean;
+  is_available?: number; // 1 for available, 0 for unavailable
   date: string;
   times: string[];
 };
@@ -26,6 +26,9 @@ export default function ReserveDetailPage({ p_id }: Props) {
   const searchParams = useSearchParams();
 
   const [availableSlots, setAvailableSlots] = useState<
+    Record<string, string[]>
+  >({});
+  const [unavailableSlots, setUnavailableSlots] = useState<
     Record<string, string[]>
   >({});
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +55,8 @@ export default function ReserveDetailPage({ p_id }: Props) {
     const fetchAvailableDates = async () => {
       // 기본 시간대 설정 (API에서 제공되지 않는 경우 사용)
       const defaultTimes = ["09:00", "10:00", "11:00", "14:00", "15:00"];
-      
+      console.log('Fetching available dates...');
+
       try {
         const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${p_id}/available-dates`;
         const res = await fetch(apiUrl);
@@ -61,21 +65,64 @@ export default function ReserveDetailPage({ p_id }: Props) {
         const data = await res.json();
         console.log("API 응답 데이터:", data);
 
-        const slots: Record<string, string[]> = {};
+        const slots: Record<string, string[]> = {}
         const rawData = Array.isArray(data) ? data : data?.dates || [];
         console.log("처리된 데이터:", rawData);
+        
+        // Track both available and unavailable slots
+        const unavailableSlots: Record<string, string[]> = {};
+        
+        console.log('Available Slots (before processing):', JSON.stringify(availableSlots, null, 2));
+        console.log('New Unavailable Slots (before processing):', JSON.stringify(unavailableSlots, null, 2));
 
-        // API 응답이 있고 is_available이 true인 날짜에 대해 기본 시간대 할당
+        // First, initialize all default times as available
+        const currentDate = new Date();
+        const next30Days = new Date();
+        next30Days.setDate(currentDate.getDate() + 30);
+        
+        // Initialize all dates with default times
+        for (let d = new Date(currentDate); d <= next30Days; d.setDate(d.getDate() + 1)) {
+          const dateStr = format(d, 'yyyy-MM-dd');
+          slots[dateStr] = [...defaultTimes];
+        }
+
+        // Process API response to mark unavailable times
         rawData.forEach((item: AvailableDate) => {
-          if (item.is_available === true || item.is_availabl === "1") {
-            // times 배열이 없으면 기본 시간대 사용
-            slots[item.date] = item.times?.length ? item.times : defaultTimes;
+          const dateStr = item.date;
+          
+          if (item.is_available === 1) {
+            // If the date is marked as available, ensure we have the times
+            if (item.times?.length) {
+              slots[dateStr] = item.times;
+            } else if (!slots[dateStr]) {
+              slots[dateStr] = [...defaultTimes];
+            }
+          } else {
+            // Mark times as unavailable
+            if (item.times?.length) {
+              if (!unavailableSlots[dateStr]) {
+                unavailableSlots[dateStr] = [];
+              }
+              // Add the unavailable times to our tracking
+              item.times.forEach(time => {
+                if (!unavailableSlots[dateStr].includes(time)) {
+                  unavailableSlots[dateStr].push(time);
+                }
+                // Remove from available slots if present
+                if (slots[dateStr]?.includes(time)) {
+                  slots[dateStr] = slots[dateStr].filter(t => t !== time);
+                }
+              });
+            }
           }
         });
 
-        console.log("사용 가능한 슬롯:", slots);
-
+        console.log('Final Available Slots:', JSON.stringify(slots, null, 2));
+        console.log('Final Unavailable Slots:', JSON.stringify(unavailableSlots, null, 2));
+        
+        // Update both states at once to prevent multiple re-renders
         setAvailableSlots(slots);
+        setUnavailableSlots(unavailableSlots);
       } catch (error) {
         console.error("예약 가능한 날짜를 불러오는 데 실패했습니다", error);
       } finally {
@@ -137,15 +184,34 @@ export default function ReserveDetailPage({ p_id }: Props) {
           <div className="grid grid-cols-3 gap-2 mb-6">
             {availableTimes.length > 0 ? (
               availableTimes.map((time) => {
-                const isAvailable = availableTimes.includes(time);
                 const isSelected = selectedTime === time;
+                const currentDate = selectedDate
+                  ? format(selectedDate, "yyyy-MM-dd")
+                  : "";
+                
+                console.log('--- Time Slot Debug ---');
+                console.log('Current Date:', currentDate);
+                console.log('Time:', time);
+                console.log('Available Slots for this date:', availableSlots[currentDate]);
+                console.log('Unavailable Slots for this date:', unavailableSlots[currentDate]);
+                
+                // Check if the time is explicitly marked as unavailable
+                const isUnavailable = currentDate && 
+                  Array.isArray(unavailableSlots[currentDate]) && 
+                  unavailableSlots[currentDate].includes(time);
+                  
+                // A time is available if it's in availableTimes and not in unavailableSlots
+                const isAvailable = currentDate && 
+                  Array.isArray(availableSlots[currentDate]) && 
+                  availableSlots[currentDate].includes(time);
+                  
+                console.log('isUnavailable:', isUnavailable);
+                console.log('isAvailable:', isAvailable);
 
                 return (
                   <button
                     key={time}
-                    onClick={() =>
-                      isAvailable && setSelectedTime(isSelected ? null : time)
-                    }
+                    onClick={() => setSelectedTime(isSelected ? null : time)}
                     disabled={!isAvailable}
                     className={`py-2 px-4 rounded-md text-center transition-colors ${
                       isSelected

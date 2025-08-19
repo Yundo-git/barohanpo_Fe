@@ -1,5 +1,4 @@
 export interface User {
-  id?: number;  // API 응답에서 사용되는 필드
   email: string;
   name: string;
   phone: number;

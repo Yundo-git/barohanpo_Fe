@@ -16,17 +16,22 @@ interface NavItem {
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
-const navItems = (isLoggedIn: boolean): NavItem[] => [
-  { href: "/", label: "홈", Icon: HomeIcon },
-  { href: "/map", label: "약국", Icon: BuildingStorefrontIcon },
-  { href: isLoggedIn ? "/mypage" : "/auth", label: "마이", Icon: UserIcon },
-];
-
 export default function MobileNavBar() {
   const pathname = usePathname();
-  const user = useSelector((state: RootState) => state.user?.user ?? null);
+  const user = useSelector((state: RootState) => state.user.user);
   const isLoggedIn = Boolean(user);
 
+  const navItems = (isLoggedIn: boolean): NavItem[] => [
+    { href: "/", label: "홈", Icon: HomeIcon },
+    { href: "/map", label: "약국", Icon: BuildingStorefrontIcon },
+
+    {
+      href: isLoggedIn ? "/mybook/" + user?.user_id : "/auth",
+      label: "예약",
+      Icon: UserIcon,
+    },
+    { href: isLoggedIn ? "/mypage" : "/auth", label: "마이", Icon: UserIcon },
+  ];
   return (
     <nav
       style={{ bottom: 0 }}
