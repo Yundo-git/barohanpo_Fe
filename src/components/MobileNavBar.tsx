@@ -24,13 +24,16 @@ export default function MobileNavBar() {
   const navItems = (isLoggedIn: boolean): NavItem[] => [
     { href: "/", label: "홈", Icon: HomeIcon },
     { href: "/map", label: "약국", Icon: BuildingStorefrontIcon },
-
     {
-      href: isLoggedIn ? "/mybook/" + user?.user_id : "/auth",
+      href: isLoggedIn ? "/mybook/" + user?.user_id : "/auth?from=reservation",
       label: "예약",
       Icon: UserIcon,
     },
-    { href: isLoggedIn ? "/mypage" : "/auth", label: "마이", Icon: UserIcon },
+    { 
+      href: isLoggedIn ? "/mypage" : "/auth?from=my", 
+      label: "마이", 
+      Icon: UserIcon 
+    },
   ];
   return (
     <nav
@@ -42,7 +45,7 @@ export default function MobileNavBar() {
           const active = pathname === href;
           return (
             <li
-              key={href}
+key={`${href}-${label}`}
               className="flex flex-1 flex-col items-center justify-center"
             >
               <Link

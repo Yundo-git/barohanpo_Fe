@@ -18,13 +18,16 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     // 사용자 정보만 설정 (accessToken 없이)
-    setUser: (state, action: PayloadAction<Omit<User, 'id'> & { id?: number } | null>) => {
+    setUser: (
+      state,
+      action: PayloadAction<(Omit<User, "id"> & { id?: number }) | null>
+    ) => {
       if (!action.payload) {
         state.user = null;
         state.lastUpdated = null;
         return;
       }
-      
+
       // Ensure required fields are present
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, ...userData } = action.payload;
@@ -33,7 +36,7 @@ const userSlice = createSlice({
         name: userData.name,
         phone: userData.phone,
         user_id: userData.user_id,
-        role: userData.role || 'user' // Default to 'user' if not specified
+        role: userData.role || "user", // Default to 'user' if not specified
       };
       state.lastUpdated = Date.now();
     },
@@ -42,7 +45,7 @@ const userSlice = createSlice({
     setAuth: (
       state,
       action: PayloadAction<{
-        user: Omit<User, 'id'> & { id?: number }; // Allow both id and user_id for backward compatibility
+        user: Omit<User, "id"> & { id?: number }; // Allow both id and user_id for backward compatibility
         accessToken: string;
         refreshToken?: string;
         expiresIn?: number;
@@ -60,7 +63,7 @@ const userSlice = createSlice({
       }
 
       // Map user data to ensure consistent structure
-if (rawUser) {
+      if (rawUser) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id, ...userData } = rawUser;
         state.user = {
@@ -68,7 +71,7 @@ if (rawUser) {
           name: userData.name,
           phone: userData.phone,
           user_id: userData.user_id,
-          role: userData.role || 'user'
+          role: userData.role || "user",
         };
       } else {
         state.user = null;
