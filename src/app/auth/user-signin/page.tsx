@@ -21,7 +21,7 @@ const UserSignInPage = () => {
 
     try {
       const loginData = { email, password };
-      console.log("로그인 시도:", { email: loginData.email });
+      console.log("로그인 시도:", { email: loginData });
 
       const result = await login(loginData);
 

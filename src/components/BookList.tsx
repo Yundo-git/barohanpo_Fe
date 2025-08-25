@@ -1,18 +1,18 @@
 "use client";
 
-import { User } from "@/types/user";
-
-interface Props {
-  user: User | null;
-  reservation: Array<{
-    p_id: number;
-    book_date: string;
-    book_id: number;
-    book_time: string;
-  }>;
+interface ReservationItem {
+  p_id: number;
+  book_date: string;
+  book_id: number;
+  book_time: string;
+  // Add other properties as needed
 }
-const BookList = ({ user, reservation }: Props) => {
-  console.log(reservation);
+
+const BookList = ({ reservation }: { reservation: ReservationItem[] }) => {
+  if (!reservation || reservation.length === 0) {
+    return <div className="text-center py-4">예약 내역이 없습니다.</div>;
+  }
+
   return (
     <div>
       <ul>

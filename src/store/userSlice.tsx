@@ -36,6 +36,7 @@ const userSlice = createSlice({
         name: userData.name,
         phone: userData.phone,
         user_id: userData.user_id,
+        nickname: userData.nickname,
         role: userData.role || "user", // Default to 'user' if not specified
       };
       state.lastUpdated = Date.now();
@@ -71,6 +72,7 @@ const userSlice = createSlice({
           name: userData.name,
           phone: userData.phone,
           user_id: userData.user_id,
+          nickname: userData.nickname,
           role: userData.role || "user",
         };
       } else {

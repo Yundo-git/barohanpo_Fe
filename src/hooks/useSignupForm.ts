@@ -1,11 +1,14 @@
 import axios from "axios";
-import { useState, useCallback } from "react";
-
+import { useState, useCallback, useEffect } from "react";
+import { generateRandomNickname } from "@/utils/nicknameGenerator";
+import useLogin from "@/hooks/useLogin";
+import { useRouter } from "next/navigation";
 interface SignupFormData {
   email: string;
   password: string;
   confirmPassword: string;
   name: string;
+  nickname: string;
   phone: string;
   verificationCode: string;
   agreements: {
@@ -21,6 +24,7 @@ export const useSignupForm = () => {
     password: "",
     confirmPassword: "",
     name: "",
+    nickname: "",
     phone: "",
     verificationCode: "",
     agreements: {
@@ -29,7 +33,15 @@ export const useSignupForm = () => {
       marketing: false,
     },
   });
+  const { login } = useLogin();
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      nickname: generateRandomNickname(),
+    }));
+  }, []);
 
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,15 +113,31 @@ export const useSignupForm = () => {
       setError("비밀번호가 일치하지 않습니다.");
       return false;
     }
-
+    console.log(formData);
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.post(
+      // Make the signup request
+      await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/signup`,
         formData
       );
-      return response.data.success;
+      try {
+        const loginData = {
+          email: formData.email,
+          password: formData.password,
+        };
+        const loginResponse = await login(loginData);
+
+        if (loginResponse.success) {
+          router.push("/");
+        }
+        return loginResponse.success;
+      } catch (error) {
+        setError("회원가입 중 오류가 발생했습니다.");
+        console.error("회원가입 중 오류가 발생했습니다.", error);
+        return false;
+      }
     } catch (err) {
       setError("회원가입 중 오류가 발생했습니다.");
       console.error("회원가입 중 오류가 발생했습니다.", err);
@@ -117,7 +145,7 @@ export const useSignupForm = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formData]);
+  }, [formData, router, login]);
 
   return {
     formData,
