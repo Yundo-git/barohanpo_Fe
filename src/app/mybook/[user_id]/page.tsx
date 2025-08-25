@@ -49,6 +49,7 @@ export default function MyBook() {
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">나의 예약 내역</h1>
+
       <BookList reservation={reservation} />
     </div>
   );
