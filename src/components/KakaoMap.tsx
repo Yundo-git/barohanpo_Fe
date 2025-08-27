@@ -2,19 +2,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { format } from "date-fns";
 import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
 import { Pharmacy, PharmacyUser, PharmacyWithUser } from "@/types/pharmacy";
 import ReservationSheetContent from "./ReservationSheetContent";
+import ReservationCompleteSheet from "./ReservationCompleteSheet";
 import MapPharmacyList from "./MapPharmacyList";
 
 interface KakaoMapProps {
   initialPharmacies?: PharmacyWithUser[];
 }
 
-type SheetView = "list" | "detail" | "reserve";
+type SheetView = "list" | "detail" | "reserve" | "complete";
 
 export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState<boolean>(true);
@@ -22,7 +24,12 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(
     null
   );
-  const [initialDate, setInitialDate] = useState<string | undefined>(undefined);
+  const [initialDate, setInitialDate] = useState<string>("");
+  const [reservationInfo, setReservationInfo] = useState<{
+    date: string;
+    time: string;
+    status: string;
+  } | null>(null);
 
   const markersRef = useRef<kakao.maps.Marker[]>([]);
   const bottomSheetRef = useRef<{ reset: () => void } | null>(null);
@@ -35,10 +42,14 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     adjustMapBounds,
   } = usePharmacies();
 
-  const handleMarkerClick = (pharmacy: Pharmacy) => {
+  const handlePharmacySelect = useCallback((pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
-    setSheetView("detail");
+    setSheetView("detail" as SheetView);
     setIsBottomSheetOpen(true);
+  }, []);
+
+  const handleMarkerClick = (pharmacy: Pharmacy) => {
+    handlePharmacySelect(pharmacy);
   };
 
   const { handleMapLoad } = useMapHandlers({
@@ -107,9 +118,22 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     setSelectedPharmacy(pharmacy);
     console.log("pharmacy", pharmacy);
     setInitialDate(date);
-    setSheetView("reserve");
+    setSheetView("reserve" as SheetView);
     setIsBottomSheetOpen(true);
   }, []);
+
+  const handleReservationComplete = useCallback(
+    (date: string, time: string) => {
+      // Set reservation info and switch to complete view
+      setReservationInfo({
+        date,
+        time,
+        status: "success",
+      });
+      setSheetView("complete" as SheetView);
+    },
+    []
+  );
 
   const closeBottomSheet = () => {
     setIsBottomSheetOpen(false);
@@ -162,28 +186,59 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
         isOpen={isBottomSheetOpen}
         onClose={closeBottomSheet}
       >
-        <MapPharmacyList
-          pharmacies={pharmacies}
-          selectedPharmacy={selectedPharmacy}
-          sheetView={sheetView}
-          initialDate={initialDate}
-          onPharmacySelect={(pharmacy) => {
-            setSelectedPharmacy(pharmacy);
-            setSheetView("detail");
-            setIsBottomSheetOpen(true);
-          }}
-          onReserve={openReserveView}
-          onCloseReserve={() => setSheetView("detail")}
-        >
-          {sheetView === "reserve" && selectedPharmacy && (
-            <ReservationSheetContent
-              pharmacyId={Number(selectedPharmacy.p_id)}
-              pharmacyName={selectedPharmacy.name}
-              initialDate={initialDate}
-              onClose={() => setSheetView("detail")}
-            />
-          )}
-        </MapPharmacyList>
+        {sheetView === "list" && (
+          <MapPharmacyList
+            pharmacies={pharmacies}
+            selectedPharmacy={selectedPharmacy}
+            sheetView={sheetView}
+            initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
+            onPharmacySelect={(pharmacy) => {
+              setSelectedPharmacy(pharmacy);
+              setSheetView("detail" as SheetView);
+              setIsBottomSheetOpen(true);
+            }}
+            onReserve={openReserveView}
+            onCloseReserve={() => setSheetView("detail" as SheetView)}
+          >
+            {/* {pharmacies.map((pharmacy) => (
+              <div
+                key={pharmacy.p_id}
+                className={`p-4 border-b cursor-pointer ${
+                  selectedPharmacy?.p_id === pharmacy.p_id
+                    ? "bg-gray-100"
+                    : "bg-white"
+                }`}
+                onClick={() => handlePharmacySelect(pharmacy)}
+              >
+                <h3 className="font-bold">{pharmacy.dutyName}</h3>
+                <p className="text-sm text-gray-600">
+                  {pharmacy.dutyAddr}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {pharmacy.dutyTel1}
+                </p>
+              </div>
+            ))} */}
+          </MapPharmacyList>
+        )}
+        {sheetView === "reserve" && selectedPharmacy && (
+          <ReservationSheetContent
+            pharmacyId={Number(selectedPharmacy.p_id)}
+            pharmacyName={selectedPharmacy.name}
+            initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
+            onClose={() => setSheetView("detail" as SheetView)}
+            onComplete={handleReservationComplete}
+          />
+        )}
+        {sheetView === "complete" && reservationInfo && selectedPharmacy && (
+          <ReservationCompleteSheet
+            p_id={selectedPharmacy.p_id.toString()}
+            date={reservationInfo.date}
+            time={reservationInfo.time}
+            status={reservationInfo.status}
+            onClose={() => setSheetView("list" as SheetView)}
+          />
+        )}
       </BottomSheet>
     </div>
   );

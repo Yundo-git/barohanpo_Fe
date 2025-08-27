@@ -5,8 +5,8 @@ import { Pharmacy, PharmacyUser } from "../types/pharmacy";
 interface MapPharmacyListProps {
   pharmacies: Pharmacy[];
   selectedPharmacy: Pharmacy | null;
-  sheetView: "list" | "detail" | "reserve";
-  initialDate: string | undefined;
+  sheetView: "list" | "detail" | "reserve" | "complete";
+  initialDate: string;
   onPharmacySelect: (pharmacy: Pharmacy) => void;
   onReserve: (pharmacy: Pharmacy, date: string) => void;
   onCloseReserve: () => void;

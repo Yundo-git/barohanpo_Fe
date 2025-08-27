@@ -14,9 +14,10 @@ interface Props {
   pharmacyId: number;
   pharmacyName?: string;
   /** 'YYYY-MM-DD' 형태 */
-  initialDate?: string;
+  initialDate: string;
   /** 닫기 또는 뒤로가기 동작 */
   onClose: () => void;
+  onComplete: (date: string, time: string) => void;
 }
 
 type AvailableDate = {
@@ -30,6 +31,7 @@ export default function ReservationSheetContent({
   pharmacyName,
   initialDate,
   onClose,
+  onComplete,
 }: Props) {
   const [availableSlots, setAvailableSlots] = useState<
     Record<string, string[]>
@@ -38,7 +40,9 @@ export default function ReservationSheetContent({
     Record<string, string[]>
   >({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    initialDate ? new Date(initialDate) : null
+  );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // 로그인 유저
@@ -50,8 +54,8 @@ export default function ReservationSheetContent({
     if (initialDate) {
       try {
         setSelectedDate(parseISO(initialDate));
-      } catch {
-        // ignore parse error
+      } catch (error) {
+        console.error("Failed to parse initial date:", error);
       }
     }
   }, [initialDate]);
@@ -163,7 +167,7 @@ export default function ReservationSheetContent({
     <div className="flex flex-col h-full">
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Calendar Section */}
-        <div className="flex-shrink-0 bg-white">
+        <div className="flex-shrink-0 bg-white ">
           <div className="border-b border-gray-100">
             <Calendar
               onChange={onDateChange}
