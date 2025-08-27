@@ -1,5 +1,4 @@
 // src/components/KakaoMap.tsx
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,18 +7,24 @@ import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
 import { Pharmacy, PharmacyUser, PharmacyWithUser } from "@/types/pharmacy";
-import Bookbtn from "./Bookbtn";
+import ReservationSheetContent from "./ReservationSheetContent";
+import MapPharmacyList from "./MapPharmacyList";
 
 interface KakaoMapProps {
   initialPharmacies?: PharmacyWithUser[];
 }
 
+type SheetView = "list" | "detail" | "reserve";
+
 export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(true);
-  const markersRef = useRef<kakao.maps.Marker[]>([]);
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState<boolean>(true);
+  const [sheetView, setSheetView] = useState<SheetView>("list");
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(
     null
   );
+  const [initialDate, setInitialDate] = useState<string | undefined>(undefined);
+
+  const markersRef = useRef<kakao.maps.Marker[]>([]);
   const bottomSheetRef = useRef<{ reset: () => void } | null>(null);
 
   const {
@@ -32,6 +37,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
 
   const handleMarkerClick = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
+    setSheetView("detail");
     setIsBottomSheetOpen(true);
   };
 
@@ -44,68 +50,70 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
 
   const { getMap } = useKakaoMap(handleMapLoad, { initialPharmacies });
 
-  // 마커 참조를 위한 useEffect 추가
   useEffect(() => {
     return () => {
-      // 컴포넌트 언마운트 시 마커 정리
       markersRef.current.forEach((marker) => marker.setMap(null));
       markersRef.current = [];
     };
   }, []);
 
-  // 위치 버튼 클릭 핸들러
   const handleLocationClick = useCallback(async () => {
-    if (navigator.geolocation) {
-      try {
-        const position = await new Promise<GeolocationPosition>(
-          (resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-            });
-          }
-        );
-
-        const { latitude, longitude } = position.coords;
-        const moveLatLon = new window.kakao.maps.LatLng(latitude, longitude);
-
-        // useKakaoMap 훅을 통해 map 인스턴스 가져오기
-        const mapInstance = getMap();
-        if (mapInstance) {
-          mapInstance.setCenter(moveLatLon);
-          mapInstance.setLevel(3);
-        }
-      } catch (error) {
-        console.error("현재 위치로 이동할 수 없습니다:", error);
-        alert("현재 위치를 가져올 수 없습니다. 위치 서비스를 확인해주세요.");
-      }
-    } else {
+    if (!navigator.geolocation) {
       alert("이 브라우저에서는 위치 서비스를 지원하지 않습니다.");
+      return;
+    }
+    try {
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+          });
+        }
+      );
+      const { latitude, longitude } = position.coords;
+      const moveLatLon = new window.kakao.maps.LatLng(latitude, longitude);
+      const mapInstance = getMap();
+      if (mapInstance) {
+        mapInstance.setCenter(moveLatLon);
+        mapInstance.setLevel(3);
+      }
+    } catch (err) {
+      console.error("현재 위치로 이동할 수 없습니다:", err);
+      alert("현재 위치를 가져올 수 없습니다. 위치 서비스를 확인해주세요.");
     }
   }, [getMap]);
 
   const handleRetry = useCallback(() => {
-    if (window.kakao && window.kakao.maps) {
-      const map = getMap();
-      if (map) {
-        try {
-          // Get the current center using the Kakao Maps API
-          const center = map.getCenter();
-          if (center) {
-            // Use the LatLng object directly with the Kakao Maps API
-            findNearbyPharmacies(center.getLat(), center.getLng());
-          } else {
-            // Fallback to default coordinates if center can't be determined
-            findNearbyPharmacies(37.5665, 126.978); // Default to Seoul City Hall
-          }
-        } catch (error) {
-          console.error("Error getting map center:", error);
-          // Fallback to default coordinates if there's an error
-          findNearbyPharmacies(37.5665, 126.978); // Default to Seoul City Hall
-        }
+    if (!(window.kakao && window.kakao.maps)) return;
+    const map = getMap();
+    if (!map) return;
+    try {
+      const center = map.getCenter();
+      if (center) {
+        findNearbyPharmacies(center.getLat(), center.getLng());
+      } else {
+        findNearbyPharmacies(37.5665, 126.978);
       }
+    } catch (err) {
+      console.error("Error getting map center:", err);
+      findNearbyPharmacies(37.5665, 126.978);
     }
   }, [findNearbyPharmacies, getMap]);
+
+  // Bookbtn → 예약 뷰로 전환
+  const openReserveView = useCallback((pharmacy: Pharmacy, date: string) => {
+    console.log("openReserveView");
+    setSelectedPharmacy(pharmacy);
+    console.log("pharmacy", pharmacy);
+    setInitialDate(date);
+    setSheetView("reserve");
+    setIsBottomSheetOpen(true);
+  }, []);
+
+  const closeBottomSheet = () => {
+    setIsBottomSheetOpen(false);
+  };
 
   return (
     <div className="relative w-full h-full">
@@ -121,7 +129,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
         </div>
       )}
 
-      {/* 위치 버튼 추가 */}
+      {/* 위치 버튼 */}
       <button
         onClick={handleLocationClick}
         className="fixed bottom-24 right-4 bg-white rounded-full p-3 shadow-lg z-10"
@@ -152,72 +160,30 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
       <BottomSheet
         ref={bottomSheetRef}
         isOpen={isBottomSheetOpen}
-        onClose={() => {
-          setIsBottomSheetOpen(false);
-          setSelectedPharmacy(null);
-        }}
+        onClose={closeBottomSheet}
       >
-        {selectedPharmacy ? (
-          <div className="space-y-2 max-h-[50vh] px-2">
-            <div className="border border-gray-200 rounded-md">
-              <div className="flex gap-2 p-2">
-                <div className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center">
-                  이미지 영역
-                </div>
-                <div className="w-[60vw]">
-                  <a href={`pharmacy/${selectedPharmacy.p_id}`}>
-                    {`${selectedPharmacy.name} >` || "이름 없음"}
-                  </a>
-                  <p className="text-xs text-gray-600">
-                    {selectedPharmacy.address || "주소 정보 없음"}
-                  </p>
-                  {(selectedPharmacy.user as PharmacyUser)?.number && (
-                    <p className="text-xs">
-                      {(selectedPharmacy.user as PharmacyUser)?.number}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="p-2">
-                <Bookbtn pharmacyId={Number(selectedPharmacy.p_id)} />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2 max-h-[60vh] px-2">
-            {pharmacies.map((pharmacy) => (
-              <div
-                key={pharmacy.p_id}
-                className="border border-gray-200 rounded-md"
-              >
-                <div className="flex gap-2 p-2">
-                  <div className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center">
-                    이미지 영역
-                  </div>
-                  <div
-                    className="hover:bg-gray-50 w-[60vw]"
-                    onClick={() => handleMarkerClick(pharmacy)}
-                  >
-                    <a href={`pharmacy/${pharmacy.p_id}`}>
-                      {`${pharmacy.name} >` || "이름 없음"}
-                    </a>
-                    <p className="text-xs text-gray-600">
-                      {pharmacy.address || "주소 정보 없음"}
-                    </p>
-                    {(pharmacy.user as PharmacyUser)?.number && (
-                      <p className="text-xs">
-                        {(pharmacy.user as PharmacyUser)?.number}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="p-2">
-                  <Bookbtn pharmacyId={Number(pharmacy.p_id)} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <MapPharmacyList
+          pharmacies={pharmacies}
+          selectedPharmacy={selectedPharmacy}
+          sheetView={sheetView}
+          initialDate={initialDate}
+          onPharmacySelect={(pharmacy) => {
+            setSelectedPharmacy(pharmacy);
+            setSheetView("detail");
+            setIsBottomSheetOpen(true);
+          }}
+          onReserve={openReserveView}
+          onCloseReserve={() => setSheetView("detail")}
+        >
+          {sheetView === "reserve" && selectedPharmacy && (
+            <ReservationSheetContent
+              pharmacyId={Number(selectedPharmacy.p_id)}
+              pharmacyName={selectedPharmacy.name}
+              initialDate={initialDate}
+              onClose={() => setSheetView("detail")}
+            />
+          )}
+        </MapPharmacyList>
       </BottomSheet>
     </div>
   );
