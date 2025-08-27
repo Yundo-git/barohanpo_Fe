@@ -1,65 +1,61 @@
 "use client";
 
-import { useId, KeyboardEvent } from "react";
+import { ReactNode, useState } from "react";
 
 interface TabItem {
   key: string;
   label: string;
+  component: ReactNode;
   badge?: number;
 }
 
 interface TabsProps {
   items: TabItem[];
-  value: string;
-  onChange: (key: string) => void;
+  defaultActiveKey?: string;
   className?: string;
+  tabClassName?: string;
+  activeTabClassName?: string;
+  inactiveTabClassName?: string;
 }
 
-export default function Tabs({ items, value, onChange, className }: TabsProps) {
-  const baseId = useId();
+export default function Tabs({
+  items,
+  defaultActiveKey,
+  className = "",
+  tabClassName = "py-2 px-4 w-[50vw] font-medium",
+  activeTabClassName = "text-blue-600 border-b-2 border-blue-600",
+  inactiveTabClassName = "text-gray-500 hover:text-gray-700",
+}: TabsProps) {
+  const [activeKey, setActiveKey] = useState(
+    defaultActiveKey || items[0]?.key || ""
+  );
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (items.length < 2) return;
-    const idx = items.findIndex((t) => t.key === value);
-    if (idx === -1) return;
-
-    if (e.key === "ArrowRight") {
-      const next = items[(idx + 1) % items.length];
-      onChange(next.key);
-    } else if (e.key === "ArrowLeft") {
-      const prev = items[(idx - 1 + items.length) % items.length];
-      onChange(prev.key);
-    }
-  };
+  const activeTab = items.find((tab) => tab.key === activeKey) || items[0];
 
   return (
     <div className={className}>
       <div
         role="tablist"
-        aria-label="예약 탭"
-        className="inline-flex rounded-2xl bg-gray-100 p-1"
-        onKeyDown={onKeyDown}
+        aria-label="탭 메뉴"
+        className="flex border-b mt-4 w-full"
       >
         {items.map((item) => {
-          const selected = item.key === value;
+          const isActive = item.key === activeKey;
           return (
             <button
               key={item.key}
               role="tab"
-              aria-selected={selected}
-              aria-controls={`${baseId}-${item.key}-panel`}
-              id={`${baseId}-${item.key}-tab`}
-              onClick={() => onChange(item.key)}
-              className={[
-                "px-4 py-2 rounded-xl text-sm font-medium transition",
-                selected
-                  ? "bg-white shadow text-gray-900"
-                  : "text-gray-600 hover:text-gray-900",
-              ].join(" ")}
+              aria-selected={isActive}
+              aria-controls={`${item.key}-panel`}
+              id={`${item.key}-tab`}
+              onClick={() => setActiveKey(item.key)}
+              className={`${tabClassName} ${
+                isActive ? activeTabClassName : inactiveTabClassName
+              }`}
             >
-              <span>{item.label}</span>
-              {typeof item.badge === "number" && (
-                <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-gray-200 px-2 text-xs">
+              {item.label}
+              {typeof item.badge === "number" && item.badge > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs">
                   {item.badge}
                 </span>
               )}
@@ -67,6 +63,34 @@ export default function Tabs({ items, value, onChange, className }: TabsProps) {
           );
         })}
       </div>
+
+      <div
+        id={`${activeKey}-panel`}
+        role="tabpanel"
+        aria-labelledby={`${activeKey}-tab`}
+        className="mt-4 overflow-y-auto h-[calc(100vh-3.5rem)]"
+      >
+        {activeTab?.component}
+      </div>
     </div>
   );
 }
+
+// Example usage:
+/*
+<Tabs
+  items={[
+    {
+      key: "upcoming",
+      label: "다가오는 예약",
+      component: <UpcomingReservations />,
+      badge: upcomingCount,
+    },
+    {
+      key: "past", 
+      label: "지난 예약",
+      component: <PastReservations />,
+    },
+  ]}
+/>
+*/

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import useGetBook from "@/hooks/useGetBook";
 import BookList from "@/components/BookList";
+import Tab from "@/components/Tab";
+import useGetCancelList from "@/hooks/useGetCancelList";
+import CencelList from "@/components/CancelList";
 
 //리덕스 스토어 에러 발생 중 해당 페이지 수정 필요
 //user_id를 props로 받아와야 함
@@ -12,7 +15,9 @@ import BookList from "@/components/BookList";
 
 export default function MyBook() {
   const { getBook } = useGetBook();
-  const [reservation, setReservation] = useState([]);
+  const { getCancelList } = useGetCancelList();
+  const [reservation, setReservation] = useState<any[]>([]);
+  const [cancelList, setCancelList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +27,9 @@ export default function MyBook() {
         setIsLoading(true);
         setError(null);
         const data = await getBook();
+        const cancelData = await getCancelList();
         setReservation(data);
+        setCancelList(cancelData);
       } catch (err) {
         console.error("예약 불러오기 실패:", err);
         setError("예약 내역을 불러오는 중 오류가 발생했습니다.");
@@ -32,7 +39,7 @@ export default function MyBook() {
     };
 
     fetchData();
-  }, [getBook]);
+  }, [getBook, getCancelList]);
 
   if (isLoading) {
     return <div className="p-4 text-center">로딩 중...</div>;
@@ -47,10 +54,21 @@ export default function MyBook() {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">나의 예약 내역</h1>
-
-      <BookList reservation={reservation} />
-    </div>
+    
+<Tab
+  items={[
+    {
+      key: "bookList",
+      label: "예약내역",
+      component:       <BookList reservation={reservation} />,
+    },
+    {
+      key: "cancel",
+      label: "예약 취소",
+      component: <CencelList cancelList={cancelList} />,
+    },
+  ]}
+/>
+    
   );
 }
