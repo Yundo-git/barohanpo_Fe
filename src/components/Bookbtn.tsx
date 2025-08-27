@@ -54,7 +54,7 @@ export default function Bookbtn({
     <div className={["px-2 pb-2", className ?? ""].join(" ")}>
       <button
         onClick={handleClick}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        className=" rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
       >
         {label ?? (isTodayAvailable ? "예약" : "예약 가능일 확인")}
       </button>

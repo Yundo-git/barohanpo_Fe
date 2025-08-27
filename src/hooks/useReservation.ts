@@ -1,9 +1,8 @@
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
-export const useReservation = (p_id: string) => {
-  const router = useRouter();
+type ReservationSuccessCallback = (date: string, time: string) => void;
 
+export const useReservation = (p_id: string, onSuccess?: ReservationSuccessCallback) => {
   const handleReservation = async (
     userId: number,
     selectedDate: Date | null,
@@ -38,10 +37,9 @@ export const useReservation = (p_id: string) => {
 
       const result = await response.json();
       alert("예약이 완료되었습니다!");
-      router.push(
-        `/complete/${p_id}?date=${formattedDate}&time=${formattedTime}&status=success`
-      );
-
+      if (onSuccess) {
+        onSuccess(formattedDate, formattedTime);
+      }
       return result;
     } catch (error) {
       console.error("예약 중 오류 발생:", error);

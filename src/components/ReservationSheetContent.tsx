@@ -1,7 +1,7 @@
 // src/components/reservation/ReservationSheetContent.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import  { useEffect, useMemo, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format, parseISO } from "date-fns";
@@ -9,6 +9,7 @@ import type { Value } from "react-calendar/dist/shared/types.js";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 import { useReservation } from "@/hooks/useReservation";
+import ReservationCompleteSheet from "./ReservationCompleteSheet";
 
 interface Props {
   pharmacyId: number;
@@ -17,7 +18,6 @@ interface Props {
   initialDate: string;
   /** 닫기 또는 뒤로가기 동작 */
   onClose: () => void;
-  onComplete: (date: string, time: string) => void;
 }
 
 type AvailableDate = {
@@ -31,7 +31,6 @@ export default function ReservationSheetContent({
   pharmacyName,
   initialDate,
   onClose,
-  onComplete,
 }: Props) {
   const [availableSlots, setAvailableSlots] = useState<
     Record<string, string[]>
@@ -44,10 +43,15 @@ export default function ReservationSheetContent({
     initialDate ? new Date(initialDate) : null
   );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [reservationComplete, setReservationComplete] = useState(false);
+  const [completedReservation, setCompletedReservation] = useState<{date: string; time: string} | null>(null);
 
   // 로그인 유저
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
-  const { handleReservation } = useReservation(String(pharmacyId));
+  const { handleReservation } = useReservation(String(pharmacyId), (date, time) => {
+    setCompletedReservation({ date, time });
+    setReservationComplete(true);
+  });
 
   // 초기 날짜 적용
   useEffect(() => {
@@ -138,6 +142,16 @@ export default function ReservationSheetContent({
       setSelectedTime(null); // 날짜 바뀌면 시간 리셋
     }
   };
+
+  if (reservationComplete && completedReservation) {
+    return (
+      <ReservationCompleteSheet
+        date={completedReservation.date}
+        time={completedReservation.time}
+        pharmacyName={pharmacyName}
+      />
+    );
+  }
 
   if (isLoading)
     return (

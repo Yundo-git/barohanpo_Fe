@@ -9,7 +9,6 @@ import { usePharmacies } from "@/hooks/usePharmacies";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
 import { Pharmacy, PharmacyUser, PharmacyWithUser } from "@/types/pharmacy";
 import ReservationSheetContent from "./ReservationSheetContent";
-import ReservationCompleteSheet from "./ReservationCompleteSheet";
 import MapPharmacyList from "./MapPharmacyList";
 
 interface KakaoMapProps {
@@ -227,16 +226,6 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
             pharmacyName={selectedPharmacy.name}
             initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
             onClose={() => setSheetView("detail" as SheetView)}
-            onComplete={handleReservationComplete}
-          />
-        )}
-        {sheetView === "complete" && reservationInfo && selectedPharmacy && (
-          <ReservationCompleteSheet
-            p_id={selectedPharmacy.p_id.toString()}
-            date={reservationInfo.date}
-            time={reservationInfo.time}
-            status={reservationInfo.status}
-            onClose={() => setSheetView("list" as SheetView)}
           />
         )}
       </BottomSheet>
