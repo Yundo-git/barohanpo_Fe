@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearAuth } from "@/store/userSlice";
 import { logout as logoutApi } from "@/services/authService";
 import type { RootState } from "@/store/store";
+import Profile from "@/components/Profile";
 
 export default function MyPage() {
   const router = useRouter();
@@ -27,14 +28,27 @@ export default function MyPage() {
       router.refresh(); // Next.js 캐시 초기화
     }
   };
-  // const handleMyBook = () => {
-  //   router.push("/mybook/" + user?.user_id);
-  // };
+  const editProfile = () => {
+    router.push("/auth/" + user?.user_id);
+  };
 
   return (
     <div className="flex flex-col  min-h-screen p-4">
-      <div>
-        <h1>{user?.name}</h1>
+      <div className="flex justify-between" onClick={editProfile}>
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <Profile
+              userId={user?.user_id || 0}
+              alt="사용자 프로필"
+              size={56}
+              rounded="full"
+              className="w-[4.5rem] h-[4.5rem]"
+              onClick={editProfile}
+            />
+          </div>
+          <h1>{user?.nickname}</h1>
+        </div>
+        <p>버튼</p>
       </div>
       {/* 유저 정보 */}
       <div className="text-gray-600 text-sm">
