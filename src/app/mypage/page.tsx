@@ -37,14 +37,15 @@ export default function MyPage() {
       <div className="flex justify-between" onClick={editProfile}>
         <div className="flex items-center gap-3">
           <div className="relative group">
-            <Profile
-              userId={user?.user_id || 0}
-              alt="사용자 프로필"
-              size={56}
-              rounded="full"
-              className="w-[4.5rem] h-[4.5rem]"
-              onClick={editProfile}
-            />
+            <div onClick={editProfile}>
+              <Profile
+                userId={user?.user_id || 0}
+                alt="사용자 프로필"
+                size={56}
+                rounded="full"
+                className="w-[4.5rem] h-[4.5rem]"
+              />
+            </div>
           </div>
           <h1>{user?.nickname}</h1>
         </div>

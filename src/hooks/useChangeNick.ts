@@ -1,11 +1,15 @@
-//닉네임 변경하는 훅
+"use client";
+
+import { useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { useCallback } from "react";
 
-const useChangeNick = () => {
-  const user = useSelector((state: RootState) => state.user.user);
-  const userId = user?.user_id;
+interface UseChangeNickReturn {
+  usenickname: (nickname: string) => Promise<{ nickname: string } | null>;
+}
+
+const useChangeNick = (): UseChangeNickReturn => {
+  const userId = useSelector((state: RootState) => state.user.user?.user_id);
 
   const usenickname = useCallback(
     async (nickname: string) => {
@@ -38,7 +42,9 @@ const useChangeNick = () => {
     [userId]
   );
 
-  return { usenickname };
+  return {
+    usenickname,
+  };
 };
 
 export default useChangeNick;

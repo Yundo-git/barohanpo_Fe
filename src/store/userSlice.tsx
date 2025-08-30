@@ -99,10 +99,25 @@ const userSlice = createSlice({
 
     // accessToken 갱신
     updateAccessToken: (state, action: PayloadAction<string>) => {
-      state.accessToken = action.payload;
-      state.lastUpdated = Date.now();
-
-      // Note: axios 헤더는 useAuth 훅의 인터셉터에서 관리됨
+      if (state) {
+        state.accessToken = action.payload;
+        state.lastUpdated = Date.now();
+      }
+    },
+    
+    // Update user information without affecting auth state
+    updateUser: (
+      state,
+      action: PayloadAction<Partial<Omit<User, 'id'>> & { id?: number }>
+    ) => {
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload,
+          user_id: action.payload.user_id ?? state.user.user_id,
+        };
+        state.lastUpdated = Date.now();
+      }
     },
   },
   // Handle rehydration
@@ -128,5 +143,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { setAuth, clearAuth, updateAccessToken } = userSlice.actions;
+export const { setAuth, clearAuth, updateAccessToken, updateUser } = userSlice.actions;
 export default userSlice.reducer;

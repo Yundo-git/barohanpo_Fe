@@ -29,7 +29,7 @@ const userTransform = createTransform<UserState, Partial<UserState>>(
     } as UserState;
   },
   // Only apply to the user slice
-  { whitelist: ['user'] }
+  { whitelist: ["user"] }
 );
 
 const persistConfig = {
