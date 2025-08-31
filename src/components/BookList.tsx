@@ -1,8 +1,9 @@
 "use client";
 import useBookCencel from "@/hooks/useBookCancel";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CancelModal from "./CancelModal";
-interface ReservationItem {
+import ReviewModal from "./ReviewModal";
+export interface ReservationItem {
   p_id: number;
   book_date: string;
   book_id: number;
@@ -34,9 +35,8 @@ const BookList: React.FC<BookListProps> = ({
   };
 
   // Handle review button click
-  const handleReviewClick = (bookId: number) => {
-    console.log('Review for bookId:', bookId);
-    // Add your review logic here
+  const handleReviewClick = (reservation: ReservationItem) => {
+    openReviewModal(reservation);
   };
 
   if (reservationList.length === 0) {
@@ -44,7 +44,20 @@ const BookList: React.FC<BookListProps> = ({
   }
   const { bookCancel } = useBookCencel();
   const [cencelModal, setCencelModal] = useState(false);
-  const [bookId, setBookId] = useState<number>(0);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<ReservationItem | null>(null);
+
+  useEffect(() => {
+    if (reviewModalOpen || cencelModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [reviewModalOpen, cencelModal]);
   const handleBookCancel = async (bookId: number) => {
     try {
       await bookCancel(bookId);
@@ -56,10 +69,14 @@ const BookList: React.FC<BookListProps> = ({
       console.error('Error cancelling booking:', error);
     }
   };
-  const openCencelModal = (book_id: number) => {
+  const openCencelModal = (reservation: ReservationItem) => {
     setCencelModal(true);
-    console.log(book_id);
-    setBookId(book_id);
+    setSelectedReservation(reservation);
+  };
+
+  const openReviewModal = (reservation: ReservationItem) => {
+    setReviewModalOpen(true);
+    setSelectedReservation(reservation);
   };
 
   return (
@@ -73,14 +90,14 @@ const BookList: React.FC<BookListProps> = ({
              
               {isReservationPassed(list.book_date, list.book_time) ? (
                 <button
-                  onClick={() => handleReviewClick(list.book_id)}
+                  onClick={() => handleReviewClick(list)}
                   className="w-full rounded-md bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 transition-colors"
                 >
                   리뷰작성
                 </button>
               ) : (
                 <button
-                  onClick={() => openCencelModal(list.book_id)}
+                  onClick={() => openCencelModal(list)}
                   className="w-full rounded-md bg-red-500 text-white px-4 py-2 hover:bg-red-600 transition-colors"
                 >
                   예약취소
@@ -90,6 +107,16 @@ const BookList: React.FC<BookListProps> = ({
           </li>
         ))}
       </ul>
+      {selectedReservation && (
+        <ReviewModal
+          isOpen={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          selectedBookId={selectedReservation.book_id}
+          p_id={selectedReservation.p_id}
+          book_date={selectedReservation.book_date}
+          book_time={selectedReservation.book_time}
+        />
+      )}
       <CancelModal
         open={cencelModal}
         onClose={() => setCencelModal(false)}
@@ -105,7 +132,7 @@ const BookList: React.FC<BookListProps> = ({
                 취소
               </button>
               <button
-                onClick={() => handleBookCancel(bookId)}
+                onClick={() => selectedReservation && handleBookCancel(selectedReservation.book_id)}
                 className="w-full rounded-md border border-gray-300 px-4 py-2"
               >
                 확인
