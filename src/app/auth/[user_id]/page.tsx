@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/store";
-import { updateUser } from "@/store/userSlice";
+import { updateUser, updateProfileImage } from "@/store/userSlice";
 import Profile from "@/components/Profile";
 import NicknameEditModal from "@/components/NicknameEditModal";
 import { toast } from "react-toastify";
@@ -28,12 +28,18 @@ export default function AuthPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [updatedAt, setUpdatedAt] = useState<number>();
   const [profileImage, setProfileImage] = useState<ProfileImageState>({
     file: null,
     previewUrl: "",
     isUploading: false,
   });
+  
+  // Get the current image URL from Redux or use the default one
+  const profileImageUrl = useMemo(() => {
+    if (user?.profileImageUrl) return user.profileImageUrl;
+    if (user?.user_id) return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
+    return "/sample_profile.jpeg";
+  }, [user]);
 
   // Update local state when user changes
   useEffect(() => {
@@ -102,10 +108,12 @@ export default function AuthPage() {
       // Update nickname if changed
       if (editedNickname !== user.nickname) {
         await usenickname(editedNickname);
-        dispatch(updateUser({ 
-          user_id: user.user_id,
-          nickname: editedNickname 
-        }));
+        dispatch(
+          updateUser({
+            user_id: user.user_id,
+            nickname: editedNickname,
+          })
+        );
         toast.success("닉네임이 변경되었습니다.");
       }
 
@@ -128,11 +136,23 @@ export default function AuthPage() {
           throw new Error("프로필 이미지 업로드에 실패했습니다.");
         }
 
-        // Update the image preview
-        setUpdatedAt(Date.now());
+        // Get the image URL from the response if available
+        const result = await response.json();
+        const imageUrl = result.imageUrl || `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
+        
+        // Update Redux with the new image version and URL
+        const timestamp = Date.now();
+        dispatch(updateProfileImage({
+          user_id: user.user_id,
+          profileImageVersion: timestamp,
+          profileImageUrl: imageUrl
+        }));
+
+        // Reset the file state
         setProfileImage((prev) => ({
           ...prev,
           file: null,
+          previewUrl: "",
           isUploading: false,
         }));
       }
@@ -146,7 +166,14 @@ export default function AuthPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [user, editedNickname, profileImage.file, handleSaveNickname, router, usenickname]);
+  }, [
+    user,
+    editedNickname,
+    profileImage.file,
+    handleSaveNickname,
+    router,
+    usenickname,
+  ]);
 
   if (!user) {
     return <div>사용자 정보를 불러오는 중입니다...</div>;
@@ -156,7 +183,7 @@ export default function AuthPage() {
     <div className="p-4 max-w-md mx-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-32 h-32">
-          <Profile
+<Profile
             userId={user.user_id}
             alt="프로필 사진"
             size={128}
@@ -165,7 +192,8 @@ export default function AuthPage() {
             fallbackSrc="/sample_profile.jpeg"
             onFileSelect={handleFileSelect}
             isLoading={profileImage.isUploading}
-            updatedAt={updatedAt}
+            version={user.profileImageVersion}
+            imageUrl={profileImageUrl}
           />
         </div>
 
@@ -224,9 +252,13 @@ export default function AuthPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveNickname}
       />
-      
+
       {/* Success Modal */}
-      <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity ${isSuccessModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity ${
+          isSuccessModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
         <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
           <h3 className="text-lg font-medium mb-4">저장 완료</h3>
           <p className="mb-6">수정사항을 저장하였습니다.</p>
@@ -234,7 +266,7 @@ export default function AuthPage() {
             <button
               onClick={() => {
                 setIsSuccessModalOpen(false);
-                router.push('/mypage');
+                router.push("/mypage");
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >

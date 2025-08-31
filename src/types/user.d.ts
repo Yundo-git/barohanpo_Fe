@@ -5,7 +5,10 @@ export interface User {
   user_id: number;
   nickname: string;
   role: "user" | "admin";
-  profileImage?: string;
+  profileImage?: string; // For backward compatibility
+  profileImageVersion?: number; // For cache busting
+  profileImageUrl?: string; // Full URL to the profile image
+  updated_at?: string; // Last update timestamp from server
 }
 
 export interface LoginResponse {

@@ -74,6 +74,11 @@ const userSlice = createSlice({
           user_id: userData.user_id,
           nickname: userData.nickname,
           role: userData.role || "user",
+          // Include profile image related fields
+          profileImage: userData.profileImage,
+          profileImageUrl: userData.profileImageUrl,
+          profileImageVersion: userData.profileImageVersion,
+          updated_at: userData.updated_at
         };
       } else {
         state.user = null;
@@ -104,11 +109,11 @@ const userSlice = createSlice({
         state.lastUpdated = Date.now();
       }
     },
-    
+
     // Update user information without affecting auth state
     updateUser: (
       state,
-      action: PayloadAction<Partial<Omit<User, 'id'>> & { id?: number }>
+      action: PayloadAction<Partial<Omit<User, "id">> & { id?: number }>
     ) => {
       if (state.user) {
         state.user = {
@@ -116,6 +121,24 @@ const userSlice = createSlice({
           ...action.payload,
           user_id: action.payload.user_id ?? state.user.user_id,
         };
+        state.lastUpdated = Date.now();
+      }
+    },
+    
+    // Update just the profile image version
+    updateProfileImage: (
+      state,
+      action: PayloadAction<{ 
+        user_id: number; 
+        profileImageVersion: number;
+        profileImageUrl?: string;
+      }>
+    ) => {
+      if (state.user?.user_id === action.payload.user_id) {
+        state.user.profileImageVersion = action.payload.profileImageVersion;
+        if (action.payload.profileImageUrl) {
+          state.user.profileImageUrl = action.payload.profileImageUrl;
+        }
         state.lastUpdated = Date.now();
       }
     },
@@ -143,5 +166,11 @@ const userSlice = createSlice({
   },
 });
 
-export const { setAuth, clearAuth, updateAccessToken, updateUser } = userSlice.actions;
+export const { 
+  setAuth, 
+  clearAuth, 
+  updateAccessToken, 
+  updateUser, 
+  updateProfileImage 
+} = userSlice.actions;
 export default userSlice.reducer;

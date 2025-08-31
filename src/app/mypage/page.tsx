@@ -40,6 +40,7 @@ export default function MyPage() {
             <div onClick={editProfile}>
               <Profile
                 userId={user?.user_id || 0}
+                version={user?.profileImageVersion}
                 alt="사용자 프로필"
                 size={56}
                 rounded="full"
