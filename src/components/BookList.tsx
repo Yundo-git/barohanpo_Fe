@@ -22,6 +22,23 @@ const BookList: React.FC<BookListProps> = ({
   // Ensure reservation is always an array
   const reservationList = Array.isArray(reservation) ? reservation : [];
 
+  // Check if the reservation time has passed
+  const isReservationPassed = (dateStr: string, timeStr: string): boolean => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    
+    const reservationTime = new Date(year, month - 1, day, hours, minutes);
+    const currentTime = new Date();
+    
+    return currentTime > reservationTime;
+  };
+
+  // Handle review button click
+  const handleReviewClick = (bookId: number) => {
+    console.log('Review for bookId:', bookId);
+    // Add your review logic here
+  };
+
   if (reservationList.length === 0) {
     return <div className="text-center py-4">예약 내역이 없습니다.</div>;
   }
@@ -52,18 +69,23 @@ const BookList: React.FC<BookListProps> = ({
           <li key={list.book_id} className="border-b border-gray-200 p-4">
             <p>날짜 : {list.book_date}</p>
             <p>시간 : {list.book_time}</p>
-            <div className="flex justify-center w-full gap-2">
-              <button className="w-full rounded-md border border-gray-300 px-4 py-2">
-                영수증 인증
-              </button>
-              <button
-                onClick={() => {
-                  openCencelModal(list.book_id);
-                }}
-                className="w-full rounded-md border border-gray-300 px-4 py-2"
-              >
-                예약 취소
-              </button>
+            <div >
+             
+              {isReservationPassed(list.book_date, list.book_time) ? (
+                <button
+                  onClick={() => handleReviewClick(list.book_id)}
+                  className="w-full rounded-md bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 transition-colors"
+                >
+                  리뷰작성
+                </button>
+              ) : (
+                <button
+                  onClick={() => openCencelModal(list.book_id)}
+                  className="w-full rounded-md bg-red-500 text-white px-4 py-2 hover:bg-red-600 transition-colors"
+                >
+                  예약취소
+                </button>
+              )}
             </div>
           </li>
         ))}
