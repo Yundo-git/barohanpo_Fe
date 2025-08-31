@@ -1,19 +1,24 @@
 // 예약 취소 내역 조회 훅
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+
+interface CancelItem {
+  // Define the structure of your cancel item here
+  [key: string]: unknown;
+}
 
 interface CancelListResponse {
-  data?: any[];
-  [key: string]: any;
+  data?: CancelItem[];
+  message?: string;
+  [key: string]: unknown;
 }
 
 const useGetCancelList = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const userId = user?.user_id;
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const getCancelList = useCallback(async (): Promise<any[]> => {
+  const getCancelList = useCallback(async (): Promise<CancelItem[]> => {
     if (!userId) {
       console.log('No user ID found');
       return [];
@@ -44,21 +49,17 @@ const useGetCancelList = () => {
       } else if (result && Array.isArray(result.data)) {
         return result.data;
       } else if (result && typeof result === 'object') {
-        return Object.values(result).filter(Array.isArray).flat();
+        return Object.values(result).filter(Array.isArray).flat() as CancelItem[];
       }
       
       return [];
     } catch (error) {
-      console.error('Error in getCancelList:', error);
+      console.error('Error fetching cancel list:', error);
       return [];
     }
   }, [userId]);
 
-  const refresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-  }, []);
-
-  return { getCancelList, refresh };
+  return { getCancelList };
 };
 
 export default useGetCancelList;

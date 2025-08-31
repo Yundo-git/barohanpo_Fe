@@ -6,8 +6,11 @@ import { clearAuth } from "@/store/userSlice";
 import { logout as logoutApi } from "@/services/authService";
 import type { RootState } from "@/store/store";
 import Profile from "@/components/Profile";
+import DevelopmentNoticeModal from "@/components/DevelopmentNoticeModal";
+import { useState } from "react";
 
 export default function MyPage() {
+  const [showDevNotice, setShowDevNotice] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.user);
@@ -32,9 +35,17 @@ export default function MyPage() {
     router.push("/auth/" + user?.user_id);
   };
 
+  const handleMyReview = () => {
+    router.push("/mypage/myreview");
+  };
+
+  const handlePrescriptionRecord = () => {
+    setShowDevNotice(true);
+  };
+
   return (
     <div className="flex flex-col  min-h-screen p-4">
-      <div className="flex justify-between" onClick={editProfile}>
+      <section className="flex justify-between" onClick={editProfile}>
         <div className="flex items-center gap-3">
           <div className="relative group">
             <div onClick={editProfile}>
@@ -51,20 +62,28 @@ export default function MyPage() {
           <h1>{user?.nickname}</h1>
         </div>
         <p>버튼</p>
-      </div>
-      {/* 유저 정보 */}
-      <div className="text-gray-600 text-sm">
-        <p>유저 ID: {user?.name || "N/A"}</p>
-        <p>전화번호: {user?.phone || "N/A"}</p>
-        <p>이메일: {user?.email || "N/A"}</p>
-      </div>
-      {/* <button
-          onClick={handleMyBook}
-          className="w-full px-4 py-2 font-medium  rounded-md border border-gray-300"
-        >
-          내 예약
-        </button> */}
-      <button onClick={handleLogout}>로그아웃</button>
+      </section>
+      {/* 유저 내역 */}
+      <section className="pt-4 flex flex-col gap-4 items-start">
+        <button onClick={handlePrescriptionRecord}>내 영양제 처방 기록</button>
+        <button>찜 목록</button>
+        <button onClick={handleMyReview}>
+          내 후기
+        </button>
+      </section>
+
+      <DevelopmentNoticeModal 
+        isOpen={showDevNotice} 
+        onClose={() => setShowDevNotice(false)}
+      />
+      <section className="border-t pt-4 border-gray-200">
+        <h1>문의</h1>
+        <button className="mt-4">문의하기</button>
+      </section>
+      <section className="border-t pt-4 border-gray-200">
+        <h1>계정관리</h1>
+      <button className="mt-4" onClick={handleLogout}>로그아웃</button>
+      </section>
     </div>
   );
 }
