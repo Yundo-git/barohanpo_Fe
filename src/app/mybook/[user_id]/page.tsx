@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useGetBook from "@/hooks/useGetBook";
 import BookList from "@/components/BookList";
 import Tab from "@/components/Tab";
 import useGetCancelList from "@/hooks/useGetCancelList";
-import CencelList from "@/components/CancelList";
+import CancelList from "@/components/CancelList";
 
 //리덕스 스토어 에러 발생 중 해당 페이지 수정 필요
 //user_id를 props로 받아와야 함
@@ -14,12 +14,29 @@ import CencelList from "@/components/CancelList";
 //예약 내역 조회 후 예약 내역이 없을 경우 화면 구성 필요
 
 export default function MyBook() {
-  const { getBook } = useGetBook();
-  const { getCancelList } = useGetCancelList();
+  const { getBook, refresh: refreshBook } = useGetBook();
+  const { getCancelList, refresh: refreshCancelList } = useGetCancelList();
   const [reservation, setReservation] = useState<any[]>([]);
   const [cancelList, setCancelList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const refreshData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [bookData, cancelData] = await Promise.all([
+        getBook(),
+        getCancelList()
+      ]);
+      setReservation(bookData);
+      setCancelList(cancelData);
+    } catch (err) {
+      console.error("데이터 새로고침 중 오류 발생:", err);
+      setError("데이터를 새로고침하는 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getBook, getCancelList]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,21 +71,24 @@ export default function MyBook() {
   }
 
   return (
-    
-<Tab
-  items={[
-    {
-      key: "bookList",
-      label: "예약내역",
-      component:       <BookList reservation={reservation} />,
-    },
-    {
-      key: "cancel",
-      label: "예약 취소",
-      component: <CencelList cancelList={cancelList} />,
-    },
-  ]}
-/>
-    
+    <Tab
+      items={[
+        {
+          key: 'reservations',
+          label: '예약 내역',
+          component: <BookList 
+            reservation={reservation}
+            onCancelSuccess={refreshData}
+          />
+        },
+        {
+          key: 'cancellations',
+          label: '취소 내역',
+          component: <CancelList 
+            cancelList={cancelList}
+          />
+        }
+      ]}
+    />
   );
 }

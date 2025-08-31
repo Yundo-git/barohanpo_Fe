@@ -1,11 +1,12 @@
 //예약 내역 불러오는 훅
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 const useGetBook = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const userId = user?.user_id;
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const getBook = useCallback(async () => {
     if (!userId) return [];
@@ -22,9 +23,13 @@ const useGetBook = () => {
       console.error('Error fetching reservations:', error);
       return [];
     }
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
-  return { getBook };
+  const refresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  return { getBook, refresh };
 };
 
 export default useGetBook;

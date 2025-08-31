@@ -1,13 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/store/store";
+import { useRouter, useParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState, AppDispatch } from "@/store/store";
 import { updateUser, updateProfileImage } from "@/store/userSlice";
 import Profile from "@/components/Profile";
 import NicknameEditModal from "@/components/NicknameEditModal";
-import { toast } from "react-toastify";
+import SuccessModal from "@/components/SuccessModal";
 import useChangeNick from "@/hooks/useChangeNick";
+
+// Mock toast function since the actual hook is missing
+const toast = {
+  success: (message: string) => console.log(message),
+  error: (message: string) => console.error(message),
+  info: (message: string) => console.info(message),
+};
 
 interface ProfileImageState {
   file: File | null;
@@ -19,11 +27,10 @@ export default function AuthPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params?.user_id as string;
-  const user = useAppSelector((state) => state.user.user);
-  const dispatch = useAppDispatch();
+  const user = useSelector((state: RootState) => state.user.user);
+  const dispatch = useDispatch<AppDispatch>();
   const { usenickname } = useChangeNick();
 
-  // Local state for form inputs
   const [editedNickname, setEditedNickname] = useState(user?.nickname || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,21 +40,20 @@ export default function AuthPage() {
     previewUrl: "",
     isUploading: false,
   });
-  
-  // Get the current image URL from Redux or use the default one
+
   const profileImageUrl = useMemo(() => {
     if (user?.profileImageUrl) return user.profileImageUrl;
-    if (user?.user_id) return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
-    return "/sample_profile.jpeg";
+    if (user?.user_id)
+      return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
+    return "/sample_profile.svg";
   }, [user]);
 
-  // Update local state when user changes
   useEffect(() => {
     if (user?.nickname) {
       setEditedNickname(user.nickname);
     }
   }, [user?.nickname]);
-
+  //프로필 이미지 선택
   const handleFileSelect = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -64,15 +70,15 @@ export default function AuthPage() {
     };
     reader.readAsDataURL(file);
   }, []);
-
+  //프로필 이미지 변경
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> =
     useCallback(
       (e) => {
         const file = e.target.files?.[0];
-        e.currentTarget.value = ""; // Allow re-selecting the same file
+        e.currentTarget.value = ""; // 파일 재선택 허용
         if (!file || !user?.user_id) return;
 
-        // Simple validation (5MB, jpeg/png/webp)
+        // 이미지 파일 검증 (5MB, jpeg/png/webp)
         const okTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
         if (!okTypes.has(file.type)) {
           toast.error("JPEG, PNG, WebP 형식의 이미지만 업로드 가능합니다.");
@@ -87,16 +93,15 @@ export default function AuthPage() {
       },
       [user?.user_id, handleFileSelect]
     );
-
+  //닉네임 변경
   const handleSaveNickname = useCallback((newNickname: string) => {
     setEditedNickname(newNickname);
     setIsModalOpen(false);
   }, []);
-
+  //백엔드에 전송
   const handleSaveToBackend = useCallback(async () => {
     if (!user) return;
 
-    // Check if there are any changes
     if (editedNickname === user.nickname && !profileImage.file) {
       toast.info("변경된 내용이 없습니다.");
       return;
@@ -105,7 +110,7 @@ export default function AuthPage() {
     setIsSaving(true);
 
     try {
-      // Update nickname if changed
+      // 닉네임 변경
       if (editedNickname !== user.nickname) {
         await usenickname(editedNickname);
         dispatch(
@@ -117,7 +122,6 @@ export default function AuthPage() {
         toast.success("닉네임이 변경되었습니다.");
       }
 
-      // Upload profile image if selected
       if (profileImage.file) {
         setProfileImage((prev) => ({ ...prev, isUploading: true }));
 
@@ -136,19 +140,23 @@ export default function AuthPage() {
           throw new Error("프로필 이미지 업로드에 실패했습니다.");
         }
 
-        // Get the image URL from the response if available
+        // 응답에서 이미지 URL 가져오기
         const result = await response.json();
-        const imageUrl = result.imageUrl || `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
-        
-        // Update Redux with the new image version and URL
-        const timestamp = Date.now();
-        dispatch(updateProfileImage({
-          user_id: user.user_id,
-          profileImageVersion: timestamp,
-          profileImageUrl: imageUrl
-        }));
+        const imageUrl =
+          result.imageUrl ||
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
 
-        // Reset the file state
+        // 리덕스에 이미지 버전 업데이트
+        const timestamp = Date.now();
+        dispatch(
+          updateProfileImage({
+            user_id: user.user_id,
+            profileImageVersion: timestamp,
+            profileImageUrl: imageUrl,
+          })
+        );
+
+        // 파일 상태 초기화
         setProfileImage((prev) => ({
           ...prev,
           file: null,
@@ -157,7 +165,7 @@ export default function AuthPage() {
         }));
       }
 
-      // Show success modal
+      // 성공 모달 표시
       setIsSuccessModalOpen(true);
     } catch (error) {
       const message =
@@ -183,13 +191,13 @@ export default function AuthPage() {
     <div className="p-4 max-w-md mx-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-32 h-32">
-<Profile
+          <Profile
             userId={user.user_id}
             alt="프로필 사진"
             size={128}
             rounded="full"
             className="w-full h-full border-2 border-gray-200"
-            fallbackSrc="/sample_profile.jpeg"
+            fallbackSrc="/sample_profile.svg"
             onFileSelect={handleFileSelect}
             isLoading={profileImage.isUploading}
             version={user.profileImageVersion}
@@ -253,28 +261,11 @@ export default function AuthPage() {
         onSave={handleSaveNickname}
       />
 
-      {/* Success Modal */}
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity ${
-          isSuccessModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
-          <h3 className="text-lg font-medium mb-4">저장 완료</h3>
-          <p className="mb-6">수정사항을 저장하였습니다.</p>
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                setIsSuccessModalOpen(false);
-                router.push("/mypage");
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              확인
-            </button>
-          </div>
-        </div>
-      </div>
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        redirectPath="/mypage"
+      />
     </div>
   );
 }

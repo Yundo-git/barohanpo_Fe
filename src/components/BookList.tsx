@@ -1,7 +1,6 @@
 "use client";
 import useBookCencel from "@/hooks/useBookCancel";
 import { useState } from "react";
-import CencelModal from "./CancelModal";
 import CancelModal from "./CancelModal";
 interface ReservationItem {
   p_id: number;
@@ -11,10 +10,18 @@ interface ReservationItem {
   // Add other properties as needed
 }
 
-const BookList = ({ reservation }: { reservation?: ReservationItem[] | null }) => {
+interface BookListProps {
+  reservation?: ReservationItem[] | null;
+  onCancelSuccess?: () => void;
+}
+
+const BookList: React.FC<BookListProps> = ({
+  reservation,
+  onCancelSuccess
+}) => {
   // Ensure reservation is always an array
   const reservationList = Array.isArray(reservation) ? reservation : [];
-  
+
   if (reservationList.length === 0) {
     return <div className="text-center py-4">예약 내역이 없습니다.</div>;
   }
@@ -22,16 +29,20 @@ const BookList = ({ reservation }: { reservation?: ReservationItem[] | null }) =
   const [cencelModal, setCencelModal] = useState(false);
   const [bookId, setBookId] = useState<number>(0);
   const handleBookCancel = async (bookId: number) => {
-
-    console.log('bookId>>>>',bookId);
-    await bookCancel(bookId);
-    setCencelModal(false);
+    try {
+      await bookCancel(bookId);
+      setCencelModal(false);
+      if (onCancelSuccess) {
+        onCancelSuccess();
+      }
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+    }
   };
   const openCencelModal = (book_id: number) => {
     setCencelModal(true);
     console.log(book_id);
     setBookId(book_id);
-
   };
 
   return (
@@ -45,8 +56,12 @@ const BookList = ({ reservation }: { reservation?: ReservationItem[] | null }) =
               <button className="w-full rounded-md border border-gray-300 px-4 py-2">
                 영수증 인증
               </button>
-              <button onClick={() => {openCencelModal(list.book_id)}} 
-              className="w-full rounded-md border border-gray-300 px-4 py-2">
+              <button
+                onClick={() => {
+                  openCencelModal(list.book_id);
+                }}
+                className="w-full rounded-md border border-gray-300 px-4 py-2"
+              >
                 예약 취소
               </button>
             </div>

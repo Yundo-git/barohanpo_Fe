@@ -47,10 +47,9 @@ export default function Profile({
   size = 96,
   rounded = "full",
   className = "",
-  fallbackSrc = "/sample_profile.jpeg",
+  fallbackSrc = "/sample_profile.svg",
   apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
-  relativeApi = true,
-  unoptimized = false,
+
   version,
   imageUrl,
   onFileSelect,
@@ -59,12 +58,14 @@ export default function Profile({
   const baseSrc = useMemo<string>(() => {
     // If direct image URL is provided, use it with version for cache busting
     if (imageUrl) {
-      return version ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}v=${version}` : imageUrl;
+      return version
+        ? `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}v=${version}`
+        : imageUrl;
     }
-    
+
     // Fallback to default URL construction if no imageUrl is provided
-    if (!userId) return fallbackSrc || '';
-    
+    if (!userId) return fallbackSrc || "";
+
     const root = `${apiBaseUrl}/api/profile/${userId}/photo`;
     // Add cache-busting query parameter if version is provided
     return version ? `${root}?v=${version}` : root;

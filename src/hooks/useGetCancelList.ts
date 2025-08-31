@@ -1,7 +1,7 @@
 // 예약 취소 내역 조회 훅
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 interface CancelListResponse {
   data?: any[];
@@ -11,6 +11,7 @@ interface CancelListResponse {
 const useGetCancelList = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const userId = user?.user_id;
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const getCancelList = useCallback(async (): Promise<any[]> => {
     if (!userId) {
@@ -53,7 +54,11 @@ const useGetCancelList = () => {
     }
   }, [userId]);
 
-  return { getCancelList };
+  const refresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  return { getCancelList, refresh };
 };
 
 export default useGetCancelList;
