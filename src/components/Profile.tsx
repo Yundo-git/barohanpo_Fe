@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
 type Round = "full" | "lg" | "md" | "sm";
 
@@ -14,6 +14,10 @@ function cx(...classes: ClassValue[]): string {
     .join(" ");
 }
 
+interface ImageFile extends File {
+  preview: string;
+}
+
 export interface ProfileProps {
   userId: number | string;
   alt: string;
@@ -21,11 +25,12 @@ export interface ProfileProps {
   rounded?: Round;
   className?: string;
   fallbackSrc?: string;
-  apiBaseUrl?: string; // relativeApi=false일 때만 사용
-  relativeApi?: boolean; // 기본: true (프론트 프록시 사용)
+  apiBaseUrl?: string;
+  relativeApi?: boolean;
   unoptimized?: boolean;
-  /** 서버에서 이미지 갱신 시 캐시버스트용 쿼리 파라미터로 사용 */
   updatedAt?: string | number;
+  onFileSelect?: (file: File) => void;
+  isLoading?: boolean;
 }
 
 const roundedClass: Record<Round, string> = {
@@ -46,11 +51,13 @@ export default function Profile({
   relativeApi = true,
   unoptimized = false,
   updatedAt,
+  onFileSelect,
+  isLoading = false,
 }: ProfileProps) {
   const baseSrc = useMemo<string>(() => {
     const root = relativeApi
-      ? `/api/users/${userId}/profile`
-      : `${apiBaseUrl}/api/users/${userId}/profile`;
+      ? `/api/profile/${userId}/photo`
+      : `${apiBaseUrl}/api/profile/${userId}/photo`;
     return updatedAt ? `${root}?v=${updatedAt}` : root;
   }, [relativeApi, apiBaseUrl, userId, updatedAt]);
 
@@ -69,24 +76,74 @@ export default function Profile({
     }
   };
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create preview URL
+    const imageUrl = URL.createObjectURL(file);
+    setSrc(imageUrl);
+
+    // Notify parent component
+    onFileSelect?.(file);
+
+    // Clean up the object URL when component unmounts
+    return () => URL.revokeObjectURL(imageUrl);
+  };
+
   return (
     <div
-      className={cx("relative inline-block", className)}
+      className={cx("relative inline-block overflow-hidden", className)}
       style={{ width: size, height: size }}
     >
-      <Image
-        src={src}
-        alt={alt}
-        width={size}
-        height={size}
-        className={cx(
-          "h-full w-full object-cover bg-gray-100",
-          roundedClass[rounded]
+      <div className="relative w-full h-full">
+        <Image
+          src={src}
+          alt={alt}
+          width={size}
+          height={size}
+          className={cx(
+            "h-full w-full object-cover bg-gray-100 transition-opacity",
+            roundedClass[rounded],
+            isLoading ? "opacity-50" : "opacity-100"
+          )}
+          onError={handleError}
+          unoptimized={unoptimized}
+          priority
+        />
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
         )}
-        onError={handleError}
-        unoptimized={unoptimized}
-        priority
-      />
+      </div>
+      {onFileSelect && (
+        <label
+          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-20 transition-all cursor-pointer"
+          style={{ borderRadius: rounded === "full" ? "50%" : "0.5rem" }}
+        >
+          <input
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={isLoading}
+          />
+          <span className="text-white opacity-0 hover:opacity-100 transition-opacity text-sm font-medium">
+            변경
+          </span>
+        </label>
+      )}
     </div>
   );
+}
+
+// Add cleanup for object URLs
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    // Clean up any remaining object URLs
+    document.querySelectorAll('img[src^="blob:"]').forEach((img) => {
+      URL.revokeObjectURL(img.getAttribute("src") || "");
+    });
+  });
 }

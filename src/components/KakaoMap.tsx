@@ -47,9 +47,11 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     setIsBottomSheetOpen(true);
   }, []);
 
-  const handleMarkerClick = (pharmacy: Pharmacy) => {
-    handlePharmacySelect(pharmacy);
-  };
+  const handleMarkerClick = useCallback((pharmacy: Pharmacy) => {
+    setSelectedPharmacy(pharmacy);
+    setSheetView("detail");
+    setIsBottomSheetOpen(true);
+  }, []);
 
   const { handleMapLoad } = useMapHandlers({
     createPharmacyMarkers,
@@ -185,47 +187,26 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
         isOpen={isBottomSheetOpen}
         onClose={closeBottomSheet}
       >
-        {sheetView === "list" && (
-          <MapPharmacyList
-            pharmacies={pharmacies}
-            selectedPharmacy={selectedPharmacy}
-            sheetView={sheetView}
-            initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
-            onPharmacySelect={(pharmacy) => {
-              setSelectedPharmacy(pharmacy);
-              setSheetView("detail" as SheetView);
-              setIsBottomSheetOpen(true);
-            }}
-            onReserve={openReserveView}
-            onCloseReserve={() => setSheetView("detail" as SheetView)}
-          >
-            {/* {pharmacies.map((pharmacy) => (
-              <div
-                key={pharmacy.p_id}
-                className={`p-4 border-b cursor-pointer ${
-                  selectedPharmacy?.p_id === pharmacy.p_id
-                    ? "bg-gray-100"
-                    : "bg-white"
-                }`}
-                onClick={() => handlePharmacySelect(pharmacy)}
-              >
-                <h3 className="font-bold">{pharmacy.dutyName}</h3>
-                <p className="text-sm text-gray-600">
-                  {pharmacy.dutyAddr}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {pharmacy.dutyTel1}
-                </p>
-              </div>
-            ))} */}
-          </MapPharmacyList>
-        )}
-        {sheetView === "reserve" && selectedPharmacy && (
+        {sheetView === "reserve" && selectedPharmacy ? (
           <ReservationSheetContent
             pharmacyId={Number(selectedPharmacy.p_id)}
             pharmacyName={selectedPharmacy.name}
             initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
             onClose={() => setSheetView("detail" as SheetView)}
+          />
+        ) : (
+          <MapPharmacyList
+            pharmacies={sheetView === "list" ? pharmacies : []}
+            selectedPharmacy={selectedPharmacy}
+            sheetView={sheetView}
+            initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
+            onPharmacySelect={(pharmacy) => {
+              setSelectedPharmacy(pharmacy);
+              setSheetView("detail");
+              setIsBottomSheetOpen(true);
+            }}
+            onReserve={openReserveView}
+            onCloseReserve={() => setSheetView("detail")}
           />
         )}
       </BottomSheet>

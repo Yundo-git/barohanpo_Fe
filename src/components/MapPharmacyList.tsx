@@ -27,20 +27,24 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
     return <div className="max-h-[75vh] px-2">{children}</div>;
   }
 
-  if (selectedPharmacy) {
+  // When a pharmacy is selected, show only that pharmacy
+  if (selectedPharmacy && sheetView === "detail") {
     return (
-      <div className="space-y-2 max-h-[50vh] px-2">
+      <div className="space-y-2 max-h-[50vh] overflow-y-auto px-2">
         <div className="border border-gray-200 rounded-md">
           <div className="flex gap-2 p-2">
             <div className="w-[60vw]">
-              <a href={`pharmacy/${selectedPharmacy.p_id}`}>
-                {`${selectedPharmacy.name} >` || "이름 없음"}
+              <a
+                href={`pharmacy/${selectedPharmacy.p_id}`}
+                className="text-base font-medium hover:underline"
+              >
+                {selectedPharmacy.name || "이름 없음"} &gt;
               </a>
-              <p className="text-xs text-gray-600">
+              <p className="text-sm text-gray-600 mt-1">
                 {selectedPharmacy.address || "주소 정보 없음"}
               </p>
               {(selectedPharmacy.user as PharmacyUser)?.number && (
-                <p className="text-xs">
+                <p className="text-sm text-gray-700 mt-1">
                   {(selectedPharmacy.user as PharmacyUser)?.number}
                 </p>
               )}
