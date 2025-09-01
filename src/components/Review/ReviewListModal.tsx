@@ -39,7 +39,7 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
       </button>
 
       <div className="container mx-auto p-4 pt-16">
-        <h2 className="text-2xl font-bold mb-6">내 리뷰</h2>
+        <h2 className="text-2xl font-bold mb-6">내 후기</h2>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">

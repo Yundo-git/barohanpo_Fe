@@ -1,3 +1,4 @@
+//리뷰 내용 조회하는 훅
 import { useCallback, useState } from "react";
 import { Review } from "@/types/review";
 

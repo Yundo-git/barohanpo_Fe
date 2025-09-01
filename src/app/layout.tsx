@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "바로한포",
   description: "당신만의 건강 루틴, 지금 시작해보세요.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
   },
 };
 
