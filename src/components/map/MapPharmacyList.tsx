@@ -1,6 +1,6 @@
 import React from "react";
-import Bookbtn from "./Bookbtn";
-import { Pharmacy, PharmacyUser } from "../types/pharmacy";
+import Bookbtn from "../reservation/Bookbtn";
+import { Pharmacy, PharmacyUser } from "../../types/pharmacy";
 
 interface MapPharmacyListProps {
   pharmacies: Pharmacy[];

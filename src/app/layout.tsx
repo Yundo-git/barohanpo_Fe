@@ -3,7 +3,7 @@ import "./globals.css";
 import MobileNavBar from "@/components/MobileNavBar";
 import Header from "@/components/Header";
 import Providers from "@/store/Provider";
-import LocalPermission from "@/components/LocalPermission";
+import LocalPermission from "@/components/map/LocalPermission";
 
 export const metadata: Metadata = {
   title: "바로한포",

@@ -3,12 +3,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
-import BottomSheet from "./BottomSheet";
+import BottomSheet from "../BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
 import { Pharmacy } from "@/types/pharmacy";
-import ReservationSheetContent from "./ReservationSheetContent";
+import ReservationSheetContent from "../reservation/ReservationSheetContent";
 import MapPharmacyList from "./MapPharmacyList";
 
 interface KakaoMapProps {

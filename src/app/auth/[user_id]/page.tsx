@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store/store";
 import { updateUser, updateProfileImage } from "@/store/userSlice";
-import Profile from "@/components/Profile";
-import NicknameEditModal from "@/components/NicknameEditModal";
-import SuccessModal from "@/components/SuccessModal";
+import Profile from "@/components/auth/Profile";
+import NicknameEditModal from "@/components/auth/NicknameEditModal";
+import SuccessModal from "@/components/reservation/SuccessModal";
 import useChangeNick from "@/hooks/useChangeNick";
 
 // Mock toast function since the actual hook is missing

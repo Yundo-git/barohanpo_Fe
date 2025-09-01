@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense, useState, useCallback, useEffect, ReactNode } from "react";
-import BookList from "@/components/BookList";
+import BookList from "@/components/reservation/BookList";
 import Tab from "@/components/Tab";
-import CancelList from "@/components/CancelList";
+import CancelList from "@/components/reservation/CancelList";
 import useGetBook from "@/hooks/useGetBook";
 import useGetCancelList from "@/hooks/useGetCancelList";
 import type { Reservation, CancelItem } from "@/types/reservation";

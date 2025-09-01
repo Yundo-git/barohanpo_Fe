@@ -3,7 +3,7 @@
 
 import React, { useMemo } from "react";
 import dayjs from "dayjs";
-import { useReservationSlots } from "../hooks/useReservationSlots";
+import { useReservationSlots } from "../../hooks/useReservationSlots";
 
 type DayAvailability = { date: string; is_available: number };
 

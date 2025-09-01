@@ -2,7 +2,7 @@
 import useBookCencel from "@/hooks/useBookCancel";
 import { useState, useEffect } from "react";
 import CancelModal from "./CancelModal";
-import ReviewModal from "./ReviewModal";
+import ReviewModal from "../Review/ReviewModal";
 
 import type { Reservation } from "@/types/reservation";
 
@@ -15,23 +15,24 @@ type ReservationItem = Reservation;
 
 const BookList: React.FC<BookListProps> = ({
   reservation,
-  onCancelSuccess
+  onCancelSuccess,
 }) => {
   const { bookCancel } = useBookCencel();
   const [cencelModal, setCencelModal] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState<ReservationItem | null>(null);
+  const [selectedReservation, setSelectedReservation] =
+    useState<ReservationItem | null>(null);
   const [reservationList, setReservationList] = useState<ReservationItem[]>([]);
 
   useEffect(() => {
     if (reviewModalOpen || cencelModal) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [reviewModalOpen, cencelModal]);
 
@@ -42,17 +43,21 @@ const BookList: React.FC<BookListProps> = ({
   }, [reservation]);
 
   if (!reservation || reservation.length === 0) {
-    return <div className="text-center py-4 text-gray-500">예약 내역이 없습니다.</div>;
+    return (
+      <div className="text-center py-4 text-gray-500">
+        예약 내역이 없습니다.
+      </div>
+    );
   }
 
   // Check if the reservation time has passed
   const isReservationPassed = (dateStr: string, timeStr: string): boolean => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const [hours, minutes] = timeStr.split(":").map(Number);
+
     const reservationTime = new Date(year, month - 1, day, hours, minutes);
     const currentTime = new Date();
-    
+
     return currentTime > reservationTime;
   };
 
@@ -69,7 +74,7 @@ const BookList: React.FC<BookListProps> = ({
         onCancelSuccess();
       }
     } catch (error) {
-      console.error('Error cancelling booking:', error);
+      console.error("Error cancelling booking:", error);
     }
   };
 
@@ -90,8 +95,7 @@ const BookList: React.FC<BookListProps> = ({
           <li key={list.book_id} className="border-b border-gray-200 p-4">
             <p>날짜 : {list.book_date}</p>
             <p>시간 : {list.book_time}</p>
-            <div >
-             
+            <div>
               {isReservationPassed(list.book_date, list.book_time) ? (
                 <button
                   onClick={() => handleReviewClick(list)}
@@ -136,7 +140,10 @@ const BookList: React.FC<BookListProps> = ({
                 취소
               </button>
               <button
-                onClick={() => selectedReservation && handleBookCancel(selectedReservation.book_id)}
+                onClick={() =>
+                  selectedReservation &&
+                  handleBookCancel(selectedReservation.book_id)
+                }
                 className="w-full rounded-md border border-gray-300 px-4 py-2"
               >
                 확인
