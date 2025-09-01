@@ -172,14 +172,12 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
             pharmacies={sheetView === "list" ? pharmacies : []}
             selectedPharmacy={selectedPharmacy}
             sheetView={sheetView}
-            initialDate={initialDate || format(new Date(), "yyyy-MM-dd")}
             onPharmacySelect={(pharmacy) => {
               setSelectedPharmacy(pharmacy);
               setSheetView("detail");
               setIsBottomSheetOpen(true);
             }}
             onReserve={openReserveView}
-            onCloseReserve={() => setSheetView("detail")}
           />
         )}
       </BottomSheet>

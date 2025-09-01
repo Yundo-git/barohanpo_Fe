@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store/store";
 import { updateUser, updateProfileImage } from "@/store/userSlice";
@@ -24,9 +23,6 @@ interface ProfileImageState {
 }
 
 export default function AuthPage() {
-  const router = useRouter();
-  const params = useParams();
-  const userId = params?.user_id as string;
   const user = useSelector((state: RootState) => state.user.user);
   const dispatch = useDispatch<AppDispatch>();
   const { usenickname } = useChangeNick();
@@ -100,7 +96,7 @@ export default function AuthPage() {
   }, []);
   //백엔드에 전송
   const handleSaveToBackend = useCallback(async () => {
-    if (!user) return;
+    if (!user || !dispatch) return;
 
     if (editedNickname === user.nickname && !profileImage.file) {
       toast.info("변경된 내용이 없습니다.");
@@ -174,14 +170,7 @@ export default function AuthPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    user,
-    editedNickname,
-    profileImage.file,
-    handleSaveNickname,
-    router,
-    usenickname,
-  ]);
+  }, [user, editedNickname, profileImage.file, dispatch, usenickname]);
 
   if (!user) {
     return <div>사용자 정보를 불러오는 중입니다...</div>;

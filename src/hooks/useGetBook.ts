@@ -1,6 +1,4 @@
 //예약 내역 불러오는 훅
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
 import { useCallback, useState } from "react";
 
 interface Reservation {
@@ -12,44 +10,47 @@ interface Reservation {
 }
 
 const useGetBook = (userId?: number) => {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const getBook = useCallback(async (): Promise<Reservation[]> => {
     if (!userId) return [];
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${userId}/books`,
-        { cache: 'no-store' }
+        { cache: "no-store" }
       );
-      if (!res.ok) throw new Error('Failed to fetch reservations');
-      
+      if (!res.ok) throw new Error("Failed to fetch reservations");
+
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      const err = error instanceof Error ? error : new Error('Failed to fetch reservations');
+      const err =
+        error instanceof Error
+          ? error
+          : new Error("Failed to fetch reservations");
       setError(err);
-      console.error('Error fetching reservations:', error);
+      console.error("Error fetching reservations:", error);
       return [];
     } finally {
       setIsLoading(false);
     }
-  }, [userId, refreshTrigger]);
+  }, [userId]);
 
   const refresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
-  return { 
-    getBook, 
-    refresh, 
-    isLoading, 
-    error 
+  return {
+    getBook,
+    refresh,
+    isLoading,
+    error,
   };
 };
 

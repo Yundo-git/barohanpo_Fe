@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 const useGetUserReview = () => {
     const user = useSelector((state: RootState) => state.user.user);
     const userId = user?.user_id;
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [, setRefreshTrigger] = useState(0);
 
     const getUserReview = useCallback(async () => {
         if (!userId) return [];
@@ -23,7 +23,7 @@ const useGetUserReview = () => {
             console.error('Error fetching reviews:', error);
             return [];
         }
-    }, [userId, refreshTrigger]);
+    }, [userId]);
 
     const refresh = useCallback(() => {
         setRefreshTrigger(prev => prev + 1);

@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "localhost",
         port: "5000",
-        pathname: "/api/users/**", // 백엔드 이미지 경로 패턴
+        pathname: "/api/**", // Allow all API routes
       },
     ],
     // 또는 간단히:

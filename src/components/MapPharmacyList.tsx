@@ -6,10 +6,8 @@ interface MapPharmacyListProps {
   pharmacies: Pharmacy[];
   selectedPharmacy: Pharmacy | null;
   sheetView: "list" | "detail" | "reserve" | "complete";
-  initialDate: string;
   onPharmacySelect: (pharmacy: Pharmacy) => void;
   onReserve: (pharmacy: Pharmacy, date: string) => void;
-  onCloseReserve: () => void;
   children?: React.ReactNode;
 }
 
@@ -17,10 +15,8 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
   pharmacies,
   selectedPharmacy,
   sheetView,
-  initialDate,
   onPharmacySelect,
   onReserve,
-  onCloseReserve,
   children,
 }) => {
   if (sheetView === "reserve" && selectedPharmacy) {

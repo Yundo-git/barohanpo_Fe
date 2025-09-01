@@ -1,8 +1,8 @@
 // src/components/Profile.tsx
 "use client";
 
-import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type Round = "full" | "lg" | "md" | "sm";
 
@@ -14,9 +14,7 @@ function cx(...classes: ClassValue[]): string {
     .join(" ");
 }
 
-interface ImageFile extends File {
-  preview: string;
-}
+// Image file type with preview URL
 
 export interface ProfileProps {
   userId?: number;
@@ -133,14 +131,13 @@ export default function Profile({
       <div className="relative w-full h-full">
         {hasCorsError ? (
           // If we have a CORS error, use an img tag with crossOrigin="anonymous"
-          <img
+          <Image
             src={`${baseSrc}${
               baseSrc.includes("?") ? "&" : "?"
             }_=${Date.now()}`}
             alt={alt}
             width={size}
             height={size}
-            crossOrigin="anonymous"
             className={cx(
               "h-full w-full object-cover bg-gray-100 transition-opacity",
               roundedClass[rounded],
@@ -150,7 +147,7 @@ export default function Profile({
           />
         ) : (
           // Otherwise, use the normal image loading flow
-          <img
+          <Image
             src={src}
             alt={alt}
             width={size}

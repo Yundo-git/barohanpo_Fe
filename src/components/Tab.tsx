@@ -16,6 +16,7 @@ interface TabsProps {
   tabClassName?: string;
   activeTabClassName?: string;
   inactiveTabClassName?: string;
+  onChange?: (key: string) => void;
 }
 
 export default function Tabs({
@@ -25,6 +26,7 @@ export default function Tabs({
   tabClassName = "py-2 px-4 w-[50vw] font-medium",
   activeTabClassName = "text-blue-600 border-b-2 border-blue-600",
   inactiveTabClassName = "text-gray-500 hover:text-gray-700",
+  onChange,
 }: TabsProps) {
   const [activeKey, setActiveKey] = useState(
     defaultActiveKey || items[0]?.key || ""
@@ -34,11 +36,7 @@ export default function Tabs({
 
   return (
     <div className={className}>
-      <div
-        role="tablist"
-        aria-label="탭 메뉴"
-        className="flex border-b mt-4 w-full"
-      >
+      <div role="tablist" aria-label="탭 메뉴" className="flex border-b w-full">
         {items.map((item) => {
           const isActive = item.key === activeKey;
           return (
@@ -48,7 +46,10 @@ export default function Tabs({
               aria-selected={isActive}
               aria-controls={`${item.key}-panel`}
               id={`${item.key}-tab`}
-              onClick={() => setActiveKey(item.key)}
+              onClick={() => {
+                setActiveKey(item.key);
+                onChange?.(item.key);
+              }}
               className={`${tabClassName} ${
                 isActive ? activeTabClassName : inactiveTabClassName
               }`}

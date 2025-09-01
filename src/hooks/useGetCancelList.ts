@@ -15,7 +15,7 @@ interface CancelListResponse {
 }
 
 const useGetCancelList = (userId?: number) => {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -59,7 +59,7 @@ const useGetCancelList = (userId?: number) => {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, refreshTrigger]);
+  }, [userId]);
 
   const refresh = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
