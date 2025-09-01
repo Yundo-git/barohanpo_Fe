@@ -1,35 +1,57 @@
-//유저 후기 불러오는 훅
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Review } from "@/types/review";
 
-const useGetUserReview = () => {
-  const user = useSelector((state: RootState) => state.user.user);
-  const userId = user?.user_id;
-  const [, setRefreshTrigger] = useState(0);
+interface UseGetUserReviewReturn {
+  reviews: Review[];
+}
 
-  const getUserReview = useCallback(async () => {
-    if (!userId) return [];
+const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
+  const [reviews, setReviews] = useState<Review[]>([]);
+
+  const fetchReviews = useCallback(async () => {
+    if (!userId) {
+      setReviews([]);
+      return;
+    }
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/review/${userId}`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${userId}`
       );
-      if (!res.ok) throw new Error("Failed to fetch reviews");
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch reviews: ${res.statusText}`);
+      }
 
       const data = await res.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-      return [];
+      console.log("API Response data:", data);
+      const reviewsData = Array.isArray(data?.data) ? data.data : [];
+      console.log("Reviews datasdadsf:", reviewsData);
+      setReviews(reviewsData);
+      // console.log("Reviews data:", reviews);
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+      setReviews([]);
     }
   }, [userId]);
 
-  const refresh = useCallback(() => {
-    setRefreshTrigger((prev) => prev + 1);
-  }, []);
+  useEffect(() => {
+    let isMounted = true;
 
-  return { getUserReview, refresh };
+    const fetchData = async () => {
+      if (isMounted) {
+        await fetchReviews();
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchReviews]);
+
+  return { reviews };
 };
 
 export default useGetUserReview;
