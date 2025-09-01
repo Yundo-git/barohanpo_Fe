@@ -3,25 +3,47 @@ import useBookCencel from "@/hooks/useBookCancel";
 import { useState, useEffect } from "react";
 import CancelModal from "./CancelModal";
 import ReviewModal from "./ReviewModal";
-export interface ReservationItem {
-  p_id: number;
-  book_date: string;
-  book_id: number;
-  book_time: string;
-  // Add other properties as needed
-}
+
+import type { Reservation } from "@/types/reservation";
 
 interface BookListProps {
-  reservation?: ReservationItem[] | null;
-  onCancelSuccess?: () => void;
+  reservation: Reservation[] | null | undefined;
+  onCancelSuccess?: () => void | Promise<void>;
 }
+
+type ReservationItem = Reservation;
 
 const BookList: React.FC<BookListProps> = ({
   reservation,
   onCancelSuccess
 }) => {
-  // Ensure reservation is always an array
-  const reservationList = Array.isArray(reservation) ? reservation : [];
+  const { bookCancel } = useBookCencel();
+  const [cencelModal, setCencelModal] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<ReservationItem | null>(null);
+  const [reservationList, setReservationList] = useState<ReservationItem[]>([]);
+
+  useEffect(() => {
+    if (reviewModalOpen || cencelModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [reviewModalOpen, cencelModal]);
+
+  useEffect(() => {
+    if (reservation) {
+      setReservationList(reservation);
+    }
+  }, [reservation]);
+
+  if (!reservation || reservation.length === 0) {
+    return <div className="text-center py-4 text-gray-500">예약 내역이 없습니다.</div>;
+  }
 
   // Check if the reservation time has passed
   const isReservationPassed = (dateStr: string, timeStr: string): boolean => {
@@ -39,25 +61,6 @@ const BookList: React.FC<BookListProps> = ({
     openReviewModal(reservation);
   };
 
-  if (reservationList.length === 0) {
-    return <div className="text-center py-4">예약 내역이 없습니다.</div>;
-  }
-  const { bookCancel } = useBookCencel();
-  const [cencelModal, setCencelModal] = useState(false);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState<ReservationItem | null>(null);
-
-  useEffect(() => {
-    if (reviewModalOpen || cencelModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [reviewModalOpen, cencelModal]);
   const handleBookCancel = async (bookId: number) => {
     try {
       await bookCancel(bookId);
@@ -69,6 +72,7 @@ const BookList: React.FC<BookListProps> = ({
       console.error('Error cancelling booking:', error);
     }
   };
+
   const openCencelModal = (reservation: ReservationItem) => {
     setCencelModal(true);
     setSelectedReservation(reservation);

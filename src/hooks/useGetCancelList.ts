@@ -1,11 +1,11 @@
-// 예약 취소 내역 조회 훅
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
-interface CancelItem {
-  // Define the structure of your cancel item here
-  [key: string]: unknown;
+export interface CancelItem {
+  p_id: number;
+  book_date: string;
+  book_id: number;
+  book_time: string;
+  // Add other properties as needed
 }
 
 interface CancelListResponse {
@@ -14,15 +14,16 @@ interface CancelListResponse {
   [key: string]: unknown;
 }
 
-const useGetCancelList = () => {
-  const user = useSelector((state: RootState) => state.user.user);
-  const userId = user?.user_id;
+const useGetCancelList = (userId?: number) => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const getCancelList = useCallback(async (): Promise<CancelItem[]> => {
-    if (!userId) {
-      console.log('No user ID found');
-      return [];
-    }
+    if (!userId) return [];
+    
+    setIsLoading(true);
+    setError(null);
     
     try {
       const response = await fetch(
@@ -35,31 +36,41 @@ const useGetCancelList = () => {
           cache: 'no-store'
         }
       );
-      
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch cancel list');
+        throw new Error(`Failed to fetch cancel list: ${response.status}`);
       }
-      
+
       const result: CancelListResponse = await response.json();
-      
+
       // Handle different response formats
       if (Array.isArray(result)) {
         return result;
       } else if (result && Array.isArray(result.data)) {
         return result.data;
-      } else if (result && typeof result === 'object') {
-        return Object.values(result).filter(Array.isArray).flat() as CancelItem[];
       }
       
       return [];
     } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to fetch cancel list');
+      setError(err);
       console.error('Error fetching cancel list:', error);
       return [];
+    } finally {
+      setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
-  return { getCancelList };
+  const refresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  return { 
+    getCancelList, 
+    refresh, 
+    isLoading, 
+    error 
+  };
 };
 
 export default useGetCancelList;

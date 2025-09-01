@@ -3,25 +3,41 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useCallback, useState } from "react";
 
-const useGetBook = () => {
-  const user = useSelector((state: RootState) => state.user.user);
-  const userId = user?.user_id;
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+interface Reservation {
+  p_id: number;
+  book_date: string;
+  book_id: number;
+  book_time: string;
+  // Add other properties as needed
+}
 
-  const getBook = useCallback(async () => {
+const useGetBook = (userId?: number) => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const getBook = useCallback(async (): Promise<Reservation[]> => {
     if (!userId) return [];
+    
+    setIsLoading(true);
+    setError(null);
     
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${userId}/books`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${userId}/books`,
+        { cache: 'no-store' }
       );
       if (!res.ok) throw new Error('Failed to fetch reservations');
       
       const data = await res.json();
-      return data;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to fetch reservations');
+      setError(err);
       console.error('Error fetching reservations:', error);
       return [];
+    } finally {
+      setIsLoading(false);
     }
   }, [userId, refreshTrigger]);
 
@@ -29,7 +45,12 @@ const useGetBook = () => {
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
-  return { getBook, refresh };
+  return { 
+    getBook, 
+    refresh, 
+    isLoading, 
+    error 
+  };
 };
 
 export default useGetBook;

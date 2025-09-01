@@ -7,12 +7,12 @@ import BottomSheet from "./BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
-import { Pharmacy, PharmacyUser, PharmacyWithUser } from "@/types/pharmacy";
+import { Pharmacy } from "@/types/pharmacy";
 import ReservationSheetContent from "./ReservationSheetContent";
 import MapPharmacyList from "./MapPharmacyList";
 
 interface KakaoMapProps {
-  initialPharmacies?: PharmacyWithUser[];
+  initialPharmacies?: Pharmacy[];
 }
 
 type SheetView = "list" | "detail" | "reserve" | "complete";
@@ -24,11 +24,6 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     null
   );
   const [initialDate, setInitialDate] = useState<string>("");
-  const [reservationInfo, setReservationInfo] = useState<{
-    date: string;
-    time: string;
-    status: string;
-  } | null>(null);
 
   const markersRef = useRef<kakao.maps.Marker[]>([]);
   const bottomSheetRef = useRef<{ reset: () => void } | null>(null);
@@ -40,12 +35,6 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     createPharmacyMarkers,
     adjustMapBounds,
   } = usePharmacies();
-
-  const handlePharmacySelect = useCallback((pharmacy: Pharmacy) => {
-    setSelectedPharmacy(pharmacy);
-    setSheetView("detail" as SheetView);
-    setIsBottomSheetOpen(true);
-  }, []);
 
   const handleMarkerClick = useCallback((pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
@@ -113,28 +102,12 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
     }
   }, [findNearbyPharmacies, getMap]);
 
-  // Bookbtn → 예약 뷰로 전환
   const openReserveView = useCallback((pharmacy: Pharmacy, date: string) => {
-    console.log("openReserveView");
     setSelectedPharmacy(pharmacy);
-    console.log("pharmacy", pharmacy);
     setInitialDate(date);
     setSheetView("reserve" as SheetView);
     setIsBottomSheetOpen(true);
   }, []);
-
-  const handleReservationComplete = useCallback(
-    (date: string, time: string) => {
-      // Set reservation info and switch to complete view
-      setReservationInfo({
-        date,
-        time,
-        status: "success",
-      });
-      setSheetView("complete" as SheetView);
-    },
-    []
-  );
 
   const closeBottomSheet = () => {
     setIsBottomSheetOpen(false);
