@@ -65,7 +65,7 @@ function MyBookContent({ userId }: { userId: number }) {
       component: isLoading ? (
         <div className="py-4 text-center text-gray-500">로딩 중...</div>
       ) : (
-        <BookList reservation={reservations} onCancelSuccess={handleRefresh} />
+        <BookList reservation={reservations} onCancelSuccess={handleRefresh} userId={userId}/>
       ),
     },
     {

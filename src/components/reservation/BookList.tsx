@@ -1,92 +1,120 @@
 "use client";
 import useBookCencel from "@/hooks/useBookCancel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import CancelModal from "./CancelModal";
 import ReviewModal from "../Review/ReviewModal";
-
+import useCompletedReview from "@/hooks/useCompletedReview";
 import type { Reservation } from "@/types/reservation";
 
 interface BookListProps {
   reservation: Reservation[] | null | undefined;
   onCancelSuccess?: () => void | Promise<void>;
+  userId: number;
 }
 
 type ReservationItem = Reservation;
+// 훅 반환 타입 예시: { book_id: number }[]
+type CompletedReview = { book_id: number | string };
 
 const BookList: React.FC<BookListProps> = ({
   reservation,
   onCancelSuccess,
+  userId,
 }) => {
   const { bookCancel } = useBookCencel();
+  const { completedReviews } = useCompletedReview(userId);
+
   const [cencelModal, setCencelModal] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedReservation, setSelectedReservation] =
     useState<ReservationItem | null>(null);
   const [reservationList, setReservationList] = useState<ReservationItem[]>([]);
 
+  // 최초/변경 시 예약 목록 반영
   useEffect(() => {
-    if (reviewModalOpen || cencelModal) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [reviewModalOpen, cencelModal]);
-
-  useEffect(() => {
-    if (reservation) {
-      setReservationList(reservation);
-    }
+    if (reservation) setReservationList(reservation);
   }, [reservation]);
 
-  if (!reservation || reservation.length === 0) {
-    return (
-      <div className="text-center py-4 text-gray-500">
-        예약 내역이 없습니다.
-      </div>
-    );
-  }
-
-  // Check if the reservation time has passed
+  // 예약시간이 지났는지 판단 (로컬타임 기준)
   const isReservationPassed = (dateStr: string, timeStr: string): boolean => {
     const [year, month, day] = dateStr.split("-").map(Number);
     const [hours, minutes] = timeStr.split(":").map(Number);
-
     const reservationTime = new Date(year, month - 1, day, hours, minutes);
-    const currentTime = new Date();
-
-    return currentTime > reservationTime;
+    return new Date() > reservationTime;
   };
 
-  // Handle review button click
-  const handleReviewClick = (reservation: ReservationItem) => {
-    openReviewModal(reservation);
+  // 리뷰 완료된 book_id들을 Set으로 (객체배열 → number 배열 → Set)
+  const completedSet = useMemo<Set<number>>(() => {
+    const ids = completedReviews?.map((r) => Number(r ?? 0)) ?? [];
+    return new Set(ids);
+  }, [completedReviews]);
+
+  const openCencelModal = (r: ReservationItem) => {
+    setCencelModal(true);
+    setSelectedReservation(r);
+  };
+  const openReviewModal = (r: ReservationItem) => {
+    setReviewModalOpen(true);
+    setSelectedReservation(r);
   };
 
   const handleBookCancel = async (bookId: number) => {
     try {
       await bookCancel(bookId);
       setCencelModal(false);
-      if (onCancelSuccess) {
-        onCancelSuccess();
-      }
+      if (onCancelSuccess) await onCancelSuccess();
     } catch (error) {
       console.error("Error cancelling booking:", error);
     }
   };
 
-  const openCencelModal = (reservation: ReservationItem) => {
-    setCencelModal(true);
-    setSelectedReservation(reservation);
+  // 액션 버튼 결정
+  const renderActionButton = (item: ReservationItem) => {
+    const reviewed = completedSet.has(Number(item.book_id));
+    const passed = isReservationPassed(item.book_date, item.book_time);
+
+    if (reviewed) {
+      return (
+        <button
+          type="button"
+          disabled
+          aria-disabled
+          className="w-full rounded-md bg-gray-200 text-gray-600 px-4 py-2 cursor-not-allowed"
+          title="이미 리뷰를 작성했습니다."
+        >
+          완료
+        </button>
+      );
+    }
+
+    if (!passed) {
+      return (
+        <button
+          onClick={() => openCencelModal(item)}
+          className="w-full rounded-md bg-red-500 text-white px-4 py-2 hover:bg-red-600 transition-colors"
+        >
+          예약취소
+        </button>
+      );
+    }
+
+    return (
+      <button
+        onClick={() => openReviewModal(item)}
+        className="w-full rounded-md bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 transition-colors"
+      >
+        리뷰작성
+      </button>
+    );
   };
 
-  const openReviewModal = (reservation: ReservationItem) => {
-    setReviewModalOpen(true);
-    setSelectedReservation(reservation);
-  };
+  if (!reservationList?.length) {
+    return (
+      <div className="text-center py-4 text-gray-500">
+        예약 내역이 없습니다.
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -95,26 +123,11 @@ const BookList: React.FC<BookListProps> = ({
           <li key={list.book_id} className="border-b border-gray-200 p-4">
             <p>날짜 : {list.book_date}</p>
             <p>시간 : {list.book_time}</p>
-            <div>
-              {isReservationPassed(list.book_date, list.book_time) ? (
-                <button
-                  onClick={() => handleReviewClick(list)}
-                  className="w-full rounded-md bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 transition-colors"
-                >
-                  리뷰작성
-                </button>
-              ) : (
-                <button
-                  onClick={() => openCencelModal(list)}
-                  className="w-full rounded-md bg-red-500 text-white px-4 py-2 hover:bg-red-600 transition-colors"
-                >
-                  예약취소
-                </button>
-              )}
-            </div>
+            <div className="mt-2">{renderActionButton(list)}</div>
           </li>
         ))}
       </ul>
+
       {selectedReservation && (
         <ReviewModal
           isOpen={reviewModalOpen}
@@ -125,6 +138,7 @@ const BookList: React.FC<BookListProps> = ({
           book_time={selectedReservation.book_time}
         />
       )}
+
       <CancelModal
         open={cencelModal}
         onClose={() => setCencelModal(false)}
@@ -132,7 +146,7 @@ const BookList: React.FC<BookListProps> = ({
         content={
           <div>
             <p>예약을 취소하시겠습니까?</p>
-            <div className="flex justify-center w-full gap-2">
+            <div className="flex justify-center w-full gap-2 mt-3">
               <button
                 onClick={() => setCencelModal(false)}
                 className="w-full rounded-md border border-gray-300 px-4 py-2"
@@ -144,7 +158,7 @@ const BookList: React.FC<BookListProps> = ({
                   selectedReservation &&
                   handleBookCancel(selectedReservation.book_id)
                 }
-                className="w-full rounded-md border border-gray-300 px-4 py-2"
+                className="w-full rounded-md bg-red-500 text-white px-4 py-2 hover:bg-red-600 transition-colors"
               >
                 확인
               </button>
