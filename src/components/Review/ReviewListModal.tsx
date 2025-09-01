@@ -16,13 +16,15 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
   onClose,
   userId,
 }) => {
-  const { reviews } = useGetUserReview(userId);
-  const [isLoading, setIsLoading] = useState(true);
+  const { reviews, isLoading, error: _error, fetchReviews } = useGetUserReview(userId);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setIsLoading(false);
-  }, [isOpen]);
+    if (isOpen && !hasFetched) {
+      fetchReviews();
+      setHasFetched(true);
+    }
+  }, [isOpen, hasFetched, fetchReviews]);
 
   if (!isOpen) return null;
 

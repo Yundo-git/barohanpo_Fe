@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Review } from "@/types/review";
 
 interface UseGetUserReviewReturn {
   reviews: Review[];
+  isLoading: boolean;
+  error: Error | null;
+  fetchReviews: () => Promise<void>;
 }
 
 const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchReviews = useCallback(async () => {
     if (!userId) {
@@ -14,6 +19,9 @@ const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
+    
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${userId}`
@@ -24,34 +32,18 @@ const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
       }
 
       const data = await res.json();
-      console.log("API Response data:", data);
       const reviewsData = Array.isArray(data?.data) ? data.data : [];
-      console.log("Reviews datasdadsf:", reviewsData);
       setReviews(reviewsData);
-      // console.log("Reviews data:", reviews);
     } catch (err) {
       console.error("Error fetching reviews:", err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch reviews'));
       setReviews([]);
+    } finally {
+      setIsLoading(false);
     }
   }, [userId]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      if (isMounted) {
-        await fetchReviews();
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchReviews]);
-
-  return { reviews };
+  return { reviews, isLoading, error, fetchReviews };
 };
 
 export default useGetUserReview;
