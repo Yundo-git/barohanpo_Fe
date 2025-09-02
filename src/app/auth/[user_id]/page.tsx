@@ -230,7 +230,7 @@ export default function AuthPage() {
     <div className="p-4 max-w-md mx-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-32 h-32">
-          <Profile
+          {/* <Profile
             imageUrl={profileImageUrl}
             alt={`${user.nickname}님의 프로필`}
             size={128}
@@ -246,7 +246,26 @@ export default function AuthPage() {
             }}
             isLoading={isUploadingImage || isUploading}
             version={user.profileImageVersion}
-            // fallbackSrc="/sample_profile.svg"
+            // fallbackSrc="/sample_pro
+            // file.svg"
+          /> */}
+          {/* // 선택된 파일이 있을 때만 미리보기 blob URL을 src로 전달 */}
+          <Profile
+            userId={user.user_id}
+            version={user.profileImageVersion}
+            alt={`${user.nickname}님의 프로필`}
+            size={128}
+            rounded="full"
+            className="w-full h-full border-2 border-gray-200"
+            onFileSelect={(file) => {
+              const event = {
+                target: {
+                  files: [file],
+                },
+              } as unknown as React.ChangeEvent<HTMLInputElement>;
+              handleFileChange(event);
+            }}
+            src={images[0]?.previewUrl} // 선택된 파일이 있으면 blob:... 로 미리보기
           />
         </div>
 
