@@ -1,34 +1,44 @@
 // src/components/Profile.tsx
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Round = "full" | "lg" | "md" | "sm";
 
-/** 간단한 클래스 머지 유틸 (cn 대체) */
-type ClassValue = string | undefined | null | false;
-function cx(...classes: ClassValue[]): string {
-  return classes
-    .filter((c): c is string => typeof c === "string" && c.length > 0)
-    .join(" ");
+/** 아주 단순한 class 병합 유틸 */
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
 }
 
 export interface ProfileProps {
+  /** 서버에서 이미지를 만드는 기준 */
   userId?: number;
+  /** 이미지 대체 텍스트 */
   alt: string;
+  /** 정사각형 크기(px) */
   size: number;
+  /** 모서리 */
   rounded?: Round;
+  /** 추가 클래스 */
   className?: string;
+  /** 서버 이미지 실패 시 폴백 */
   fallbackSrc?: string;
+  /** API 베이스 URL (userId를 사용할 때 조합) */
   apiBaseUrl?: string;
-  relativeApi?: boolean;
-  unoptimized?: boolean;
+  /** 서버 이미지에 cache-busting 버전 파라미터 */
+  version?: number;
+  /** 직접 서버 이미지 URL 주입 (userId 대신) */
+  imageUrl?: string;
+  /** 최종적으로 이 src를 강제 사용 (imageUrl보다 우선) */
+  src?: string;
+
+  /** 파일 선택을 받으면 업로드는 부모가 처리 */
   onFileSelect?: (file: File) => void;
+  /** 로딩 스피너 표시 여부 */
   isLoading?: boolean;
-  version?: number; // For cache busting
-  imageUrl?: string; // Direct image URL if available
-  src?: string; // Direct image source
+  /** next/image 최적화 해제 (외부/프리뷰 등) */
+  unoptimized?: boolean;
 }
 
 const roundedClass: Record<Round, string> = {
@@ -51,172 +61,125 @@ export default function Profile({
   src,
   onFileSelect,
   isLoading = false,
+  unoptimized,
 }: ProfileProps) {
-  const baseSrc = useMemo<string>(() => {
-    // If src is provided, use it directly
-    if (src) return src;
-    
-    // If direct image URL is provided, use it with version for cache busting
+  // 1) 서버 이미지 URL 계산
+  const serverSrc = useMemo(() => {
+    if (src) return src; // 최우선
     if (imageUrl) {
       return version
         ? `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}v=${version}`
         : imageUrl;
     }
-
-    // Fallback to default URL construction if no imageUrl is provided
-    if (!userId) return fallbackSrc || "";
-
-    const root = `${apiBaseUrl}/api/profile/${userId}/photo`;
-    // Add cache-busting query parameter if version is provided
-    return version ? `${root}?v=${version}` : root;
-  }, [apiBaseUrl, userId, version, imageUrl, fallbackSrc, src]);
-
-  const [currentSrc, setCurrentSrc] = useState<string>(baseSrc);
-  const [isFallback, setIsFallback] = useState<boolean>(false);
-  const [hasCorsError, setHasCorsError] = useState<boolean>(false);
-
-  useEffect(() => {
-    // Reset states when baseSrc changes
-    setCurrentSrc(baseSrc);
-    setIsFallback(false);
-    setHasCorsError(false);
-  }, [baseSrc]);
-
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const target = e.target as HTMLImageElement;
-
-    // If we already tried the fallback, don't do anything
-    if (isFallback) return;
-
-    // If this is a CORS error or the image failed to load
-    if (target.src !== fallbackSrc && fallbackSrc) {
-      // Check if this is a CORS error by trying to load the image with fetch
-      fetch(target.src, {
-        method: "HEAD",
-        mode: "no-cors",
-        cache: "no-store",
-      })
-        .then(() => {
-          // If we get here, it's likely a CORS issue
-          setHasCorsError(true);
-          setCurrentSrc(fallbackSrc);
-        })
-        .catch(() => {
-          // If fetch fails, it's likely a 404 or other error
-          setCurrentSrc(fallbackSrc);
-        });
+    if (userId) {
+      const root = `${apiBaseUrl}/api/profile/${userId}/photo`;
+      return version ? `${root}?v=${version}` : root;
     }
+    return fallbackSrc; // userId도 imageUrl도 없는 경우
+  }, [src, imageUrl, version, userId, apiBaseUrl, fallbackSrc]);
 
-    setIsFallback(true);
-  };
+  // 2) 미리보기 blob URL(State) — onFileSelect 사용 시만 생성
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const prevPreviewRef = useRef<string | null>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // 3) 서버 이미지 로드 실패 시 폴백 1회
+  const [useFallback, setUseFallback] = useState(false);
+
+  // serverSrc가 바뀌면 실패 상태 해제
+  useEffect(() => {
+    setUseFallback(false);
+  }, [serverSrc]);
+
+  // blob URL 정리(이전 값 revoke + 언마운트 시에도 revoke)
+  useEffect(() => {
+    if (prevPreviewRef.current && prevPreviewRef.current !== previewUrl) {
+      URL.revokeObjectURL(prevPreviewRef.current);
+    }
+    prevPreviewRef.current = previewUrl;
+    return () => {
+      if (prevPreviewRef.current) {
+        URL.revokeObjectURL(prevPreviewRef.current);
+        prevPreviewRef.current = null;
+      }
+    };
+  }, [previewUrl]);
+
+  // 4) 실제 표시할 src 결정: 미리보기 우선 → 서버 → 폴백
+  const effectiveSrc = previewUrl ?? (useFallback ? fallbackSrc : serverSrc);
+
+  // 5) next/image에 넘길 최적화 여부
+  const isPreview = Boolean(previewUrl);
+  const imageUnoptimized = isPreview ? true : !!unoptimized;
+
+  // 6) 파일 선택 → 미리보기 생성 + 상위 콜백 호출
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
+    // 같은 파일 재선택 허용
+    e.currentTarget.value = "";
     if (!file) return;
 
-    // Validate image type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      console.error('유효하지 않은 이미지 형식입니다. JPEG, PNG, WebP 형식만 지원합니다.');
+    // 간단한 검증(형식/크기)
+    const okTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!okTypes.has(file.type)) {
+      console.error("JPEG/PNG/WebP만 업로드 가능합니다.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      console.error("이미지는 5MB 이하여야 합니다.");
       return;
     }
 
-    // Validate image size (5MB)
-    const maxSizeMB = 5;
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      console.error(`이미지 크기는 ${maxSizeMB}MB 이하로 업로드해주세요.`);
-      return;
-    }
-
-    // Create preview URL
-    const imageUrl = URL.createObjectURL(file);
-    setCurrentSrc(imageUrl);
-
-    // Notify parent component
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
     onFileSelect?.(file);
-
-    // Clean up the object URL when component unmounts
-    return () => URL.revokeObjectURL(imageUrl);
   };
-
-  const sizeStyle = typeof size === 'number' 
-    ? { width: `${size}px`, height: `${size}px` }
-    : { width: '100%', height: 'auto' };
-
-  const imageSize = typeof size === 'number' ? size : undefined;
 
   return (
     <div
       className={cx("relative inline-block overflow-hidden", className)}
       style={{ width: size, height: size }}
     >
-      <div className="relative w-full h-full">
-        {hasCorsError ? (
-          // If we have a CORS error, use an img tag with crossOrigin="anonymous"
-          <Image
-            src={`${baseSrc}${baseSrc.includes("?") ? "&" : "?"}_=${Date.now()}`}
-            alt={alt}
-            width={size}
-            height={size}
-            className={cx(
-              "h-full w-full object-cover bg-gray-100 transition-opacity",
-              roundedClass[rounded],
-              "opacity-100"
-            )}
-            onError={handleError}
-          />
-        ) : (
-          // Otherwise, use the normal image loading flow
-          <Image
-            src={currentSrc || fallbackSrc}
-            alt={alt}
-            width={size}
-            height={size}
-            crossOrigin={currentSrc?.startsWith("http") ? "anonymous" : undefined}
-            className={cx(
-              "h-full w-full object-cover bg-gray-100 transition-opacity",
-              roundedClass[rounded],
-              isLoading ? "opacity-50" : "opacity-100"
-            )}
-            onError={handleError}
-          />
+      <Image
+        src={effectiveSrc}
+        alt={alt}
+        width={size}
+        height={size}
+        className={cx(
+          "h-full w-full object-cover bg-gray-100",
+          roundedClass[rounded]
         )}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        )}
-      </div>
+        onError={() => {
+          // 미리보기가 아닐 때만 폴백 전환
+          if (!previewUrl) setUseFallback(true);
+        }}
+        unoptimized={imageUnoptimized}
+        priority
+      />
+
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white" />
+        </div>
+      )}
+
+      {/* 파일 선택 지원 모드(표시 전용으로 쓰면 onFileSelect 안 넘기면 됨) */}
       {onFileSelect && (
         <label
-          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-20 transition-all cursor-pointer"
-          style={{
-            borderRadius: rounded === "full" ? "50%" : "0.5rem",
-            pointerEvents: isLoading ? "none" : "auto",
-          }}
+          className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/0 transition hover:bg-black/20"
+          style={{ borderRadius: rounded === "full" ? "9999px" : undefined }}
         >
           <input
             type="file"
             className="hidden"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={handleFileChange}
             disabled={isLoading}
           />
-          <span className="text-white opacity-0 hover:opacity-100 transition-opacity text-sm font-medium">
+          <span className="select-none text-sm font-medium text-white opacity-0 transition group-hover:opacity-100">
             변경
           </span>
         </label>
       )}
     </div>
   );
-}
-
-// Add cleanup for object URLs
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => {
-    // Clean up any remaining object URLs
-    document.querySelectorAll('img[src^="blob:"]').forEach((img) => {
-      URL.revokeObjectURL(img.getAttribute("src") || "");
-    });
-  });
 }
