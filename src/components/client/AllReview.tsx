@@ -6,6 +6,7 @@ import ReviewCard from "@/components/Review/ReviewCard";
 export default function AllReview() {
   const { reviews, loading, error } = useFiveStarReviews();
   //리뷰 로딩중
+  console.log('mainpage reviews',reviews);
   if (loading) {
     return (
       <div className="p-4">
