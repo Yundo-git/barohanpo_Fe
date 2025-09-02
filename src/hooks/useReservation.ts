@@ -1,8 +1,11 @@
 import { format } from "date-fns";
 
-type ReservationSuccessCallback = (date: string, time: string) => void;
+interface UseReservationOptions {
+  onSuccess?: (date: string, time: string) => void;
+}
 
-export const useReservation = (p_id: string, onSuccess?: ReservationSuccessCallback) => {
+export const useReservation = (p_id: string, options: UseReservationOptions = {}) => {
+  const { onSuccess } = options;
   const handleReservation = async (
     userId: number,
     selectedDate: Date | null,
