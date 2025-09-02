@@ -35,41 +35,43 @@ export default function Tabs({
   const activeTab = items.find((tab) => tab.key === activeKey) || items[0];
 
   return (
-    <div className={className}>
-      <div role="tablist" aria-label="탭 메뉴" className="flex border-b w-full">
-        {items.map((item) => {
-          const isActive = item.key === activeKey;
-          return (
-            <button
-              key={item.key}
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={`${item.key}-panel`}
-              id={`${item.key}-tab`}
-              onClick={() => {
-                setActiveKey(item.key);
-                onChange?.(item.key);
-              }}
-              className={`${tabClassName} ${
-                isActive ? activeTabClassName : inactiveTabClassName
-              }`}
-            >
-              {item.label}
-              {typeof item.badge === "number" && item.badge > 0 && (
-                <span className="ml-1 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs">
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+    <div className={`flex flex-col h-full ${className}`}>
+      <div className="sticky top-0 z-10 bg-white">
+        <div role="tablist" aria-label="탭 메뉴" className="flex border-b w-full">
+          {items.map((item) => {
+            const isActive = item.key === activeKey;
+            return (
+              <button
+                key={item.key}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`${item.key}-panel`}
+                id={`${item.key}-tab`}
+                onClick={() => {
+                  setActiveKey(item.key);
+                  onChange?.(item.key);
+                }}
+                className={`${tabClassName} ${
+                  isActive ? activeTabClassName : inactiveTabClassName
+                }`}
+              >
+                {item.label}
+                {typeof item.badge === "number" && item.badge > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div
         id={`${activeKey}-panel`}
         role="tabpanel"
         aria-labelledby={`${activeKey}-tab`}
-        className="mt-4 overflow-y-auto h-[calc(100vh-3.5rem)]"
+        className="flex-1 overflow-y-auto"
       >
         {activeTab?.component}
       </div>

@@ -117,10 +117,10 @@ const BookList: React.FC<BookListProps> = ({
   }
 
   return (
-    <div>
-      <ul>
+    <div className="h-full">
+      <ul className="divide-y divide-gray-200">
         {reservationList.map((list) => (
-          <li key={list.book_id} className="border-b border-gray-200 p-4">
+          <li key={list.book_id} className="p-4 hover:bg-gray-50">
             <p>날짜 : {list.book_date}</p>
             <p>시간 : {list.book_time}</p>
             <div className="mt-2">{renderActionButton(list)}</div>

@@ -19,16 +19,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full w-full">
-      <body className="bg-white min-h-screen h-full w-full">
+    <html lang="en" className="h-full">
+      <body className="bg-white h-screen flex flex-col overflow-hidden">
         {/* <UserProvider> */}
         <Providers>
           <LocalPermission />
-          <Header />
-          <main className="min-h-[calc(100vh-14rem)] h-full min-h-screen absolute flex-grow top-14 left-0 right-0 bottom-14">
-            {children}
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <Header />
+          </div>
+          <main className="flex-1 pt-14 pb-14 overflow-y-auto">
+            <div className="h-full">
+              {children}
+            </div>
           </main>
-          <MobileNavBar />
+          <div className="fixed bottom-0 left-0 right-0 z-50">
+            <MobileNavBar />
+          </div>
         </Providers>
         {/* </UserProvider> */}
       </body>

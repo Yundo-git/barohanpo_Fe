@@ -88,7 +88,7 @@ export default function PharmacyDetail() {
       </div>
 
       {/* 탭 내용 */}
-      <div className="mt-4 overflow-y-auto h-[calc(100vh-3.5rem)]">
+      <div className=" h-[calc(100vh-3.5rem)]">
         {activeTab === "info" ? (
           <div>
             <h3 className="text-lg  font-semibold mb-2">약국 정보</h3>

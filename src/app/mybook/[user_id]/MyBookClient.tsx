@@ -63,7 +63,7 @@ function MyBookContent({ userId }: { userId: number }) {
       key: "reservations",
       label: "예약 내역",
       component: isLoading ? (
-        <div className="py-4 text-center text-gray-500">로딩 중...</div>
+        <div className="py-4 text-center h-full text-gray-500">로딩 중...</div>
       ) : (
         <BookList reservation={reservations} onCancelSuccess={handleRefresh} userId={userId}/>
       ),
@@ -80,7 +80,7 @@ function MyBookContent({ userId }: { userId: number }) {
   ] as const;
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto h-full flex flex-col">
       <Tab
         items={
           tabItems as unknown as Array<{
@@ -90,7 +90,7 @@ function MyBookContent({ userId }: { userId: number }) {
           }>
         }
         defaultActiveKey="reservations"
-        className="mb-6"
+        className="flex-1 flex flex-col min-h-0"
         onChange={(key: string) =>
           setActiveTab(key as "reservations" | "canceled")
         }
