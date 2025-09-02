@@ -14,8 +14,6 @@ function cx(...classes: ClassValue[]): string {
     .join(" ");
 }
 
-// Image file type with preview URL
-
 export interface ProfileProps {
   userId?: number;
   alt: string;
@@ -30,6 +28,7 @@ export interface ProfileProps {
   isLoading?: boolean;
   version?: number; // For cache busting
   imageUrl?: string; // Direct image URL if available
+  src?: string; // Direct image source
 }
 
 const roundedClass: Record<Round, string> = {
@@ -42,18 +41,21 @@ const roundedClass: Record<Round, string> = {
 export default function Profile({
   userId,
   alt,
-  size = 96,
+  size,
   rounded = "full",
   className = "",
   fallbackSrc = "/sample_profile.svg",
   apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
-
   version,
   imageUrl,
+  src,
   onFileSelect,
   isLoading = false,
 }: ProfileProps) {
   const baseSrc = useMemo<string>(() => {
+    // If src is provided, use it directly
+    if (src) return src;
+    
     // If direct image URL is provided, use it with version for cache busting
     if (imageUrl) {
       return version
@@ -67,15 +69,15 @@ export default function Profile({
     const root = `${apiBaseUrl}/api/profile/${userId}/photo`;
     // Add cache-busting query parameter if version is provided
     return version ? `${root}?v=${version}` : root;
-  }, [apiBaseUrl, userId, version, imageUrl, fallbackSrc]);
+  }, [apiBaseUrl, userId, version, imageUrl, fallbackSrc, src]);
 
-  const [src, setSrc] = useState<string>(baseSrc);
+  const [currentSrc, setCurrentSrc] = useState<string>(baseSrc);
   const [isFallback, setIsFallback] = useState<boolean>(false);
   const [hasCorsError, setHasCorsError] = useState<boolean>(false);
 
   useEffect(() => {
     // Reset states when baseSrc changes
-    setSrc(baseSrc);
+    setCurrentSrc(baseSrc);
     setIsFallback(false);
     setHasCorsError(false);
   }, [baseSrc]);
@@ -87,7 +89,7 @@ export default function Profile({
     if (isFallback) return;
 
     // If this is a CORS error or the image failed to load
-    if (target.src !== fallbackSrc) {
+    if (target.src !== fallbackSrc && fallbackSrc) {
       // Check if this is a CORS error by trying to load the image with fetch
       fetch(target.src, {
         method: "HEAD",
@@ -97,11 +99,11 @@ export default function Profile({
         .then(() => {
           // If we get here, it's likely a CORS issue
           setHasCorsError(true);
-          setSrc(fallbackSrc);
+          setCurrentSrc(fallbackSrc);
         })
         .catch(() => {
           // If fetch fails, it's likely a 404 or other error
-          setSrc(fallbackSrc);
+          setCurrentSrc(fallbackSrc);
         });
     }
 
@@ -112,9 +114,23 @@ export default function Profile({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate image type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      console.error('유효하지 않은 이미지 형식입니다. JPEG, PNG, WebP 형식만 지원합니다.');
+      return;
+    }
+
+    // Validate image size (5MB)
+    const maxSizeMB = 5;
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      console.error(`이미지 크기는 ${maxSizeMB}MB 이하로 업로드해주세요.`);
+      return;
+    }
+
     // Create preview URL
     const imageUrl = URL.createObjectURL(file);
-    setSrc(imageUrl);
+    setCurrentSrc(imageUrl);
 
     // Notify parent component
     onFileSelect?.(file);
@@ -122,6 +138,12 @@ export default function Profile({
     // Clean up the object URL when component unmounts
     return () => URL.revokeObjectURL(imageUrl);
   };
+
+  const sizeStyle = typeof size === 'number' 
+    ? { width: `${size}px`, height: `${size}px` }
+    : { width: '100%', height: 'auto' };
+
+  const imageSize = typeof size === 'number' ? size : undefined;
 
   return (
     <div
@@ -132,9 +154,7 @@ export default function Profile({
         {hasCorsError ? (
           // If we have a CORS error, use an img tag with crossOrigin="anonymous"
           <Image
-            src={`${baseSrc}${
-              baseSrc.includes("?") ? "&" : "?"
-            }_=${Date.now()}`}
+            src={`${baseSrc}${baseSrc.includes("?") ? "&" : "?"}_=${Date.now()}`}
             alt={alt}
             width={size}
             height={size}
@@ -148,11 +168,11 @@ export default function Profile({
         ) : (
           // Otherwise, use the normal image loading flow
           <Image
-            src={src}
+            src={currentSrc || fallbackSrc}
             alt={alt}
             width={size}
             height={size}
-            crossOrigin={src.startsWith("http") ? "anonymous" : undefined}
+            crossOrigin={currentSrc?.startsWith("http") ? "anonymous" : undefined}
             className={cx(
               "h-full w-full object-cover bg-gray-100 transition-opacity",
               roundedClass[rounded],
