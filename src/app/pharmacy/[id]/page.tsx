@@ -1,16 +1,28 @@
 "use client";
+
 import { useParams } from "next/navigation";
-import Tabs from "@/components/Tab";
-import { Pharmacy } from "@/types/pharmacy";
 import { useSelector } from "react-redux";
+import type { Pharmacy } from "@/types/pharmacy";
+import Tabs from "@/components/Tab";
 import type { RootState } from "@/store/store";
 import ReviewCard from "@/components/Review/ReviewCard";
 import useGetPharmaciesReview from "@/hooks/useGetPharmaciesReview";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import BottomSheet from "@/components/BottomSheet";
+import { format } from "date-fns";
+
+// Dynamically import the reservation sheet to handle SSR
+const ReservationSheetContent = dynamic(
+  () => import("@/components/reservation/ReservationSheetContent"),
+  { ssr: false }
+);
 
 export default function PharmacyDetail() {
   const params = useParams();
   const pharmacyId = Number(params.id);
+  const [isReservationOpen, setIsReservationOpen] = useState(false);
+  const [initialDate, setInitialDate] = useState<Date>(new Date());
 
   const pharmacies = useSelector(
     (state: RootState) => state.pharmacy.pharmacies
@@ -25,6 +37,16 @@ export default function PharmacyDetail() {
   useEffect(() => {
     void fetchReviews();
   }, [fetchReviews]);
+
+  const openReservation = () => {
+    setInitialDate(new Date());
+    setIsReservationOpen(true);
+  };
+
+  const closeReservation = () => {
+    setIsReservationOpen(false);
+    void fetchReviews();
+  };
 
   return (
     <div className="min-h-[100dvh] pb-16">
@@ -97,18 +119,37 @@ export default function PharmacyDetail() {
                 },
               ]}
               defaultActiveKey="info"
-              onChange={(key) => console.log(`Tab changed to: ${key}`)}
+              onChange={(key: string) => {
+                // 탭바뀜!
+                console.log(`Tab changed to: ${key}`);
+              }}
             />
           </div>
 
           <div className="mt-8 pt-4">
             <button
-              onClick={() => alert("기능개발중입니다.")}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium"
+              onClick={openReservation}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
             >
               예약하기
             </button>
           </div>
+
+          {isReservationOpen && pharmacy && (
+            <BottomSheet
+              isOpen={isReservationOpen}
+              onClose={closeReservation}
+              maxHeightVh={80}
+              ariaLabel={`${pharmacy.name} 예약하기`}
+            >
+              <ReservationSheetContent
+                pharmacyId={pharmacyId}
+                pharmacyName={pharmacy.name}
+                initialDate={format(initialDate, "yyyy-MM-dd")}
+                onClose={closeReservation}
+              />
+            </BottomSheet>
+          )}
         </div>
       </div>
     </div>

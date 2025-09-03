@@ -39,10 +39,17 @@ export default function ReservationSheetContent({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [isReservationComplete, setIsReservationComplete] = useState<boolean>(false);
-
+  const [isReservationComplete, setIsReservationComplete] =
+    useState<boolean>(false);
   // 고정 노출 슬롯
-  const fixedTimeSlots: string[] = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
+  const fixedTimeSlots: string[] = [
+    "09:00",
+    "10:00",
+    "11:00",
+    "14:00",
+    "15:00",
+    "16:00",
+  ];
 
   // 로그인 유저
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
@@ -54,7 +61,11 @@ export default function ReservationSheetContent({
 
   // 오늘 ~ 7일(포함) 범위 계산
   const today = new Date();
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
   const maxSelectableDate = new Date(todayStart);
   maxSelectableDate.setDate(maxSelectableDate.getDate() + 6); // 오늘 포함 7일 간
 
@@ -133,10 +144,19 @@ export default function ReservationSheetContent({
       if (hasAnyAvailable) set.add(dateStr);
     }
     return set;
-  }, [availableSlots, todayStr, nowHM, todayStart.getTime(), maxSelectableDate.getTime()]);
+  }, [
+    availableSlots,
+    todayStr,
+    nowHM,
+    todayStart.getTime(),
+    maxSelectableDate.getTime(),
+  ]);
 
   // 선택된 날짜의 시간 리스트(오늘이면 과거 시간 제거)
-  const availableTimes = useMemo((): Array<{ time: string; isAvailable: boolean }> => {
+  const availableTimes = useMemo((): Array<{
+    time: string;
+    isAvailable: boolean;
+  }> => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, "yyyy-MM-dd");
     // 선택된 날짜가 아예 비활성(주차 외/가용 없음)이면 빈 배열
@@ -146,7 +166,13 @@ export default function ReservationSheetContent({
       const future = isFutureSlot(dateStr, t);
       return { time: t, isAvailable: ok && future };
     });
-  }, [selectedDate, availableSlots, enabledDateSet, nowHM, fixedTimeSlots.join(",")]);
+  }, [
+    selectedDate,
+    availableSlots,
+    enabledDateSet,
+    nowHM,
+    fixedTimeSlots.join(","),
+  ]);
 
   // 날짜 변경
   const onDateChange = (v: Value): void => {
@@ -166,7 +192,9 @@ export default function ReservationSheetContent({
   }, [selectedDate, selectedTime, nowHM]);
 
   if (isLoading) {
-    return <div className="p-4 text-center">예약 가능한 날짜를 불러오는 중...</div>;
+    return (
+      <div className="p-4 text-center">예약 가능한 날짜를 불러오는 중...</div>
+    );
   }
 
   if (isReservationComplete && selectedDate && selectedTime) {
@@ -177,13 +205,15 @@ export default function ReservationSheetContent({
         pharmacyName={pharmacyName}
       />
     );
-    }
+  }
 
   if (enabledDateSet.size === 0) {
     return (
       <div className="p-4">
         <header className="mb-3">
-          <h2 className="text-base font-semibold">{pharmacyName ?? "약국"} 예약</h2>
+          <h2 className="text-base font-semibold">
+            {pharmacyName ?? "약국"} 예약
+          </h2>
         </header>
         <p>예약 가능한 날짜가 없습니다.</p>
         <div className="mt-4 flex justify-end">
@@ -274,7 +304,9 @@ export default function ReservationSheetContent({
 
                     const dateStr = format(selectedDate, "yyyy-MM-dd");
                     if (!isFutureSlot(dateStr, selectedTime)) {
-                      alert("이미 지난 시간대입니다. 다른 시간을 선택해주세요.");
+                      alert(
+                        "이미 지난 시간대입니다. 다른 시간을 선택해주세요."
+                      );
                       setSelectedTime(null);
                       return;
                     }
@@ -290,7 +322,10 @@ export default function ReservationSheetContent({
                   ].join(" ")}
                 >
                   {selectedTime
-                    ? `${format(selectedDate, "yyyy년 MM월 dd일")} ${selectedTime} 예약하기`
+                    ? `${format(
+                        selectedDate,
+                        "yyyy년 MM월 dd일"
+                      )} ${selectedTime} 예약하기`
                     : "시간을 선택해주세요"}
                 </button>
               </div>
