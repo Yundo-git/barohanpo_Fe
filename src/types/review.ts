@@ -9,6 +9,7 @@ export interface Review {
   review_photo_id: number;
   score: number;
   user_id: number;
+  profileImageVersion?: number;
   photos: ReviewPhoto[];
 }
 
