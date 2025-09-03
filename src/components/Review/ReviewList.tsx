@@ -57,7 +57,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
   return (
     <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
       {reviewList.map((review, index) => (
-        <div key={review.review_id || index} className=" mb-4">
+        <div key={review.review_id || index} className=" mb-4 border-b border-gray-200 py-4">
           {updateReviewModalOpen && selectedReview && (
             <UpdateReviewModal
               isOpen={updateReviewModalOpen}
@@ -89,12 +89,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
             </div>
           </div>
 
-          {/* Review Content */}
+          {/* 리뷰 내용 영역*/}
           <p className="mt-3 text-gray-800 whitespace-pre-line">
             {review.comment || "내용 없음"}
           </p>
 
-          {/* Review Images */}
+          {/* 리뷰 사진 영역*/}
           {review.photos && review.photos.length > 0 && (
             <div className="mt-3">
               <div className="flex gap-3 overflow-x-auto py-2 pb-3 -mx-1 px-1 scrollbar-hide">
@@ -183,11 +183,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
             </div>
           )}
           {/* 수정/삭제버튼*/}
-          <div className="flex space-x-2">
-            <button onClick={() => updateReview(review)}>수정</button>
+          <div className="flex space-x-2 ">
+            <button onClick={() => updateReview(review)} className="border border-gray-300 rounded-md px-4 py-2">수정</button>
             <button
               onClick={() => handleDeleteClick(review.review_id)}
               disabled={isDeleting}
+              className="border border-gray-300 rounded-md px-4 py-2"
             >
               {isDeleting ? "삭제 중..." : "삭제"}
             </button>

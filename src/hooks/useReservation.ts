@@ -4,7 +4,10 @@ interface UseReservationOptions {
   onSuccess?: (date: string, time: string) => void;
 }
 
-export const useReservation = (p_id: string, options: UseReservationOptions = {}) => {
+export const useReservation = (
+  p_id: string,
+  options: UseReservationOptions = {}
+) => {
   const { onSuccess } = options;
   const handleReservation = async (
     userId: number,
