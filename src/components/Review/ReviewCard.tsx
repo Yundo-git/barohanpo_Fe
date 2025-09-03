@@ -84,11 +84,11 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           userId={review.user_id || 0}
           version={review?.profileImageVersion}
           alt="사용자 프로필"
-          size={24}
+          size={20}
           rounded="full"
           className="w-[4.5rem] h-[4.5rem]"
         />
-        <p>{user?.nickname}</p>
+        <p>{user?.nickname} . </p>
         {formatDate(review.create_at)}
       </section>
     </div>
