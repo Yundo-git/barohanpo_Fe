@@ -186,9 +186,10 @@ export default function useImageUpload({
     handleFileChange,
     removeImage,
     resetImages,
+    setImages, // Add setImages to the return object
     accept: acceptString,
     maxFiles,
     remainingSlots: maxFiles - images.length,
     ...singleImageProps
-  };
+  } as const; // Use const assertion to preserve literal types
 }

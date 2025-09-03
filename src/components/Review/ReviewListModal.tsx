@@ -50,7 +50,10 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
             작성된 리뷰가 없습니다.
           </div>
         ) : (
-          <ReviewList reviewList={reviews} />
+          <ReviewList 
+            reviewList={reviews} 
+            onDelete={fetchReviews} 
+          />
         )}
       </div>
     </div>

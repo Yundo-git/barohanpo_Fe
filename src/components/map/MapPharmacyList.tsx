@@ -30,12 +30,9 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
         <div className="border border-gray-200 rounded-md">
           <div className="flex gap-2 p-2">
             <div className="w-[60vw]">
-              <a
-                href={`pharmacy/${selectedPharmacy.p_id}`}
-                className="text-base font-medium hover:underline"
-              >
+              <p className="text-base font-medium">
                 {selectedPharmacy.name || "이름 없음"} &gt;
-              </a>
+              </p>
               <p className="text-sm text-gray-600 mt-1">
                 {selectedPharmacy.address || "주소 정보 없음"}
               </p>
@@ -45,7 +42,13 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
                 </p>
               )}
             </div>
-            <div className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center">
+            <div
+              className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Add any image click handler here if needed
+              }}
+            >
               이미지 영역
             </div>
           </div>
@@ -64,14 +67,14 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
     <div className="space-y-2 max-h-[75vh] px-2">
       {pharmacies.map((pharmacy) => (
         <div key={pharmacy.p_id} className="border border-gray-200 rounded-md">
-          <div className="flex gap-2 p-2">
-            <div
-              className="hover:bg-gray-50 w-[60vw]"
-              onClick={() => onPharmacySelect(pharmacy)}
-            >
-              <a href={`pharmacy/${pharmacy.p_id}`}>
-                {`${pharmacy.name} >` || "이름 없음"}
-              </a>
+          <div
+            className="flex gap-2 p-2 cursor-pointer hover:bg-gray-50"
+            onClick={() =>
+              (window.location.href = `/pharmacy/${pharmacy.p_id}`)
+            }
+          >
+            <div className="w-[60vw]">
+              <p>{pharmacy.name ? `${pharmacy.name} >` : "이름 없음"}</p>
               <p className="text-xs text-gray-600">
                 {pharmacy.address || "주소 정보 없음"}
               </p>
@@ -81,7 +84,13 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
                 </p>
               )}
             </div>
-            <div className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center">
+            <div
+              className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Add any image click handler here if needed
+              }}
+            >
               이미지 영역
             </div>
           </div>
