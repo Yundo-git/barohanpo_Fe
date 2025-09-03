@@ -1,29 +1,26 @@
-//리뷰 내용 조회하는 훅
-import { useCallback, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Review } from "@/types/review";
 
 interface UseGetUserReviewReturn {
   reviews: Review[];
   isLoading: boolean;
   error: Error | null;
-  fetchReviews: () => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchReviews = useCallback(async () => {
-    if (!userId) {
-      setReviews([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    
-    try {
+  const queryClient = useQueryClient();
+  
+  const { 
+    data: reviewsData = [], 
+    isLoading, 
+    error, 
+    refetch
+  } = useQuery<Review[]>({
+    queryKey: ['userReviews', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${userId}`
       );
@@ -33,18 +30,23 @@ const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
       }
 
       const data = await res.json();
-      const reviewsData = Array.isArray(data?.data) ? data.data : [];
-      setReviews(reviewsData);
-    } catch (err) {
-      console.error("Error fetching reviews:", err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch reviews'));
-      setReviews([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-  return { reviews, isLoading, error, fetchReviews };
+  // Refetch function that can be called manually
+  const handleRefetch = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['userReviews', userId] });
+  };
+
+  return { 
+    reviews: reviewsData, 
+    isLoading, 
+    error: error as Error | null, 
+    refetch: handleRefetch 
+  };
 };
 
 export default useGetUserReview;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import useUpdateReview from "@/hooks/useUpdateReview";
+import useUpdateReview, { type UpdateReviewParams } from "@/hooks/useUpdateReview";
 import useImageUpload, { type ImageFile } from "@/hooks/useImageUpload";
 import { Review, ReviewPhoto } from "@/types/review";
 
@@ -109,12 +109,20 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await updateReview({
+      const updateData: UpdateReviewParams = {
         reviewId: review.review_id,
+        userId: review.user_id,
         score,
         comment,
         images: images.map((img) => img.file),
-      });
+      };
+
+      // Add pharmacyId only if it exists on the review
+      if ('pharmacy_id' in review) {
+        updateData.pharmacyId = (review as any).pharmacy_id;
+      }
+
+      await updateReview(updateData);
 
       // 성공 알림
       alert("리뷰가 성공적으로 수정되었습니다.");

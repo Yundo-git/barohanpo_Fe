@@ -2,7 +2,7 @@
 
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import ReviewList from "./ReviewList";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import useGetUserReview from "@/hooks/useGetUserReview";
 
 interface ReviewListModalProps {
@@ -16,15 +16,13 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
   onClose,
   userId,
 }) => {
-  const { reviews, isLoading, error: _error, fetchReviews } = useGetUserReview(userId);
-  const [hasFetched, setHasFetched] = useState(false);
+  const { reviews, isLoading, error: _error, refetch } = useGetUserReview(userId);
 
   useEffect(() => {
-    if (isOpen && !hasFetched) {
-      fetchReviews();
-      setHasFetched(true);
+    if (isOpen) {
+      refetch();
     }
-  }, [isOpen, hasFetched, fetchReviews]);
+  }, [isOpen, refetch]);
 
   if (!isOpen) return null;
 
@@ -52,7 +50,7 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
         ) : (
           <ReviewList 
             reviewList={reviews} 
-            onDelete={fetchReviews} 
+            onDelete={refetch} 
           />
         )}
       </div>

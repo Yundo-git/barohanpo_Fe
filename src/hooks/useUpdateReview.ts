@@ -1,10 +1,12 @@
-import { useMutation, UseMutationResult } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface UpdateReviewParams {
+export interface UpdateReviewParams {
   reviewId: number;
+  userId: number;
   score: number;
   comment: string;
   images?: File[];
+  pharmacyId?: number;
 }
 
 interface ApiResponse {
@@ -19,6 +21,8 @@ const useUpdateReview = (): {
   isError: boolean;
   error: Error | null;
 } => {
+  const queryClient = useQueryClient();
+  
   const updateReviewMutation = useMutation<
     ApiResponse,
     Error,
@@ -34,7 +38,7 @@ const useUpdateReview = (): {
       });
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/reviews/${reviewId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${reviewId}/update`,
         {
           method: "PUT",
           credentials: "include",
@@ -49,8 +53,28 @@ const useUpdateReview = (): {
 
       return response.json();
     },
-    onSuccess: () => {
-      // 성공 시 캐시 무효화 또는 쿼리 다시 가져오기
+    onSuccess: (_, variables) => {
+      // Invalidate all related review queries
+      queryClient.invalidateQueries({
+        queryKey: ['reviews'],
+        refetchType: 'active',
+      });
+      
+      // Invalidate user's reviews
+      if (variables.userId) {
+        queryClient.invalidateQueries({
+          queryKey: ['userReviews', variables.userId],
+          refetchType: 'active',
+        });
+      }
+      
+      // Invalidate pharmacy reviews if pharmacyId is provided
+      if (variables.pharmacyId) {
+        queryClient.invalidateQueries({
+          queryKey: ['pharmacy', variables.pharmacyId, 'reviews'],
+          refetchType: 'active',
+        });
+      }
     },
   });
 
