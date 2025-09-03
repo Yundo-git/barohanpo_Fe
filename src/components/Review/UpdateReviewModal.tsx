@@ -22,7 +22,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
   const [comment, setComment] = useState(review?.comment || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateReview } = useUpdateReview();
-
+  console.log(review.photos);
   // 이미지 업로드 훅 (최대 3장)
   const {
     images,
@@ -41,10 +41,56 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
       setComment(review.comment || "");
 
       // 기존 이미지가 있으면 미리보기 설정
-      if (review.photos && review.photos.length > 0) {
-        // Note: 실제 구현에서는 서버에서 이미지 URL을 가져와서 설정해야 함
-        // 여기서는 예시로 빈 배열로 설정
-        setImages([]);
+      const existingPhotos = review?.photos?.filter(photo => photo?.review_photo_blob) || [];
+      if (existingPhotos.length > 0) {
+        // 서버에서 받은 이미지 URL을 사용하여 미리보기 설정
+        const existingImages = existingPhotos.map(photo => {
+          // review_photo_blob이 객체인 경우 data 속성을 확인
+          let blobData = '';
+          const photoBlob = photo.review_photo_blob as unknown;
+          
+          // Handle different formats of review_photo_blob with proper type checking
+          if (photoBlob !== null && typeof photoBlob === 'object') {
+            // If it's an object with data property (like a Buffer)
+            if ('data' in photoBlob && Array.isArray((photoBlob as { data: unknown }).data)) {
+              const bufferData = (photoBlob as { data: number[] }).data;
+              blobData = Buffer.from(bufferData).toString('base64');
+            }
+            // If it's a File or Blob
+            else if (photoBlob instanceof Blob || photoBlob instanceof File) {
+              return {
+                id: `existing-${photo.review_photo_id}`,
+                file: new File([], `existing-${photo.review_photo_id}`),
+                previewUrl: URL.createObjectURL(photoBlob),
+              };
+            }
+          } else if (typeof photoBlob === 'string') {
+            // If it's already a base64 string
+            const blobStr = photoBlob;
+            if (blobStr.startsWith('data:image/')) {
+              const parts = blobStr.split(',');
+              blobData = parts.length > 1 ? parts[1] : blobStr;
+            } else {
+              blobData = blobStr;
+            }
+          }
+          
+          // Clean up any non-base64 characters
+          const cleanBlobData = typeof blobData === 'string' 
+            ? blobData.replace(/^data:image\/\w+;base64,/, '')
+            : '';
+          
+          const previewUrl = typeof cleanBlobData === 'string' && cleanBlobData.startsWith('blob:')
+            ? cleanBlobData
+            : `data:image/jpeg;base64,${cleanBlobData}`;
+            
+          return {
+            id: `existing-${photo.review_photo_id}`,
+            file: new File([], `existing-${photo.review_photo_id}`),
+            previewUrl,
+          };
+        });
+        setImages(existingImages);
       } else {
         setImages([]);
       }

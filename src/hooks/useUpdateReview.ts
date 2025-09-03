@@ -19,28 +19,32 @@ const useUpdateReview = (): {
   isError: boolean;
   error: Error | null;
 } => {
-  const updateReviewMutation = useMutation<ApiResponse, Error, UpdateReviewParams>({
+  const updateReviewMutation = useMutation<
+    ApiResponse,
+    Error,
+    UpdateReviewParams
+  >({
     mutationFn: async ({ reviewId, score, comment, images = [] }) => {
       const formData = new FormData();
-      formData.append('score', score.toString());
-      formData.append('comment', comment);
-      
+      formData.append("score", score.toString());
+      formData.append("comment", comment);
+
       images.forEach((file) => {
-        formData.append('images', file);
+        formData.append("images", file);
       });
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/reviews/${reviewId}`,
         {
-          method: 'PUT',
-          credentials: 'include',
+          method: "PUT",
+          credentials: "include",
           body: formData,
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || '리뷰 수정에 실패했습니다.');
+        throw new Error(errorData.message || "리뷰 수정에 실패했습니다.");
       }
 
       return response.json();
