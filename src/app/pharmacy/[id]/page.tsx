@@ -135,20 +135,30 @@ export default function PharmacyDetail() {
             </button>
           </div>
 
+          {/* Semi-transparent overlay when bottom sheet is open */}
+          {isReservationOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+              onClick={closeReservation}
+            />
+          )}
+
           {isReservationOpen && pharmacy && (
-            <BottomSheet
-              isOpen={isReservationOpen}
-              onClose={closeReservation}
-              maxHeightVh={80}
-              ariaLabel={`${pharmacy.name} 예약하기`}
-            >
-              <ReservationSheetContent
-                pharmacyId={pharmacyId}
-                pharmacyName={pharmacy.name}
-                initialDate={format(initialDate, "yyyy-MM-dd")}
+            <div className="fixed bottom-0 left-0 right-0 z-50">
+              <BottomSheet
+                isOpen={isReservationOpen}
                 onClose={closeReservation}
-              />
-            </BottomSheet>
+                maxHeightVh={80}
+                ariaLabel={`${pharmacy.name} 예약하기`}
+              >
+                <ReservationSheetContent
+                  pharmacyId={pharmacyId}
+                  pharmacyName={pharmacy.name}
+                  initialDate={format(initialDate, "yyyy-MM-dd")}
+                  onClose={closeReservation}
+                />
+              </BottomSheet>
+            </div>
           )}
         </div>
       </div>
