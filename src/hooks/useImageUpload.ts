@@ -30,11 +30,19 @@ export default function useImageUpload({
   const [images, setImages] = useState<ImageFile[]>(() => {
     // 초기 이미지가 제공되면 미리보기용 객체 생성
     if (initialImages.length > 0) {
-      return initialImages.map((url, index) => ({
-        id: `initial-${Date.now()}-${index}`,
-        file: new File([], `image-${index}`, { type: 'image/*' }),
-        previewUrl: url
-      }));
+      return initialImages.map((url, index) => {
+        // Create a dummy file object with minimal data
+        const dummyFile = new File([], `image-${index}`, { type: 'image/*' });
+        // Mark it as existing so we can handle it differently in the upload
+        Object.defineProperty(dummyFile, 'isExisting', { value: true });
+        
+        return {
+          id: `existing-${Date.now()}-${index}`,
+          file: dummyFile,
+          previewUrl: url,
+          isExisting: true // Add a flag to identify existing images
+        };
+      });
     }
     return [];
   });
@@ -47,6 +55,9 @@ export default function useImageUpload({
 
   // 이미지 파일 검증
   const validateImage = useCallback((file: File): boolean => {
+    // Skip validation for existing files
+    if ('isExisting' in file) return true;
+    
     // 파일 타입 검사
     if (!accept.includes(file.type)) {
       throw new Error(`${file.name}: 지원하지 않는 파일 형식입니다.`);
@@ -61,17 +72,17 @@ export default function useImageUpload({
   }, [accept, maxSizeMB]);
 
   // 파일 선택 핸들러
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const newImages: ImageFile[] = [];
-    const maxFilesToAdd = maxFiles - images.length;
-    const filesToProcess = Array.from(files).slice(0, maxFilesToAdd);
-    const errors: string[] = [];
+    let hasError = false;
 
-    // 파일 유효성 검사 및 미리보기 생성
-    for (const file of filesToProcess) {
+    // Convert FileList to array and process each file
+    Array.from(files).forEach((file) => {
+      if (hasError) return;
+
       try {
         validateImage(file);
         const imageFile: ImageFile = {
@@ -80,18 +91,13 @@ export default function useImageUpload({
           previewUrl: URL.createObjectURL(file)
         };
         newImages.push(imageFile);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('이미지 처리 중 오류 발생:', err);
-        errors.push(`${file.name}: 처리 중 오류가 발생했습니다.`);
+        const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+        setError(errorMessage);
+        hasError = true;
       }
-    }
-
-    // 에러 메시지 설정
-    if (errors.length > 0) {
-      setError(errors.join('\n'));
-    } else {
-      setError(null);
-    }
+    });
 
     // 단일 이미지 모드인 경우 기존 이미지 제거
     if (newImages.length > 0) {
@@ -122,36 +128,25 @@ export default function useImageUpload({
     }
 
     // 입력 필드 초기화 (동일한 파일을 다시 선택할 수 있도록)
-    event.target.value = '';
+    e.target.value = '';
   }, [accept, images, maxFiles, maxSizeMB, singleImage]);
 
   // 특정 이미지 제거
   const removeImage = useCallback((id: string) => {
-    setImages(prev => {
-      const imageToRemove = prev.find(img => img.id === id);
-      if (imageToRemove) {
-        // Blob URL만 해제 (외부 URL은 해제하지 않음)
-        if (imageToRemove.previewUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(imageToRemove.previewUrl);
-        }
-      }
-      return prev.filter(img => img.id !== id);
-    });
-    // 에러 초기화
-    setError(null);
+    setImages(prev => prev.filter(img => img.id !== id));
   }, []);
+
+  // Filter out any existing images that don't have a file
+  const getValidImages = useCallback(() => {
+    return images.filter(img => {
+      // Keep existing images or images with actual file data
+      return (img as any).isExisting || img.file.size > 0;
+    });
+  }, [images]);
 
   // 모든 이미지 제거
   const resetImages = useCallback(() => {
-    setImages(prev => {
-      // Blob URL만 해제 (외부 URL은 해제하지 않음)
-      prev.forEach(img => {
-        if (img.previewUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(img.previewUrl);
-        }
-      });
-      return [];
-    });
+    setImages([]);
     setError(null);
   }, []);
 
@@ -183,6 +178,7 @@ export default function useImageUpload({
     images,
     isUploading,
     error,
+    getValidImages,
     handleFileChange,
     removeImage,
     resetImages,

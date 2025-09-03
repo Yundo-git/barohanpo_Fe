@@ -32,6 +32,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
     removeImage,
     resetImages,
     setImages,
+    getValidImages,
   } = useImageUpload({ maxFiles: 3 });
 
   // 리뷰 데이터가 변경되면 폼 초기화
@@ -109,13 +110,23 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Get only valid images (with actual file data or marked as existing)
+      const validImages = getValidImages();
+      
       const updateData: UpdateReviewParams = {
         reviewId: review.review_id,
         userId: review.user_id,
         score,
         comment,
-        images: images.map((img) => img.file),
+        images: validImages
+          .filter(img => !(img as any).isExisting) // Filter out existing images
+          .map(img => img.file), // Get only the file objects
       };
+      
+      console.log('Updating review with data:', {
+        ...updateData,
+        images: updateData.images?.map(f => f.name)
+      });
 
       // Add pharmacyId only if it exists on the review
       if ('pharmacy_id' in review) {
