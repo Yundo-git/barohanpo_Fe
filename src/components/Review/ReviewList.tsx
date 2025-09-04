@@ -57,7 +57,10 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
   return (
     <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
       {reviewList.map((review, index) => (
-        <div key={review.review_id || index} className=" mb-4 border-b border-gray-200 py-4">
+        <div
+          key={review.review_id || index}
+          className=" mb-4 border-b border-gray-200 py-4"
+        >
           {updateReviewModalOpen && selectedReview && (
             <UpdateReviewModal
               isOpen={updateReviewModalOpen}
@@ -184,7 +187,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
           )}
           {/* 수정/삭제버튼*/}
           <div className="flex space-x-2 ">
-            <button onClick={() => updateReview(review)} className="border border-gray-300 rounded-md px-4 py-2">수정</button>
+            <button
+              onClick={() => updateReview(review)}
+              className="border border-gray-300 rounded-md px-4 py-2"
+            >
+              수정
+            </button>
             <button
               onClick={() => handleDeleteClick(review.review_id)}
               disabled={isDeleting}

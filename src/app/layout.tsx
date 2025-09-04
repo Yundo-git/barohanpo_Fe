@@ -30,9 +30,7 @@ export default function RootLayout({
               <Header />
             </div>
             <main className="flex-1 pt-14 pb-14 overflow-y-auto">
-              <div className="h-full">
-                {children}
-              </div>
+              <div className="h-full">{children}</div>
             </main>
             <div className="fixed bottom-0 left-0 right-0 z-50">
               <MobileNavBar />

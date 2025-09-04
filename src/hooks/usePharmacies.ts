@@ -10,7 +10,10 @@ interface UsePharmaciesReturn {
   isLoading: boolean;
   error: string | null;
   initializePharmacies: (initialPharmacies: PharmacyWithUser[]) => void;
-  findNearbyPharmacies: (lat: number, lon: number) => Promise<PharmacyWithUser[]>;
+  findNearbyPharmacies: (
+    lat: number,
+    lon: number
+  ) => Promise<PharmacyWithUser[]>;
   createPharmacyMarkers: (
     map: kakao.maps.Map,
     pharmacies: PharmacyWithUser[],
@@ -27,40 +30,46 @@ export const usePharmacies = (): UsePharmaciesReturn => {
 
   const findNearbyPharmacies = useCallback(
     async (lat: number, lng: number): Promise<PharmacyWithUser[]> => {
-      // Check if we have fresh data (less than 5 minutes old)
-      const isDataFresh = lastFetched && (Date.now() - lastFetched < 5 * 60 * 1000);
-      
-      // If we have pharmacies in the store and the data is fresh, return them
-      if (pharmacies.length > 0 && isDataFresh) {
-        console.log('Using cached pharmacy data');
+      // 저장된 데이터가 이미 있으면 즉시 캐시 사용 (재요청 방지)
+      if (pharmacies.length > 0) {
+        console.log("Using cached pharmacy data (skip fetch)");
+        return pharmacies;
+      }
+
+      // 신선도 체크 (선택적으로만 사용)
+      const isDataFresh =
+        lastFetched && Date.now() - lastFetched < 5 * 60 * 1000;
+      if (isDataFresh) {
         return pharmacies;
       }
 
       try {
-        console.log('Fetching fresh pharmacy data...');
+        console.log("Fetching fresh pharmacy data...");
         const result = await dispatch(fetchNearbyPharmacies({ lat, lng }));
-        
+
         // Type guard to check if the result is a fulfilled action
         if (fetchNearbyPharmacies.fulfilled.match(result)) {
-          const fetchedPharmacies = Array.isArray(result.payload) ? result.payload : [];
+          const fetchedPharmacies = Array.isArray(result.payload)
+            ? result.payload
+            : [];
           console.log(`Fetched ${fetchedPharmacies.length} pharmacies`);
           return fetchedPharmacies;
         } else if (fetchNearbyPharmacies.rejected.match(result)) {
-          console.error('Error fetching pharmacies:', result.error);
+          console.error("Error fetching pharmacies:", result.error);
           // If we have stale data, return it instead of throwing
           if (pharmacies.length > 0) {
-            console.log('Using stale pharmacy data due to fetch error');
+            console.log("Using stale pharmacy data due to fetch error");
             return pharmacies;
           }
-          throw new Error(result.error.message || 'Failed to fetch pharmacies');
+          throw new Error(result.error.message || "Failed to fetch pharmacies");
         }
-        
+
         return [];
       } catch (error) {
-        console.error('Error in findNearbyPharmacies:', error);
+        console.error("Error in findNearbyPharmacies:", error);
         // If we have any data, return it even if there was an error
         if (pharmacies.length > 0) {
-          console.log('Using existing pharmacy data after error');
+          console.log("Using existing pharmacy data after error");
           return pharmacies;
         }
         throw error;

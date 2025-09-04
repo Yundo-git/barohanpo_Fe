@@ -1,4 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { fetchUserReviews } from "@/store/userReviewsSlice";
+import { fetchCompletedReviewIds } from "@/store/reviewCompletionSlice";
+import { fetchFiveStarReviews } from "@/store/reviewSlice";
 
 export interface UpdateReviewParams {
   reviewId: number;
@@ -22,7 +27,8 @@ const useUpdateReview = (): {
   error: Error | null;
 } => {
   const queryClient = useQueryClient();
-  
+  const dispatch = useDispatch<AppDispatch>();
+
   const updateReviewMutation = useMutation<
     ApiResponse,
     Error,
@@ -53,26 +59,31 @@ const useUpdateReview = (): {
 
       return response.json();
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalidate all related review queries
       queryClient.invalidateQueries({
-        queryKey: ['reviews'],
-        refetchType: 'active',
+        queryKey: ["reviews"],
+        refetchType: "active",
       });
-      
+
       // Invalidate user's reviews
       if (variables.userId) {
         queryClient.invalidateQueries({
-          queryKey: ['userReviews', variables.userId],
-          refetchType: 'active',
+          queryKey: ["userReviews", variables.userId],
+          refetchType: "active",
         });
+        // Redux 동기화: 내 후기/완료된 예약 ID/메인 5점 리뷰
+        const uid = Number(variables.userId);
+        void dispatch(fetchUserReviews({ userId: uid }));
+        void dispatch(fetchCompletedReviewIds({ userId: uid }));
+        void dispatch(fetchFiveStarReviews());
       }
-      
+
       // Invalidate pharmacy reviews if pharmacyId is provided
       if (variables.pharmacyId) {
         queryClient.invalidateQueries({
-          queryKey: ['pharmacy', variables.pharmacyId, 'reviews'],
-          refetchType: 'active',
+          queryKey: ["pharmacy", variables.pharmacyId, "reviews"],
+          refetchType: "active",
         });
       }
     },

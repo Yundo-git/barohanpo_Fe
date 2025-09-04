@@ -1,8 +1,11 @@
-import { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
-import { setAuth } from '@/store/userSlice';
-import { login as loginApi } from '@/services/authService';
+import { useCallback } from "react";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { setAuth } from "@/store/userSlice";
+import { fetchReservations, fetchCancelList } from "@/store/bookingSlice";
+import { fetchCompletedReviewIds } from "@/store/reviewCompletionSlice";
+import { fetchUserReviews } from "@/store/userReviewsSlice";
+import { login as loginApi } from "@/services/authService";
 
 interface LoginParams {
   email: string;
@@ -28,14 +31,14 @@ const useLogin = (): UseLoginReturn => {
     async (loginData: LoginParams) => {
       try {
         if (!loginData?.email || !loginData?.password) {
-          return { success: false, error: '이메일과 비밀번호를 입력해주세요.' };
+          return { success: false, error: "이메일과 비밀번호를 입력해주세요." };
         }
 
         const result = await loginApi(loginData.email, loginData.password);
-        
+
         if (result?.success && result?.data) {
           const { user, accessToken, refreshToken, expiresIn } = result.data;
-          
+
           try {
             // Redux에 사용자 정보와 토큰 저장
             dispatch(
@@ -46,31 +49,43 @@ const useLogin = (): UseLoginReturn => {
                 expiresIn,
               })
             );
-            
-            console.log('Login successful, user:', user);
+            // 로그인 직후 예약/취소내역 선조회하여 Redux에 저장
+            if (user?.user_id) {
+              const uid = Number(user.user_id);
+              await Promise.all([
+                dispatch(fetchReservations({ userId: uid })),
+                dispatch(fetchCancelList({ userId: uid })),
+                dispatch(fetchCompletedReviewIds({ userId: uid })),
+                dispatch(fetchUserReviews({ userId: uid })),
+              ]);
+            }
+
+            console.log("Login successful, user:", user);
             return { success: true };
           } catch (dispatchError) {
-            console.error('Error dispatching setAuth:', dispatchError);
-            return { 
-              success: false, 
-              error: '로그인 상태를 저장하는 중 오류가 발생했습니다.' 
+            console.error("Error dispatching setAuth:", dispatchError);
+            return {
+              success: false,
+              error: "로그인 상태를 저장하는 중 오류가 발생했습니다.",
             };
           }
         }
-        
-        return { 
-          success: false, 
-          error: result?.error || '로그인에 실패했습니다.' 
+
+        return {
+          success: false,
+          error: result?.error || "로그인에 실패했습니다.",
         };
       } catch (error) {
-        console.error('Login error:', error);
-        return { 
-          success: false, 
-          error: (error as Error)?.message || '로그인 처리 중 오류가 발생했습니다.' 
+        console.error("Login error:", error);
+        return {
+          success: false,
+          error:
+            (error as Error)?.message || "로그인 처리 중 오류가 발생했습니다.",
         };
-      };
-    }
-  , [dispatch]);
+      }
+    },
+    [dispatch]
+  );
 
   return { login };
 };

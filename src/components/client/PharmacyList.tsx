@@ -44,42 +44,7 @@ export default function PharmacyList({}: PharmacyListProps) {
     findNearbyPharmacies, // 실제로 사용할 함수
   });
 
-  useEffect(() => {
-    // 이미 약국 데이터가 있거나 이미 요청을 보냈으면 위치 조회를 하지 않음
-    if (pharmacies.length > 0 || hasFetchedRef.current) {
-      return;
-    }
-
-    const fetchPharmacies = async () => {
-      setIsSearching(true);
-      hasFetchedRef.current = true; // 요청 시작 시 플래그 설정
-
-      try {
-        // useMapHandlers의 getCurrentPosition 사용
-        const position = await getCurrentPosition();
-        const { latitude, longitude } = position.coords;
-        console.log("position", position);
-        await findNearbyPharmacies(latitude, longitude);
-      } catch (error: unknown) {
-        hasFetchedRef.current = false; // 실패 시 플래그 초기화하여 재시도 가능하도록
-
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "알 수 없는 오류가 발생했습니다.";
-
-        console.error("약국 정보를 가져오는 중 오류가 발생했습니다:", {
-          error: errorMessage,
-          stack: error instanceof Error ? error.stack : undefined,
-        });
-        // 사용자에게 오류 메시지 표시 (예: 토스트 메시지)
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    fetchPharmacies();
-  }, [pharmacies.length, findNearbyPharmacies, getCurrentPosition]);
+  // 스플래시에서 미리 로드하므로 여기서는 별도 fetch를 하지 않음
 
   // 에러가 있으면 사용자에게 표시
   useEffect(() => {

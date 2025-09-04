@@ -25,6 +25,49 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     }).format(date);
   };
   console.log("review", review);
+  const toImageSrc = (photo: Review["photos"][number]): string | null => {
+    try {
+      const blobAny: any = (photo as any)?.review_photo_blob;
+      // Case 1: { data: number[] }
+      const dataArr: number[] | undefined = blobAny?.data;
+      if (Array.isArray(dataArr) && dataArr.length > 0) {
+        const uint8Array = new Uint8Array(dataArr);
+        const base64String = btoa(
+          Array.from(uint8Array)
+            .map((byte) => String.fromCharCode(byte))
+            .join("")
+        );
+        return `data:image/jpeg;base64,${base64String}`;
+      }
+      // Case 2: Node Buffer-like { type: 'Buffer', data: number[] }
+      if (
+        blobAny &&
+        typeof blobAny === "object" &&
+        blobAny.type === "Buffer" &&
+        Array.isArray(blobAny.data)
+      ) {
+        const uint8Array = new Uint8Array(blobAny.data as number[]);
+        const base64String = btoa(
+          Array.from(uint8Array)
+            .map((byte) => String.fromCharCode(byte))
+            .join("")
+        );
+        return `data:image/jpeg;base64,${base64String}`;
+      }
+      // Case 3: base64 string
+      if (typeof blobAny === "string" && blobAny.startsWith("data:")) {
+        return blobAny;
+      }
+      // Case 4: URL string
+      if (typeof (photo as any)?.url === "string") {
+        return (photo as any).url as string;
+      }
+      return null;
+    } catch (e) {
+      console.error("Error building image src:", e);
+      return null;
+    }
+  };
   const user = useSelector((state: RootState) => state.user.user);
   return (
     <div
@@ -40,36 +83,24 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           />
         ))}
       </div>
-      {review.photos.length > 0 && (
+      {Array.isArray(review.photos) && review.photos.length > 0 && (
         <div className="flex gap-2 mt-2 overflow-x-auto py-2">
           {review.photos.map((photo, photoIndex) => {
-            try {
-              // Check if review_photo_blob is a Buffer
-              if (photo.review_photo_blob && photo.review_photo_blob.data) {
-                const uint8Array = new Uint8Array(photo.review_photo_blob.data);
-                const base64String = btoa(
-                  Array.from(uint8Array)
-                    .map((byte) => String.fromCharCode(byte))
-                    .join("")
-                );
-                return (
-                  <div key={photoIndex} className="flex-shrink-0 w-24 h-24">
-                    <img
-                      src={`data:image/jpeg;base64,${base64String}`}
-                      alt={`Review photo ${photoIndex + 1}`}
-                      className="w-full h-full object-cover rounded"
-                      onError={(e) => {
-                        console.error("Error loading image:", e);
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  </div>
-                );
-              }
-            } catch (error) {
-              console.error("Error processing image:", error);
-            }
-            return null;
+            const src = toImageSrc(photo);
+            if (!src) return null;
+            return (
+              <div key={photoIndex} className="flex-shrink-0 w-24 h-24">
+                <img
+                  src={src}
+                  alt={`Review photo ${photoIndex + 1}`}
+                  className="w-full h-full object-cover rounded"
+                  onError={(e) => {
+                    console.error("Error loading image:", e);
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+            );
           })}
         </div>
       )}

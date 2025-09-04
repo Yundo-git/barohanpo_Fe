@@ -110,8 +110,9 @@ export default function PharmacyDetail() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-gray-500 text-center py-8">
-                          등록된 후기가 없습니다.
+                        <div>
+                          {/* 아이콘 넣어야함 */}
+                          <h1>아직 등록된 리뷰가 없어요.</h1>
                         </div>
                       )}
                     </div>
@@ -135,9 +136,8 @@ export default function PharmacyDetail() {
             </button>
           </div>
 
-          {/* Semi-transparent overlay when bottom sheet is open */}
           {isReservationOpen && (
-            <div 
+            <div
               className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
               onClick={closeReservation}
             />

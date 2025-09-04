@@ -3,7 +3,7 @@ import useBookCencel from "@/hooks/useBookCancel";
 import { useState, useEffect, useMemo } from "react";
 import CancelModal from "./CancelModal";
 import ReviewModal from "../Review/ReviewModal";
-import useCompletedReview from "@/hooks/useCompletedReview";
+import { useAppSelector } from "@/store/store";
 import type { Reservation } from "@/types/reservation";
 
 interface BookListProps {
@@ -22,7 +22,9 @@ const BookList: React.FC<BookListProps> = ({
   userId,
 }) => {
   const { bookCancel } = useBookCencel();
-  const { completedReviews } = useCompletedReview(userId);
+  const completedReviews = useAppSelector(
+    (s) => s.reviewCompletion.completedIds
+  );
 
   const [cencelModal, setCencelModal] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -44,10 +46,10 @@ const BookList: React.FC<BookListProps> = ({
   };
 
   // 리뷰 완료된 book_id들을 Set으로 (객체배열 → number 배열 → Set)
-  const completedSet = useMemo<Set<number>>(() => {
-    const ids = completedReviews?.map((r) => Number(r ?? 0)) ?? [];
-    return new Set(ids);
-  }, [completedReviews]);
+  const completedSet = useMemo<Set<number>>(
+    () => new Set(completedReviews),
+    [completedReviews]
+  );
 
   const openCencelModal = (r: ReservationItem) => {
     setCencelModal(true);

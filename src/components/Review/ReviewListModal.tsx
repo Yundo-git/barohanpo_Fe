@@ -3,7 +3,11 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import ReviewList from "./ReviewList";
 import { useEffect } from "react";
-import useGetUserReview from "@/hooks/useGetUserReview";
+import { useAppSelector } from "@/store/store";
+import { useCallback } from "react";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { fetchUserReviews } from "@/store/userReviewsSlice";
 
 interface ReviewListModalProps {
   isOpen: boolean;
@@ -16,13 +20,17 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
   onClose,
   userId,
 }) => {
-  const { reviews, isLoading, error: _error, refetch } = useGetUserReview(userId);
+  const dispatch = useDispatch<AppDispatch>();
+  const { reviews, isLoading } = useAppSelector((s) => s.userReviews);
+  const refetch = useCallback(async () => {
+    if (userId) await dispatch(fetchUserReviews({ userId }));
+  }, [dispatch, userId]);
 
   useEffect(() => {
-    if (isOpen) {
-      refetch();
+    if (isOpen && reviews.length === 0 && userId) {
+      void dispatch(fetchUserReviews({ userId }));
     }
-  }, [isOpen, refetch]);
+  }, [isOpen, reviews.length, userId, dispatch]);
 
   if (!isOpen) return null;
 
@@ -48,10 +56,7 @@ const ReviewListModal: React.FC<ReviewListModalProps> = ({
             작성된 리뷰가 없습니다.
           </div>
         ) : (
-          <ReviewList 
-            reviewList={reviews} 
-            onDelete={refetch} 
-          />
+          <ReviewList reviewList={reviews} onDelete={refetch} />
         )}
       </div>
     </div>

@@ -4,8 +4,7 @@ import { Suspense, useState, useCallback, useEffect, ReactNode } from "react";
 import BookList from "@/components/reservation/BookList";
 import Tab from "@/components/Tab";
 import CancelList from "@/components/reservation/CancelList";
-import useGetBook from "@/hooks/useGetBook";
-import useGetCancelList from "@/hooks/useGetCancelList";
+import { useAppSelector } from "@/store/store";
 import type { Reservation, CancelItem } from "@/types/reservation";
 
 function Loading() {
@@ -17,44 +16,31 @@ function Loading() {
 }
 
 function MyBookContent({ userId }: { userId: number }) {
-  const { getBook, refresh: refreshBook } = useGetBook(userId);
-  const { getCancelList, refresh: refreshCancelList } =
-    useGetCancelList(userId);
+  const { reservations: bookingReservations, cancelList: bookingCancelList } =
+    useAppSelector((s) => s.booking);
 
   const [activeTab, setActiveTab] = useState<"reservations" | "canceled">(
     "reservations"
   );
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [cancelList, setCancelList] = useState<CancelItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [cancelListState, setCancelListState] = useState<CancelItem[]>([]);
+  const [loadingState, setLoadingState] = useState<boolean>(true);
 
   const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      if (activeTab === "reservations") {
-        const data = await getBook();
-        setReservations(data);
-      } else {
-        const data = await getCancelList();
-        setCancelList(data);
-      }
-    } catch (error) {
-      console.error("Error loading data:", error);
-    } finally {
-      setIsLoading(false);
+    setLoadingState(true);
+    if (activeTab === "reservations") {
+      setReservations(bookingReservations);
+    } else {
+      setCancelListState(bookingCancelList);
     }
-  }, [activeTab, getBook, getCancelList]);
+    setLoadingState(false);
+  }, [activeTab, bookingReservations, bookingCancelList]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
   const handleRefresh = () => {
-    if (activeTab === "reservations") {
-      refreshBook();
-    } else {
-      refreshCancelList();
-    }
     void loadData();
   };
 
@@ -62,19 +48,23 @@ function MyBookContent({ userId }: { userId: number }) {
     {
       key: "reservations",
       label: "예약 내역",
-      component: isLoading ? (
+      component: loadingState ? (
         <div className="py-4 text-center h-full text-gray-500">로딩 중...</div>
       ) : (
-        <BookList reservation={reservations} onCancelSuccess={handleRefresh} userId={userId}/>
+        <BookList
+          reservation={reservations}
+          onCancelSuccess={handleRefresh}
+          userId={userId}
+        />
       ),
     },
     {
       key: "canceled",
       label: "취소 내역",
-      component: isLoading ? (
+      component: loadingState ? (
         <div className="py-4 text-center text-gray-500">로딩 중...</div>
       ) : (
-        <CancelList cancelList={cancelList} />
+        <CancelList cancelList={cancelListState} />
       ),
     },
   ] as const;

@@ -10,17 +10,17 @@ interface UseGetUserReviewReturn {
 
 const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
   const queryClient = useQueryClient();
-  
-  const { 
-    data: reviewsData = [], 
-    isLoading, 
-    error, 
-    refetch
+
+  const {
+    data: reviewsData = [],
+    isLoading,
+    error,
+    refetch,
   } = useQuery<Review[]>({
-    queryKey: ['userReviews', userId],
+    queryKey: ["userReviews", userId],
     queryFn: async () => {
       if (!userId) return [];
-      
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${userId}`
       );
@@ -38,14 +38,14 @@ const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
 
   // Refetch function that can be called manually
   const handleRefetch = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['userReviews', userId] });
+    await queryClient.invalidateQueries({ queryKey: ["userReviews", userId] });
   };
 
-  return { 
-    reviews: reviewsData, 
-    isLoading, 
-    error: error as Error | null, 
-    refetch: handleRefetch 
+  return {
+    reviews: reviewsData,
+    isLoading,
+    error: error as Error | null,
+    refetch: handleRefetch,
   };
 };
 

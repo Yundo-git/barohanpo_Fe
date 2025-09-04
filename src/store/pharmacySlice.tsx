@@ -2,7 +2,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { PharmacyWithUser } from "@/types/pharmacy";
 
-
 // 비동기 Thunk 정의
 export const fetchNearbyPharmacies = createAsyncThunk<
   PharmacyWithUser[], // 성공 시 반환될 타입
@@ -14,46 +13,47 @@ export const fetchNearbyPharmacies = createAsyncThunk<
     try {
       console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
       const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
-      console.log('API URL:', apiUrl);
-      
+      console.log("API URL:", apiUrl);
+
       let response;
       try {
         response = await fetch(apiUrl);
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : 'Unknown network error';
-        console.error('Network error when fetching pharmacies:', errorMessage);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown network error";
+        console.error("Network error when fetching pharmacies:", errorMessage);
         throw new Error(`Network error: ${errorMessage}`);
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', {
+        console.error("API Error Response:", {
           status: response.status,
           statusText: response.statusText,
           url: response.url,
-          errorText
+          errorText,
         });
-        throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+        throw new Error(
+          `API request failed with status ${response.status}: ${response.statusText}`
+        );
       }
 
       let data;
       try {
         data = await response.json();
       } catch (jsonError) {
-        console.error('Error parsing JSON response:', jsonError);
-        throw new Error('Invalid JSON response from server');
+        console.error("Error parsing JSON response:", jsonError);
+        throw new Error("Invalid JSON response from server");
       }
-      
+
       const pharmacyList = Array.isArray(data) ? data : data?.data || [];
-      
+
       // API 응답 로깅
-      console.log('🔍 [API Response] Full Response:', {
+      console.log("🔍 [API Response] Full Response:", {
         rawData: data,
         extractedList: pharmacyList,
         isArray: Array.isArray(pharmacyList),
-        length: pharmacyList.length
+        length: pharmacyList.length,
       });
 
       // 로깅을 위한 임시 인터페이스
@@ -70,9 +70,15 @@ export const fetchNearbyPharmacies = createAsyncThunk<
       pharmacyList.forEach((pharmacy: PharmacyForLogging, index: number) => {
         const latValue = pharmacy.latitude ?? pharmacy.lat ?? 0;
         const lngValue = pharmacy.longitude ?? pharmacy.lng ?? 0;
-        const lat = typeof latValue === 'string' ? parseFloat(latValue) : Number(latValue);
-        const lng = typeof lngValue === 'string' ? parseFloat(lngValue) : Number(lngValue);
-        
+        const lat =
+          typeof latValue === "string"
+            ? parseFloat(latValue)
+            : Number(latValue);
+        const lng =
+          typeof lngValue === "string"
+            ? parseFloat(lngValue)
+            : Number(lngValue);
+
         console.log(`📌 [Pharmacy ${index + 1}] Coordinates:`, {
           p_id: pharmacy.p_id,
           name: pharmacy.name,
@@ -87,13 +93,16 @@ export const fetchNearbyPharmacies = createAsyncThunk<
             latitude: typeof pharmacy.latitude,
             longitude: typeof pharmacy.longitude,
             lat: typeof pharmacy.lat,
-            lng: typeof pharmacy.lng
-          }
+            lng: typeof pharmacy.lng,
+          },
         });
       });
 
       if (!Array.isArray(pharmacyList)) {
-        console.error('❌ [API Error] Invalid response format - expected array:', data);
+        console.error(
+          "❌ [API Error] Invalid response format - expected array:",
+          data
+        );
         return rejectWithValue("API response's data property is not an array");
       }
 
@@ -199,12 +208,14 @@ const pharmacySlice = createSlice({
         state.error = action.payload as string;
       })
       .addMatcher(
-        (action): action is { type: string; payload: { pharmacy?: PharmacyState } } => 
-          action.type === 'persist/REHYDRATE' && action.payload?.pharmacy,
+        (
+          action
+        ): action is { type: string; payload: { pharmacy?: PharmacyState } } =>
+          action.type === "persist/REHYDRATE" && action.payload?.pharmacy,
         (state, action) => {
-          console.log('Rehydrating pharmacy state:', action.payload.pharmacy);
+          console.log("Rehydrating pharmacy state:", action.payload.pharmacy);
           const persistedState = action.payload.pharmacy;
-          
+
           // Only update state if we have valid persisted data
           if (persistedState) {
             // Preserve the existing state and merge with persisted state
@@ -215,10 +226,11 @@ const pharmacySlice = createSlice({
               isLoading: state.isLoading,
               error: state.error,
               // Only update pharmacies if we have a valid array
-              pharmacies: Array.isArray(persistedState.pharmacies) && 
-                         persistedState.pharmacies.length > 0 
-                           ? persistedState.pharmacies 
-                           : state.pharmacies
+              pharmacies:
+                Array.isArray(persistedState.pharmacies) &&
+                persistedState.pharmacies.length > 0
+                  ? persistedState.pharmacies
+                  : state.pharmacies,
             };
           }
           return state;

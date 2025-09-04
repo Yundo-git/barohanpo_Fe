@@ -29,6 +29,15 @@ type ApiSlot = {
 /** date -> time(HH:mm) -> available */
 type SlotMap = Record<string, Record<string, boolean>>;
 
+// 간단한 슬롯 캐시 (pharmacyId + 조회 범위 기준)
+type SlotCacheItem = {
+  slots: SlotMap;
+  rangeStart: string; // yyyy-MM-dd
+  rangeEnd: string; // yyyy-MM-dd
+  fetchedAt: number; // ms
+};
+const slotCache: Map<number, SlotCacheItem> = new Map();
+
 export default function ReservationSheetContent({
   pharmacyId,
   pharmacyName,
@@ -95,11 +104,24 @@ export default function ReservationSheetContent({
     }
   }, [initialDate]);
 
-  // 데이터 로드
+  // 데이터 로드 (캐시 사용)
   useEffect(() => {
     const fetchAndProcessDates = async (): Promise<void> => {
       try {
         setIsLoading(true);
+        const rangeStart = format(todayStart, "yyyy-MM-dd");
+        const rangeEnd = format(maxSelectableDate, "yyyy-MM-dd");
+        const cached = slotCache.get(pharmacyId);
+        if (
+          cached &&
+          cached.rangeStart === rangeStart &&
+          cached.rangeEnd === rangeEnd
+        ) {
+          setAvailableSlots(cached.slots);
+          setIsLoading(false);
+          return;
+        }
+
         const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${pharmacyId}/available-dates`;
         const res = await fetch(apiUrl);
         if (!res.ok) throw new Error(`API 요청 실패: ${res.status}`);
@@ -116,6 +138,12 @@ export default function ReservationSheetContent({
         });
 
         setAvailableSlots(slots);
+        slotCache.set(pharmacyId, {
+          slots,
+          rangeStart,
+          rangeEnd,
+          fetchedAt: Date.now(),
+        });
       } catch (e) {
         console.error("예약 가능 날짜 로드 실패:", e);
         setAvailableSlots({});
@@ -125,7 +153,12 @@ export default function ReservationSheetContent({
     };
 
     void fetchAndProcessDates();
-  }, [pharmacyId, fixedTimeSlots.join(",")]);
+  }, [
+    pharmacyId,
+    fixedTimeSlots.join(","),
+    todayStart.getTime(),
+    maxSelectableDate.getTime(),
+  ]);
 
   // 선택 가능한 날짜(오늘~7일) 중에서 "미래 기준으로 true 슬롯이 하나라도 있는 날짜"만 허용
   const enabledDateSet = useMemo((): Set<string> => {

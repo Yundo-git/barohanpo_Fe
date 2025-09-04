@@ -1,13 +1,11 @@
 "use client";
 
-import useFiveStarReviews from "@/hooks/useFiveStarReviews";
+import { useAppSelector } from "@/store/store";
 import ReviewCard from "@/components/Review/ReviewCard";
 
 export default function AllReview() {
-  const { reviews, loading, error } = useFiveStarReviews();
-  //리뷰 로딩중
-  console.log('mainpage reviews',reviews);
-  if (loading) {
+  const { reviews, isLoading, error } = useAppSelector((s) => s.review);
+  if (isLoading) {
     return (
       <div className="p-4">
         <div className="flex space-x-4 overflow-x-auto pb-4 -mx-4 px-4">
@@ -30,7 +28,7 @@ export default function AllReview() {
     return (
       <div className="p-4">
         <div className="text-center py-8 text-red-600">
-          리뷰를 불러오는 중 오류가 발생했습니다: {error.message}
+          리뷰를 불러오는 중 오류가 발생했습니다: {error}
         </div>
       </div>
     );

@@ -4,11 +4,19 @@ import { persistStore, persistReducer, createTransform } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // 동기 import
 import userReducer, { UserState } from "./userSlice";
 import pharmacyReducer from "./pharmacySlice";
+import reviewReducer from "./reviewSlice";
+import bookingReducer from "./bookingSlice";
+import reviewCompletionReducer from "./reviewCompletionSlice";
+import userReviewsReducer from "./userReviewsSlice";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 const rootReducer = combineReducers({
   user: userReducer,
   pharmacy: pharmacyReducer,
+  review: reviewReducer,
+  booking: bookingReducer,
+  reviewCompletion: reviewCompletionReducer,
+  userReviews: userReviewsReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
