@@ -39,9 +39,32 @@ const useUpdateReview = (): {
       formData.append("score", score.toString());
       formData.append("comment", comment);
 
-      images.forEach((file) => {
-        formData.append("images", file);
+      // Separate new and existing images
+      const newImages = images.filter(
+        (img) => img instanceof File && !("isExisting" in img)
+      );
+      const existingImages = images.filter((img) => "isExisting" in img);
+
+      // Add new images
+      newImages.forEach((file) => {
+        if (file instanceof File) {
+          // Use the same field name that multer is configured to handle
+          formData.append("photos", file);
+        }
       });
+
+      // Add info about existing images to keep
+      const existingPhotoIds = existingImages
+        .map((img) => (img as any).id?.replace("existing-", ""))
+        .filter(Boolean);
+
+      formData.append("existing_photo_ids", JSON.stringify(existingPhotoIds));
+      formData.append(
+        "has_photo_changes",
+        (
+          newImages.length > 0 || existingImages.length !== images.length
+        ).toString()
+      );
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${reviewId}/update`,

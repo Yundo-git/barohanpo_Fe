@@ -25,6 +25,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateReview } = useUpdateReview();
   console.log(review.photos);
+
   // 이미지 업로드 훅 (최대 3장)
   const {
     images,
@@ -36,7 +37,6 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
     setImages,
     getValidImages,
   } = useImageUpload({ maxFiles: 3 });
-
   // 리뷰 데이터가 변경되면 폼 초기화
   useEffect(() => {
     if (review) {
@@ -229,7 +229,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
                       <img
                         src={image.previewUrl}
                         alt={`미리보기 ${index + 1}`}
-                        className="h-20 w-20 object-cover rounded"
+                        className="h-20 w-20 object-cover rounded cursor-pointer hover:opacity-80"
                       />
                       <button
                         type="button"

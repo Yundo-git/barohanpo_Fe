@@ -41,60 +41,56 @@ const UserSignInPage = () => {
 
   return (
     <div className="p-5">
-      
-      
-        
-        <form onSubmit={handleSubmit} className="mt-12">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                이메일 주소
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="이메일 주소"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                비밀번호
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="비밀번호"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="mt-12">
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="email-address" className="sr-only">
+              이메일 주소
+            </label>
+            <input
+              id="email-address"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="이메일 주소"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
-          )}
-
-          <div className="mt-6">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border  text-sm  border-gray-300 rounded-md disabled:cursor-not-allowed"
-            >
-              {isLoading ? "로그인 중..." : "로그인"}
-            </button>
+          <div>
+            <label htmlFor="password" className="sr-only">
+              비밀번호
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="비밀번호"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
-        </form>
-      
+        </div>
+
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
+        )}
+
+        <div className="mt-6">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="group relative w-full flex justify-center py-2 px-4 border  text-sm  border-gray-300 rounded-md disabled:cursor-not-allowed"
+          >
+            {isLoading ? "로그인 중..." : "로그인"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
