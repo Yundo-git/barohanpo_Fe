@@ -91,82 +91,17 @@ export const useMapHandlers = ({
           },
         };
       } else {
-        // 웹 환경: 권한 상태 확인 + 재시도 + watchPosition fallback
-        const getWithRetry = (attempt = 0): Promise<GeolocationPosition> =>
-          new Promise((resolve, reject) => {
-            const onError = (error: GeolocationPositionError) => {
-              const code = error?.code ?? 0;
-              if (attempt < 1 && code === 2) {
-                setTimeout(() => {
-                  getWithRetry(attempt + 1)
-                    .then(resolve)
-                    .catch(reject);
-                }, 1000);
-                return;
-              }
-
-              let watchId: number | null = null;
-              try {
-                watchId = navigator.geolocation.watchPosition(
-                  (pos) => {
-                    if (watchId !== null)
-                      navigator.geolocation.clearWatch(watchId);
-                    resolve(pos);
-                  },
-                  (watchErr) => {
-                    if (watchId !== null)
-                      navigator.geolocation.clearWatch(watchId);
-                    reject(watchErr || error);
-                  },
-                  {
-                    enableHighAccuracy: true,
-                    maximumAge: 300000,
-                    timeout: 10000,
-                  }
-                );
-              } catch (fallbackErr) {
-                reject(fallbackErr || error);
-              }
-            };
-
-            const request = () =>
-              navigator.geolocation.getCurrentPosition(resolve, onError, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000,
-              });
-
-            if (
-              "permissions" in navigator &&
-              (navigator as any).permissions?.query
-            ) {
-              (navigator as any).permissions
-                .query({ name: "geolocation" as PermissionName })
-                .then((status: PermissionStatus) => {
-                  if (status.state === "denied") {
-                    reject(new Error("Geolocation permission denied"));
-                  } else {
-                    request();
-                  }
-                })
-                .catch(() => request());
-            } else {
-              request();
-            }
+        // 웹 환경
+        return new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000,
           });
-
-        return await getWithRetry(0);
+        });
       }
     } catch (error) {
-      try {
-        const safe =
-          error instanceof Error
-            ? { name: error.name, message: error.message }
-            : error;
-        console.error("Error getting current position:", safe);
-      } catch {
-        console.error("Error getting current position:", error);
-      }
+      console.error("Error getting current position:", error);
       throw error;
     }
   };

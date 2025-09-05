@@ -35,33 +35,42 @@ export default function SplashPage() {
       try {
         // 먼저 권한 요청 시도 (웹/네이티브 각각에서 안전하게 동작)
         await requestLocationPermission();
-        let fetched = false;
+
+        // 약국 데이터 가져오기
+        let pharmacyPromise;
         try {
           const position = await getCurrentPosition();
           const { latitude, longitude } = position.coords;
-          await dispatch(
+          pharmacyPromise = dispatch(
             fetchNearbyPharmacies({ lat: latitude, lng: longitude })
           );
-          fetched = true;
         } catch {
           if (lastLocation) {
-            await dispatch(
+            pharmacyPromise = dispatch(
               fetchNearbyPharmacies({
                 lat: lastLocation.lat,
                 lng: lastLocation.lng,
               })
             );
-            fetched = true;
+          } else {
+            pharmacyPromise = dispatch(
+              fetchNearbyPharmacies({ lat: 37.5665, lng: 126.978 })
+            );
           }
         }
 
-        if (!fetched) {
-          await dispatch(fetchNearbyPharmacies({ lat: 37.5665, lng: 126.978 }));
-        }
+        // 리뷰 데이터 가져오기
+        const reviewPromise = dispatch(fetchFiveStarReviews());
 
-        await dispatch(fetchFiveStarReviews());
-      } finally {
+        // 모든 데이터 로드가 완료될 때까지 기다림
+        await Promise.all([pharmacyPromise, reviewPromise]);
+
+        // 모든 데이터 로드 완료 후에만 메인 페이지로 이동
         router.replace("/");
+      } catch (error) {
+        console.error("Error during splash screen initialization:", error);
+        // 에러가 발생해도 일정 시간 후에 메인 페이지로 이동 (무한 로딩 방지)
+        setTimeout(() => router.replace("/"), 5000);
       }
     };
 

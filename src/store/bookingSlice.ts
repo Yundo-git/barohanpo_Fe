@@ -113,3 +113,4 @@ const bookingSlice = createSlice({
 export const { clearBookingState, setReservations, setCancelList } =
   bookingSlice.actions;
 export default bookingSlice.reducer;
+
