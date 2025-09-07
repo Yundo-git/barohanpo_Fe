@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import { updateUser, updateProfileImage } from "@/store/userSlice";
 import Profile from "@/components/auth/Profile";
@@ -17,8 +17,8 @@ interface ProfileImageState {
 
 export default function AuthPage() {
   const router = useRouter();
-  const params = useParams();
-  const userId = params?.user_id as string;
+  // const params = useParams();
+  // const userId = params?.user_id as string;
   const user = useAppSelector((state) => state.user.user);
   const dispatch = useAppDispatch();
   const { usenickname } = useChangeNick();
@@ -38,7 +38,7 @@ export default function AuthPage() {
   const profileImageUrl = useMemo(() => {
     if (user?.profileImageUrl) return user.profileImageUrl;
     if (user?.user_id) return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
-    return "/sample_profile.jpeg";
+    return "/sample_profile.svg";
   }, [user]);
 
   // Update local state when user changes
@@ -167,13 +167,8 @@ export default function AuthPage() {
       setIsSaving(false);
     }
   }, [
-    user,
-    editedNickname,
-    profileImage.file,
-    handleSaveNickname,
-    router,
-    usenickname,
-  ]);
+    user, editedNickname, profileImage.file, dispatch, usenickname]
+  );
 
   if (!user) {
     return <div>사용자 정보를 불러오는 중입니다...</div>;

@@ -59,6 +59,7 @@ export default function MyPage() {
                 rounded="full"
                 className="w-[4.5rem] h-[4.5rem]"
               />
+              
             </div>
           </div>
           <h1>{user?.nickname}</h1>

@@ -1,324 +1,298 @@
-import { useState, useCallback, useEffect } from "react";
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
-interface ImageDimensions {
-  width: number;
-  height: number;
-}
+/** HTTP 메서드 타입 */
+type HttpMethod = "POST" | "PUT" | "PATCH";
 
-interface UploadOptions {
-  url: string;
-  method?: 'POST' | 'PUT' | 'PATCH';
-  headers?: Record<string, string>;
-  fieldName?: string;
-  onSuccess?: (result: any) => void;
-  onError?: (error: Error) => void;
-}
-
-interface UploadResult {
-  success: boolean;
-  message?: string;
+/** 서버 응답 JSON(느슨한 형태) */
+type UploadJSON = {
   imageUrl?: string;
-}
+  url?: string;
+  [key: string]: unknown;
+};
 
-interface UseImageUploadProps {
-  initialImageUrl?: string | null;
-  uploadUrl?: string;
-  method?: 'POST' | 'PUT' | 'PATCH';
+/** 업로드 결과 타입 */
+type UploadResultSuccess = {
+  success: true;
+  urls: string[];
+  response: UploadJSON | UploadJSON[];
+};
+
+type UploadResultFail = {
+  success: false;
+  message: string;
+};
+
+type UploadResult = UploadResultSuccess | UploadResultFail;
+
+/** fetch 업로드 옵션 */
+export type UploadOptions = {
+  url: string;
+  method?: HttpMethod;
+  headers?: Record<string, string>;
+  /** 서버 필드명 (다중 파일이면 보통 images[] 형태) */
   fieldName?: string;
-  onUploadSuccess?: (imageUrl: string) => void;
-  onUploadError?: (error: string) => void;
-  autoUpload?: boolean; // Add autoUpload option
-}
+};
+
+/** 훅 인자 */
+type UseImageUploadArgs = {
+  /** 최대 파일 개수 */
+  maxFiles?: number;
+  /** 허용 MIME 타입 */
+  allowedTypes?: string[];
+  /** 개별 파일 최대 크기(MB) */
+  maxSizeMB?: number;
+  /** 훅에서 직접 업로드할 때 사용할 옵션(선택) */
+  upload?: UploadOptions;
+  onUploadSuccess?: (urls: string[]) => void;
+  onUploadError?: (message: string) => void;
+};
+
+/** 이미지 아이템(기존/신규 구분을 위해 isExisting 추가) */
+export type ImageItem = {
+  id: string;
+  file: File;          // 리사이즈/압축된 파일(WebP 권장)
+  previewUrl: string;  // blob: 또는 data:
+  isExisting?: boolean; // 서버에 이미 존재하는 이미지라면 true
+};
+
+const DEFAULT_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const useImageUpload = ({
-  initialImageUrl = null,
-  uploadUrl = '',
-  method = 'POST',
-  fieldName = 'image',
+  maxFiles = 3,
+  allowedTypes = DEFAULT_TYPES,
+  maxSizeMB = 5,
+  upload,
   onUploadSuccess,
   onUploadError,
-  autoUpload = false, // Default to false for manual upload
-}: UseImageUploadProps = {}) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+}: UseImageUploadArgs = {}) => {
+  const [images, setImages] = useState<ImageItem[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialImageUrl || null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  /**
-   * 이미지 파일 유효성 검사 및 리사이즈
-   * @param {File} file - 검사할 이미지 파일
-   * @returns {Promise<File>} 리사이즈된 이미지 파일
-   * @throws {Error} 유효성 검사 실패 시 에러 발생
-   */
-  const validateAndResizeImage = useCallback(
-    async (file: File): Promise<File> => {
-      // MIME 타입 검사
-      const allowedTypes = ["image/jpeg", "image/png"];
+  /** 파일 유효성 검사 */
+  const validate = useCallback(
+    (file: File) => {
       if (!allowedTypes.includes(file.type)) {
-        throw new Error("JPEG, PNG 형식의 이미지만 업로드 가능합니다.");
+        throw new Error("JPEG/PNG/WebP 형식만 업로드할 수 있습니다.");
       }
-
-      // 파일 크기 검사 (5MB 이하)
-      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-      if (file.size > MAX_SIZE) {
-        throw new Error("이미지 크기는 5MB를 초과할 수 없습니다.");
-      }
-
-      // 이미지 리사이즈
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const MAX_DIMENSION = 1080;
-          let { width, height } = img;
-
-          // 이미지 크기 조정 (비율 유지)
-          if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-            if (width > height) {
-              height = Math.round((height * MAX_DIMENSION) / width);
-              width = MAX_DIMENSION;
-            } else {
-              width = Math.round((width * MAX_DIMENSION) / height);
-              height = MAX_DIMENSION;
-            }
-          }
-
-          // 캔버스 생성 및 리사이즈
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            reject(new Error("이미지 처리에 실패했습니다."));
-            return;
-          }
-
-          // 캔버스에 이미지 그리기 (안티앨리어싱 적용)
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // WebP 형식으로 변환 (용량 절약)
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("이미지 변환에 실패했습니다."));
-                return;
-              }
-              // 새로운 파일 객체 생성
-              const resizedFile = new File(
-                [blob],
-                file.name.replace(/\.[^/.]+$/, '.webp'),
-                { type: 'image/webp' }
-              );
-              resolve(resizedFile);
-            },
-            'image/webp',
-            0.9 // 품질 (0.0 ~ 1.0)
-          );
-        };
-        
-        img.onerror = () => {
-          reject(new Error("이미지를 로드하는 데 실패했습니다."));
-        };
-        
-        img.src = URL.createObjectURL(file);
-      });
-    },
-    []
-  );
-
-  /**
-   * 이미지 업로드 함수
-   * @param {File} file - 업로드할 이미지 파일
-   * @param {UploadOptions} options - 업로드 옵션
-   * @returns {Promise<UploadResult>} 업로드 결과
-   */
-  const uploadImage = useCallback(
-    async (file: File, customOptions?: Partial<UploadOptions>) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        console.log('Starting image upload...', {
-          file: file.name,
-          size: file.size,
-          type: file.type,
-          options: customOptions
-        });
-
-        // 이미지 유효성 검사 및 리사이즈
-        const processedFile = await validateAndResizeImage(file);
-        console.log('Image processed:', {
-          originalSize: file.size,
-          processedSize: processedFile.size,
-          type: processedFile.type
-        });
-
-        const formData = new FormData();
-        const field = customOptions?.fieldName || fieldName;
-        formData.append(field, processedFile);
-
-        const url = customOptions?.url || uploadUrl;
-        if (!url) {
-          const errorMsg = '업로드 URL이 제공되지 않았습니다.';
-          console.error(errorMsg);
-          throw new Error(errorMsg);
-        }
-
-        console.log('Sending request to:', url);
-        const startTime = Date.now();
-        
-        const response = await fetch(url, {
-          method: customOptions?.method || method,
-          headers: customOptions?.headers,
-          body: formData,
-        });
-
-        const responseTime = Date.now() - startTime;
-        console.log(`Request completed in ${responseTime}ms`, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries())
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Upload failed with response:', errorText);
-          throw new Error(`이미지 업로드에 실패했습니다: ${response.status} ${response.statusText}`);
-        }
-
-        const result = await response.json().catch(e => {
-          console.error('Failed to parse JSON response:', e);
-          return {};
-        });
-        
-        console.log('Upload successful:', result);
-        
-        const imageUrl = result.imageUrl || result.url || URL.createObjectURL(processedFile);
-        console.log('Image URL:', imageUrl);
-        
-        setPreviewUrl(imageUrl);
-        setUploadedImageUrl(imageUrl);
-        
-        if (onUploadSuccess) {
-          onUploadSuccess(imageUrl);
-        }
-        
-        return { success: true, imageUrl, response: result };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '이미지 업로드 중 오류가 발생했습니다.';
-        setError(errorMessage);
-        if (onUploadError) {
-          onUploadError(errorMessage);
-        }
-        return { success: false, message: errorMessage };
-      } finally {
-        setIsLoading(false);
+      const maxBytes = maxSizeMB * 1024 * 1024;
+      if (file.size > maxBytes) {
+        throw new Error(`파일 크기는 최대 ${maxSizeMB}MB 까지만 허용됩니다.`);
       }
     },
-    [validateAndResizeImage, uploadUrl, method, fieldName, onUploadSuccess, onUploadError]
+    [allowedTypes, maxSizeMB]
   );
 
-  /**
-   * 파일 입력 변경 핸들러
-   * @param e 파일 입력 이벤트
-   * @param customOptions 업로드 옵션 (선택사항, 기본값 대체용)
-   */
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) {
-        console.log('No file selected');
-        return;
+  /** 1080px 기준 리사이즈 후 WebP 변환 */
+  const resizeToWebp = useCallback(async (file: File): Promise<File> => {
+    const MAX_DIM = 1080;
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("이미지 로딩 실패"));
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("이미지 디코드 실패"));
+      image.src = dataUrl;
+    });
+
+    let { width, height } = img;
+    if (width > MAX_DIM || height > MAX_DIM) {
+      if (width > height) {
+        height = Math.round((height * MAX_DIM) / width);
+        width = MAX_DIM;
+      } else {
+        width = Math.round((width * MAX_DIM) / height);
+        height = MAX_DIM;
       }
-      
-      console.log('File selected for preview:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-      
-      // Create a preview URL
-      const previewUrl = URL.createObjectURL(file);
-      console.log('Created preview URL');
-      
-      // Set the preview and store the file for later upload
-      setPreviewUrl(previewUrl);
-      setPendingFile(file);
-      
-      // Reset input field (to allow selecting the same file again)
-      e.target.value = '';
-      
-      return { file, previewUrl };
-    },
-    []
-  );
-  
-  const uploadPendingFile = useCallback(
-    async (customOptions?: Partial<UploadOptions>) => {
-      if (!pendingFile) {
-        console.log('No file to upload');
-        return { success: false, message: '업로드할 파일이 없습니다.' };
-      }
-      
-      try {
-        console.log('Starting file upload...');
-        const result = await uploadImage(pendingFile, customOptions);
-        
-        if (result.success) {
-          console.log('File upload successful');
-          setPendingFile(null); // Clear the pending file on success
-          return result;
-        } else {
-          console.error('File upload failed:', result.message);
-          toast.error(`업로드 실패: ${result.message}`);
-          return result;
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
-        console.error('Error uploading file:', error);
-        toast.error(`파일 업로드 중 오류: ${errorMessage}`);
-        throw error;
-      }
-    },
-    [pendingFile, uploadImage]
-  );
-  
-  const clearPreview = useCallback(() => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
     }
-    setPendingFile(null);
-  }, [previewUrl]);
 
-  // Show toast on error
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("캔버스 컨텍스트 생성 실패");
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/webp", 0.9)
+    );
+    if (!blob) throw new Error("이미지 변환 실패");
+
+    const webpFile = new File(
+      [blob],
+      file.name.replace(/\.[^/.]+$/, ".webp"),
+      { type: "image/webp" }
+    );
+    return webpFile;
+  }, []);
+
+  /** input[type=file] onChange (다중 선택 지원) */
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const fileList = e.target.files;
+      e.currentTarget.value = ""; // 같은 파일 재선택 허용
+      if (!fileList || fileList.length === 0) return;
+
+      const remain = Math.max(0, maxFiles - images.length);
+      const files = Array.from(fileList).slice(0, remain);
+
+      try {
+        const processed: ImageItem[] = [];
+        for (const raw of files) {
+          validate(raw);
+          const resized = await resizeToWebp(raw);
+          const previewUrl = URL.createObjectURL(resized);
+          processed.push({
+            id:
+              typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random()}`,
+            file: resized,
+            previewUrl,
+            isExisting: false,
+          });
+        }
+        setImages((prev) => [...prev, ...processed]);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "이미지 처리 중 오류가 발생했습니다.";
+        setError(msg);
+      }
+    },
+    [images.length, maxFiles, resizeToWebp, validate]
+  );
+
+  /** 단일 이미지 제거 */
+  const removeImage = useCallback((id: string) => {
+    setImages((prev) => {
+      const target = prev.find((i) => i.id === id);
+      if (target?.previewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return prev.filter((i) => i.id !== id);
+    });
+  }, []);
+
+  /** 전체 비우기 */
+  const clearAll = useCallback(() => {
+    setImages((prev) => {
+      prev.forEach((i) => {
+        if (i.previewUrl.startsWith("blob:")) URL.revokeObjectURL(i.previewUrl);
+      });
+      return [];
+    });
+  }, []);
+
+  /** 현재 보관중인 이미지 배열을 그대로 반환(필요 시 필터 추가 가능) */
+  const getValidImages = useCallback(() => images, [images]);
+
+  /** (선택) 훅에서 직접 업로드 */
+  const uploadAll = useCallback(
+    async (custom?: Partial<UploadOptions>): Promise<UploadResult> => {
+      if (!upload && !custom?.url) {
+        return { success: false, message: "업로드 URL이 설정되지 않았습니다." };
+      }
+      if (images.length === 0) {
+        return { success: false, message: "업로드할 파일이 없습니다." };
+      }
+
+      setIsUploading(true);
+      try {
+        const opt = { ...upload, ...custom } as UploadOptions;
+        const fieldName = opt.fieldName ?? "images[]";
+        const method = opt.method ?? "POST";
+
+        const fd = new FormData();
+        images.forEach((img) => fd.append(fieldName, img.file));
+
+        const res = await fetch(opt.url, {
+          method,
+          headers: opt.headers,
+          body: fd,
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          const msg = `업로드 실패: ${res.status} ${res.statusText}${
+            text ? ` - ${text}` : ""
+          }`;
+          throw new Error(msg);
+        }
+
+        const json = (await res
+          .json()
+          .catch((): UploadJSON | UploadJSON[] => ({}))) as
+          | UploadJSON
+          | UploadJSON[];
+
+        // 단일/다중 응답 모두 대응
+        const urls: string[] = Array.isArray(json)
+          ? (json
+              .map((o) => o.imageUrl || o.url)
+              .filter(Boolean) as string[])
+          : ([json.imageUrl || json.url].filter(Boolean) as string[]);
+
+        onUploadSuccess?.(urls);
+        return { success: true, urls, response: json };
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "업로드 중 오류가 발생했습니다.";
+        onUploadError?.(msg);
+        return { success: false, message: msg };
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [images, onUploadError, onUploadSuccess, upload]
+  );
+
+  /** 에러 토스트 자동 표시 */
   useEffect(() => {
     if (error) {
       toast.error(error);
-      setError(null); // Clear error after showing
+      setError(null);
     }
   }, [error]);
 
+  /** 언마운트 시 blob URL 정리 */
+  useEffect(() => {
+    return () => {
+      images.forEach((i) => {
+        if (i.previewUrl.startsWith("blob:")) URL.revokeObjectURL(i.previewUrl);
+      });
+    };
+  }, [images]);
+
   return {
-    // Core functions
-    handleFileChange,
-    uploadPendingFile,
-    clearPreview,
-    
-    // State values
-    previewUrl,
-    pendingFile,
-    isLoading,
+    // 상태
+    images,            // [{ id, file, previewUrl, isExisting? }]
+    isUploading,
     error,
-    uploadedImageUrl,
-    
-    // Legacy/advanced usage
-    uploadImage, // Exposed for advanced usage
-    setPreviewUrl, // Exposed for advanced usage
+
+    // 액션
+    handleFileChange,  // input[type=file] onChange에 연결
+    removeImage,
+    clearAll,
+    uploadAll,
+
+    // 편의
+    files: useMemo(() => images.map((i) => i.file), [images]),
+
+    // 외부 제어/호환
+    setImages,        // 기존 서버 이미지 세팅 등에서 사용
+    getValidImages,   // 제출 전 필터링 등에서 사용
   };
 };
 

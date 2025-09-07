@@ -90,10 +90,9 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         <div className="flex items-center space-x-3">
           <Profile
             size={40}
-            src={review.user_profile_image || "/sample_profile.svg"}
+            imageUrl={review.user_profile_image || "/sample_profile.svg"}
             alt={review.user_name || 'User'}
             rounded="full"
-            unoptimized={true}
           />
           <div>
             <div className="font-medium">{review.user_name || '익명'}</div>
