@@ -1,23 +1,24 @@
 export interface User {
+  user_id: number;
   email: string;
   name: string;
   phone: number;
-  user_id: number;
   nickname: string;
   role: "user" | "admin";
-  profileImage?: string; // For backward compatibility
-  profileImageVersion?: number; // For cache busting
-  profileImageUrl?: string; // Full URL to the profile image
-  updated_at?: string; // Last update timestamp from server
+  profileImage?: string;
+  profileImageVersion?: number;
+  profileImageUrl?: string;
+  updated_at?: string;
 }
 
 export interface LoginResponse {
   success: boolean;
   data?: {
     user: User;
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
   };
   error?: string;
 }

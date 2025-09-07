@@ -1,3 +1,4 @@
+// React Query를 사용할 때 필수적인 컴포넌트로, 애플리케이션의 최상위 레벨에 위치해야함
 'use client';
 
 import { QueryClient, QueryClientProvider as TanstackQueryClientProvider } from '@tanstack/react-query';

@@ -8,12 +8,10 @@ import reviewReducer from "./reviewSlice";
 import bookingReducer from "./bookingSlice";
 import reviewCompletionReducer from "./reviewCompletionSlice";
 import userReviewsReducer from "./userReviewsSlice";
-import authReducer from "./authSlice";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 const rootReducer = combineReducers({
   user: userReducer,
-  auth: authReducer,
   pharmacy: pharmacyReducer,
   review: reviewReducer,
   booking: bookingReducer,

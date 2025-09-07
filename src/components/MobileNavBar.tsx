@@ -29,10 +29,10 @@ export default function MobileNavBar() {
       label: "예약",
       Icon: UserIcon,
     },
-    {
-      href: isLoggedIn ? "/mypage" : "/auth?from=my",
-      label: "마이",
-      Icon: UserIcon,
+    { 
+      href: isLoggedIn ? "/mypage" : "/auth?from=my", 
+      label: "마이", 
+      Icon: UserIcon 
     },
   ];
   return (
@@ -45,7 +45,7 @@ export default function MobileNavBar() {
           const active = pathname === href;
           return (
             <li
-              key={`${href}-${label}`}
+key={`${href}-${label}`}
               className="flex flex-1 flex-col items-center justify-center"
             >
               <Link

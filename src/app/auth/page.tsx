@@ -9,7 +9,7 @@ import { useAppSelector } from "@/store/store";
 export default function SignupChoice() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
-  const isAuthenticated = useAppSelector((state) => state.auth.user !== null);
+  const isAuthenticated = useAppSelector((state) => state.user.user !== null);
 
   useEffect(() => {
     if (isAuthenticated) {

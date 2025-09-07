@@ -4,12 +4,14 @@ import type { User } from "@/types/user";
 export interface UserState {
   user: User | null;
   accessToken: string | null;
+  refreshToken: string | null;
   lastUpdated: number | null;
 }
 
 const initialState: UserState = {
   user: null,
   accessToken: null,
+  refreshToken: null,
   lastUpdated: null,
 };
 
@@ -20,7 +22,7 @@ const userSlice = createSlice({
     // 사용자 정보만 설정 (accessToken 없이)
     setUser: (
       state,
-      action: PayloadAction<(Omit<User, "id"> & { id?: number }) | null>
+      action: PayloadAction<User | null>
     ) => {
       if (!action.payload) {
         state.user = null;
@@ -28,16 +30,17 @@ const userSlice = createSlice({
         return;
       }
 
-      // Ensure required fields are present
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, ...userData } = action.payload;
       state.user = {
-        email: userData.email,
-        name: userData.name,
-        phone: userData.phone,
-        user_id: userData.user_id,
-        nickname: userData.nickname,
-        role: userData.role || "user", // Default to 'user' if not specified
+        user_id: action.payload.user_id,
+        email: action.payload.email,
+        name: action.payload.name,
+        phone: action.payload.phone,
+        nickname: action.payload.nickname,
+        role: action.payload.role || "user",
+        profileImage: action.payload.profileImage,
+        profileImageUrl: action.payload.profileImageUrl,
+        profileImageVersion: action.payload.profileImageVersion,
+        updated_at: action.payload.updated_at
       };
       state.lastUpdated = Date.now();
     },
@@ -46,47 +49,40 @@ const userSlice = createSlice({
     setAuth: (
       state,
       action: PayloadAction<{
-        user: Omit<User, "id"> & { id?: number }; // Allow both id and user_id for backward compatibility
+        user: User;
         accessToken: string;
         refreshToken?: string;
         expiresIn?: number;
       }>
     ) => {
-      const { user: rawUser, accessToken } = action.payload;
+      const { user, accessToken, refreshToken } = action.payload;
 
-      // 상태가 없으면 초기 상태로 초기화
-      if (!state) {
-        state = {
-          user: null,
-          accessToken: null,
-          lastUpdated: null,
-        };
-      }
-
-      // Map user data to ensure consistent structure
-      if (rawUser) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, ...userData } = rawUser;
-        state.user = {
-          email: userData.email,
-          name: userData.name,
-          phone: userData.phone,
-          user_id: userData.user_id,
-          nickname: userData.nickname,
-          role: userData.role || "user",
-          // Include profile image related fields
-          profileImage: userData.profileImage,
-          profileImageUrl: userData.profileImageUrl,
-          profileImageVersion: userData.profileImageVersion,
-          updated_at: userData.updated_at
-        };
-      } else {
-        state.user = null;
-      }
+      state.user = {
+        user_id: user.user_id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        nickname: user.nickname,
+        role: user.role || "user",
+        profileImage: user.profileImage,
+        profileImageUrl: user.profileImageUrl,
+        profileImageVersion: user.profileImageVersion,
+        updated_at: user.updated_at
+      };
 
       state.accessToken = accessToken;
+      state.refreshToken = refreshToken || null;
       state.lastUpdated = Date.now();
-      // Note: refreshToken and axios header management are handled in useAuth hook
+      
+      // Save tokens to localStorage for persistence
+      if (typeof window !== 'undefined') {
+        if (accessToken) {
+          localStorage.setItem('accessToken', accessToken);
+        }
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+      }
     },
 
     // 로그아웃 시 모든 인증 정보 제거
@@ -95,11 +91,15 @@ const userSlice = createSlice({
       if (state) {
         state.user = null;
         state.accessToken = null;
+        state.refreshToken = null;
         state.lastUpdated = null;
       }
 
-      // Note: refreshToken은 서버 쿠키로 관리되므로 클라이언트에서는 제거할 필요 없음
-      // Authorization 헤더는 useAuth 훅의 인터셉터에서 관리됨
+      // Remove tokens from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
     },
 
     // accessToken 갱신
@@ -113,13 +113,14 @@ const userSlice = createSlice({
     // Update user information without affecting auth state
     updateUser: (
       state,
-      action: PayloadAction<Partial<Omit<User, "id">> & { id?: number }>
+      action: PayloadAction<Partial<Omit<User, 'user_id'>> & { user_id?: number }>
     ) => {
       if (state.user) {
+        const { user_id, ...updates } = action.payload;
         state.user = {
           ...state.user,
-          ...action.payload,
-          user_id: action.payload.user_id ?? state.user.user_id,
+          ...updates,
+          user_id: user_id !== undefined ? user_id : state.user.user_id,
         };
         state.lastUpdated = Date.now();
       }

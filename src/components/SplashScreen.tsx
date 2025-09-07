@@ -104,6 +104,9 @@ export default function SplashScreen({
       void finishSplash();
     }, maxWaitMs);
 
+    // Store the timeout ID in the ref for cleanup
+    maxWaitTimerRef.current = timeoutId;
+
     return () => {
       clearTimeout(timeoutId);
       if (unsubscribeRef.current) {
@@ -112,119 +115,128 @@ export default function SplashScreen({
     };
   }, [mounted, finishSplash, maxWaitMs]);
 
-  useEffect(() => {
-    let isMountedFlag = true;
-    let maxWaitTimer: NodeJS.Timeout | null = null;
+  const loadData = useCallback(async () => {
+    if (hasInitialized.current || !mounted) return;
+    hasInitialized.current = true;
 
-    const loadData = async () => {
-      if (hasInitialized.current || !isMountedFlag) return;
-      hasInitialized.current = true;
+    try {
+      const currentState = store.getState();
+      const hasReviews = (currentState.review.reviews?.length ?? 0) > 0;
+      const hasPharmacies = (currentState.pharmacy.pharmacies?.length ?? 0) > 0;
 
-      // 최대 대기 타이머 설정 (안전장치)
-      maxWaitTimer = setTimeout(() => {
-        if (isMountedFlag) {
-          console.warn("Splash screen timeout - forcing close");
-          onLoaded();
-          setVisible(false);
-        }
-      }, maxWaitMs); // Use the prop value for timeout
+      // If we already have data, finish immediately
+      if (hasReviews && hasPharmacies) {
+        await finishSplash();
+        return;
+      }
+
+      // Set loading state
+      setError(null);
+      setIsLoading(true);
+
+      // Get user's location
+      const position = await new Promise<GeolocationPosition>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(pos),
+          () => {
+            // Fallback to Seoul coordinates if geolocation fails
+            const mock: GeolocationPosition = {
+              coords: {
+                latitude: 37.5665,
+                longitude: 126.978,
+                accuracy: 1,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                speed: null,
+                toJSON: () => ({}),
+              },
+              timestamp: Date.now(),
+              toJSON: () => ({}),
+            };
+            resolve(mock);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      });
+
+      // Fetch data in parallel
+      const fetches: Array<Promise<unknown>> = [];
+      
+      if (!hasReviews) {
+        fetches.push(dispatch(fetchFiveStarReviews()).unwrap());
+      }
+      
+      if (!hasPharmacies) {
+        fetches.push(
+          dispatch(
+            fetchNearbyPharmacies({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            })
+          ).unwrap()
+        );
+      }
+
+      // Set a timeout to force close if data loading takes too long
+      const timeoutId = setTimeout(() => {
+        console.warn("Data loading timeout - forcing splash to close");
+        void finishSplash();
+      }, maxWaitMs);
+
+      // Store the timeout ID in the ref for cleanup
+      maxWaitTimerRef.current = timeoutId;
 
       try {
-        const currentState = store.getState();
-        const hasReviews = (currentState.review.reviews?.length ?? 0) > 0;
-        const hasPharmacies =
-          (currentState.pharmacy.pharmacies?.length ?? 0) > 0;
-
-        // 이미 모두 있으면 바로 종료
-        if (hasReviews && hasPharmacies) {
-          await finishSplash();
-          return;
-        }
-
-        const fetches: Array<Promise<unknown>> = [];
-        if (!hasReviews) {
-          fetches.push(dispatch(fetchFiveStarReviews()).unwrap());
-        }
-
-        setError(null);
-        setIsLoading(true);
-
-        // 위치 가져오기 (실패 시 서울 좌표)
-        const position = await new Promise<GeolocationPosition>((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => (isMountedFlag ? resolve(pos) : undefined),
-            () => {
-              const mock: GeolocationPosition = {
-                coords: {
-                  latitude: 37.5665,
-                  longitude: 126.978,
-                  accuracy: 1,
-                  altitude: null,
-                  altitudeAccuracy: null,
-                  heading: null,
-                  speed: null,
-                  toJSON: () => ({}),
-                },
-                timestamp: Date.now(),
-                toJSON: () => ({}),
-              };
-              resolve(mock);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-          );
-        });
-
-        if (!hasPharmacies) {
-          fetches.push(
-            dispatch(
-              fetchNearbyPharmacies({
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-              })
-            ).unwrap()
-          );
-        }
-
-        // 최대 대기 타이머 (망 연결 이슈 등으로 무한대기 방지)
-        maxWaitTimerRef.current = setTimeout(() => {
-          // 너무 오래 걸리면 안전하게 종료 시도
-          void finishSplash();
-        }, maxWaitMs);
-
         if (fetches.length > 0) {
           await Promise.all(fetches);
         }
 
-        // 상태 재확인
+        // Verify data was loaded
         const updated = store.getState();
         const allLoaded =
           (updated.review.reviews?.length ?? 0) > 0 &&
           (updated.pharmacy.pharmacies?.length ?? 0) > 0;
 
-        if (!isMountedFlag) return;
-
         if (allLoaded) {
+          clearTimeout(timeoutId);
           await finishSplash();
         } else {
-          // 일부라도 실패 시 에러 표시는 하되, 너무 오래 머물지 않도록 maxWait에 의해 종료됨
           setError("일부 데이터를 불러오지 못했습니다.");
           setIsLoading(false);
         }
-      } catch {
-        if (!isMountedFlag) return;
+      } catch (error) {
+        console.error("Error loading data:", error);
         setError("데이터를 불러오는 중 오류가 발생했습니다.");
         setIsLoading(false);
+        clearTimeout(timeoutId);
       }
-    };
+    } catch (error) {
+      console.error("Error in loadData:", error);
+      setError("초기화 중 오류가 발생했습니다.");
+      setIsLoading(false);
+    }
+  }, [dispatch, finishSplash, maxWaitMs, mounted]);
 
+  // Call loadData in useEffect with proper cleanup
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Start loading data
     void loadData();
 
+    // Set a safety timeout to close splash screen if something goes wrong
+    const safetyTimeout = setTimeout(() => {
+      if (mounted) {
+        console.warn("Safety timeout - forcing splash to close");
+        void finishSplash();
+      }
+    }, maxWaitMs);
+
     return () => {
-      isMountedFlag = false;
-      if (maxWaitTimer) clearTimeout(maxWaitTimer);
-      if (maxWaitTimerRef.current) clearTimeout(maxWaitTimerRef.current);
+      clearTimeout(safetyTimeout);
     };
-  }, [dispatch, maxWaitMs, onLoaded, finishSplash]);
+  }, [loadData, maxWaitMs, mounted, finishSplash]);
 
   // 포털 렌더 전, 또는 이미 종료한 경우
   if (!mounted || !visible) return null;
@@ -263,12 +275,28 @@ export default function SplashScreen({
         {error && (
           <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md">
             {error}
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-2 px-4 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-sm transition-colors"
-            >
-              다시 시도하기
-            </button>
+            <div className="mt-2">
+              <button
+                onClick={() => {
+                  hasInitialized.current = false;
+                  setError(null);
+                  setIsLoading(true);
+                  void loadData();
+                }}
+                className="px-4 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-sm transition-colors"
+              >
+                다시 시도하기
+              </button>
+              <button
+                onClick={() => {
+                  // Continue without the data
+                  void finishSplash();
+                }}
+                className="ml-2 px-4 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm transition-colors"
+              >
+                계속하기
+              </button>
+            </div>
           </div>
         )}
       </div>

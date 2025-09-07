@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "@/store/store";
-import { updateProfileImage, updateUser } from "@/store/userSlice";
+import { updateUser, updateProfileImage } from "@/store/userSlice";
 import Profile from "@/components/auth/Profile";
 import NicknameEditModal from "@/components/auth/NicknameEditModal";
 import SuccessModal from "@/components/reservation/SuccessModal";
@@ -17,6 +17,12 @@ const toast = {
   info: (message: string) => console.info(message),
 };
 
+// interface ProfileImageState {
+//   file: File | null;
+//   previewUrl: string;
+//   isUploading: boolean;
+// }
+
 export default function AuthPage() {
   const user = useSelector((state: RootState) => state.user.user);
   const dispatch = useDispatch<AppDispatch>();
@@ -29,54 +35,50 @@ export default function AuthPage() {
   // 프로필 이미지 업로드 훅 사용 (단일 이미지 모드로 설정)
   // 이미지 업로드 상태 관리
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [_imageError, setImageError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   // useImageUpload 훅을 사용하여 이미지 업로드 로직 처리 (단일 이미지 모드)
-  const { images, handleFileChange, removeImage, isUploading } = useImageUpload(
-    {
-      singleImage: true,
-      initialImages: user?.profileImage ? [user.profileImage] : [],
-      maxFiles: 1,
-    }
-  );
-
-  // Handle image removal - currently not used but kept for future use
-  const _handleRemoveImage = useCallback(() => {
-    if (images[0]?.id) {
-      removeImage(images[0].id);
-    }
-    setImageError(null);
-  }, [removeImage, images]);
+  const {
+    images,
+    handleFileChange,
+    removeImage,
+    resetImages,
+    isUploading,
+  } = useImageUpload({
+    singleImage: true,
+    initialImages: user?.profileImage ? [user.profileImage] : [],
+    maxFiles: 1,
+  });
 
   // 이미지 업로드 상태 동기화
   useEffect(() => {
     setIsUploadingImage(isUploading);
   }, [isUploading]);
 
-  // 프로필 이미지 URL 생성 (버전 파라미터 추가하여 캐시 방지)
-  const _profileImageUrl = useMemo(() => {
-    // If we have a preview URL (newly uploaded image), use it
-    if (images.length > 0 && images[0].previewUrl) {
-      return images[0].previewUrl;
-    }
+  // // 프로필 이미지 URL 생성 (버전 파라미터 추가하여 캐시 방지)
+  // const profileImageUrl = useMemo(() => {
+  //   // If we have a preview URL (newly uploaded image), use it
+  //   if (images.length > 0 && images[0].previewUrl) {
+  //     return images[0].previewUrl;
+  //   }
 
-    // If we have a profile image from the user object
-    if (user?.profileImage) {
-      // Check if it's already a full URL
-      if (user.profileImage.startsWith("http")) {
-        return user.profileImage;
-      }
-      // Otherwise, construct the full URL
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const separator = user.profileImage.includes("?") ? "&" : "?";
-      return `${baseUrl}${user.profileImage}${separator}v=${
-        user.profileImageVersion || Date.now()
-      }`;
-    }
+  //   // If we have a profile image from the user object
+  //   if (user?.profileImage) {
+  //     // Check if it's already a full URL
+  //     if (user.profileImage.startsWith("http")) {
+  //       return user.profileImage;
+  //     }
+  //     // Otherwise, construct the full URL
+  //     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  //     const separator = user.profileImage.includes("?") ? "&" : "?";
+  //     return `${baseUrl}${user.profileImage}${separator}v=${
+  //       user.profileImageVersion || Date.now()
+  //     }`;
+  //   }
 
-    // Fallback to default image
-    return "/sample_profile.svg";
-  }, [user?.profileImage, user?.profileImageVersion, images]);
+  //   // Fallback to default image
+  //   return "/sample_profile.svg";
+  // }, [user?.profileImage, user?.profileImageVersion, images]);
 
   useEffect(() => {
     if (user?.nickname) {
@@ -88,17 +90,25 @@ export default function AuthPage() {
   const handleProfileImageSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!user || !images.length || !images[0].file) return;
 
-      setIsSaving(true);
-      setImageError(null);
+      // 현재 선택된 이미지 가져오기
+      const currentFile = images[0]?.file;
 
+      // 이미지가 선택되지 않았거나 업로드 중인 경우 제출 방지
+      if (!currentFile || isUploadingImage) {
+        if (!currentFile) {
+          toast.info("변경할 이미지를 선택해주세요.");
+        }
+        return;
+      }
+
+      setIsUploadingImage(true);
       try {
         const formData = new FormData();
-        formData.append("file", images[0].file);
+        formData.append("file", currentFile);
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo/upload`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user?.user_id}/photo/upload`,
           {
             method: "PUT",
             body: formData,
@@ -116,16 +126,21 @@ export default function AuthPage() {
         const timestamp = Date.now();
 
         // 프로필 이미지 업데이트
-        dispatch(
-          updateProfileImage({
-            user_id: user.user_id,
-            profileImageVersion: timestamp,
-            profileImageUrl: url,
-          })
-        );
+        if (user?.user_id) {
+          dispatch(
+            updateProfileImage({
+              user_id: user.user_id,
+              profileImageVersion: timestamp,
+              profileImageUrl: url,
+            })
+          );
+        }
 
         // 성공 알림
         toast.success("프로필 이미지가 성공적으로 업데이트되었습니다.");
+
+        // 이미지 초기화 (성공 시에만)
+        resetImages();
       } catch (error) {
         console.error("프로필 이미지 업로드 중 오류 발생:", error);
         setImageError(
@@ -139,10 +154,17 @@ export default function AuthPage() {
           removeImage(images[0].id);
         }
       } finally {
-        setIsSaving(false);
+        setIsUploadingImage(false);
       }
     },
-    [images, user, dispatch, removeImage]
+    [
+      images,
+      isUploadingImage,
+      user?.user_id,
+      dispatch,
+      resetImages,
+      removeImage,
+    ]
   );
 
   // 닉네임 변경
@@ -175,7 +197,7 @@ export default function AuthPage() {
         toast.success("닉네임이 변경되었습니다.");
       }
 
-      if (images.length && images[0]?.file) {
+      if (images.length) {
         await handleProfileImageSubmit(
           new Event("submit") as unknown as React.FormEvent
         );
@@ -207,6 +229,26 @@ export default function AuthPage() {
     <div className="p-4 max-w-md mx-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-32 h-32">
+          {/* <Profile
+            imageUrl={profileImageUrl}
+            alt={`${user.nickname}님의 프로필`}
+            size={128}
+            rounded="full"
+            className="w-full h-full border-2 border-gray-200"
+            onFileSelect={(file) => {
+              const event = {
+                target: {
+                  files: [file],
+                },
+              } as unknown as React.ChangeEvent<HTMLInputElement>;
+              handleFileChange(event);
+            }}
+            isLoading={isUploadingImage || isUploading}
+            version={user.profileImageVersion}
+            // fallbackSrc="/sample_pro
+            // file.svg"
+          /> */}
+          {/* // 선택된 파일이 있을 때만 미리보기 blob URL을 src로 전달 */}
           <Profile
             userId={user.user_id}
             version={user.profileImageVersion}
@@ -222,13 +264,57 @@ export default function AuthPage() {
               } as unknown as React.ChangeEvent<HTMLInputElement>;
               handleFileChange(event);
             }}
-            src={images[0]?.previewUrl}
+            src={images[0]?.previewUrl} // 선택된 파일이 있으면 blob:... 로 미리보기
           />
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="text-blue-600">
-          수정
+
+        <button
+          onClick={() => document.getElementById("profile-file")?.click()}
+          className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          disabled={isSaving || isUploadingImage || isUploading}
+        >
+          프로필 사진 변경
         </button>
+
+        <input
+          type="file"
+          id="profile-file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(e) => {
+            // 에러 초기화 (useState 대신 useImageUpload의 setError 사용)
+            // Note: useImageUpload의 setError가 없다면, 이 부분을 수정해야 할 수 있습니다.
+            // setImageError(null);
+            handleFileChange(e);
+          }}
+          className="hidden"
+          disabled={isSaving || isUploadingImage || isUploading}
+        />
       </div>
+
+      <section className="mb-8">
+        <div
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+        >
+          <div>
+            <p className="text-sm text-gray-500">닉네임</p>
+            {isUploadingImage ? (
+              <div className="flex items-center justify-center mt-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                <span className="text-sm text-gray-500">
+                  이미지 업로드 중...
+                </span>
+              </div>
+            ) : imageError ? (
+              <p className="mt-1 text-sm text-red-500">{imageError}</p>
+            ) : null}
+            <p className="text-lg font-medium">
+              {editedNickname || "설정되지 않음"}
+            </p>
+          </div>
+          <button className="text-blue-600">수정</button>
+        </div>
+      </section>
 
       <div className="mt-8">
         <button
@@ -245,7 +331,7 @@ export default function AuthPage() {
               : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
         >
-          {isSaving || isUploadingImage ? "저장 중..." : "저장하기"}
+          {isSaving || isUploading ? "저장 중..." : "저장하기"}
         </button>
       </div>
 

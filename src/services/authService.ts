@@ -15,6 +15,12 @@ export const login = async (
   email: string,
   password: string
 ): Promise<LoginResponse> => {
+  console.log('authService - Login request:', { 
+    url: `${API_BASE_URL}/api/auth/login`,
+    email: email, // Only log email for security
+    hasPassword: !!password // Don't log actual password
+  });
+
   try {
     const response = await axios.post<LoginResponse>(
       `${API_BASE_URL}/api/auth/login`,
@@ -27,6 +33,36 @@ export const login = async (
         },
       }
     );
+    
+    if (!response.data) {
+      console.error('authService - No response data received');
+      throw new Error('No response data received');
+    }
+    
+    // Log response headers for debugging
+    const responseHeaders = response.headers ? {
+      'content-type': response.headers['content-type'],
+      'set-cookie': response.headers['set-cookie'] ? 'present' : 'not present',
+      'authorization': response.headers['authorization'] ? 'present' : 'not present'
+    } : 'No headers';
+
+    console.log('authService - Login response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+      data: {
+        success: response.data.success,
+        hasUserData: !!response.data.data?.user,
+        hasAccessToken: !!response.data.data?.tokens?.accessToken,
+        accessTokenLength: response.data.data?.tokens?.accessToken?.length || 0
+      }
+    });
+    
+    // Ensure the response has the expected structure
+    if (!response.data.data?.tokens?.accessToken) {
+      console.warn('No access token in login response');
+    }
+    
     return response.data;
   } catch (error) {
     console.error("Login error:", error);
@@ -90,10 +126,10 @@ export const refreshToken = async (): Promise<RefreshTokenResponse> => {
       {},
       {
         withCredentials: true,
-        _retry: true,
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
+          "X-Retry-Attempt": "true"
         },
       }
     );

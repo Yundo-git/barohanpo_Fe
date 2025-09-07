@@ -90,7 +90,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         <div className="flex items-center space-x-3">
           <Profile
             size={40}
-            src={review.user_profile_image || "/default-profile.png"}
+            src={review.user_profile_image || "/sample_profile.svg"}
             alt={review.user_name || 'User'}
             rounded="full"
             unoptimized={true}
