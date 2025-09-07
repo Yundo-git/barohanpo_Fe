@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { clearAuth, updateUser, setAuth, updateAccessToken } from '@/store/userSlice';
 import { refreshToken as refreshTokenApi } from '@/services/authService';
-import { User, LoginResponse } from '@/types/user';
+import { User } from '@/types/user';
 
 interface UseAuthReturn {
   user: User | null;
@@ -143,12 +143,13 @@ const useAuth = (): UseAuthReturn => {
     setIsLoading(true);
     setError(null);
     
-    console.log('Login request:', {
+    // 로그인 시도 정보 출력 (비밀번호는 보안상 콘솔에 출력하지 않음)
+    console.log('로그인 요청 정보:', {
       url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       hasCredentials: true,
-      email: email
+      email: email // 이메일만 출력 (비밀번호는 출력하지 않음)
     });
     
     try {
@@ -169,24 +170,15 @@ const useAuth = (): UseAuthReturn => {
         throw new Error(errorData.message || 'Login failed');
       }
 
-      const responseData = await response.json() as LoginResponse;
-      
-      if (responseData.success && responseData.data) {
-        const { user, tokens } = responseData.data;
-        
+      const data = await response.json();
+      if (data.user && data.accessToken) {
         dispatch(setAuth({
-          user,
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresIn: 3600 // Default expiry time
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken || '',
+          expiresIn: data.expiresIn || 3600
         }));
-        
-        // Save refresh token to localStorage (access token stays in memory)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('refreshToken', tokens.refreshToken);
-        }
-        
-        return { success: true };
+        return data.user;
       }
       throw new Error('Invalid response format');
     } catch (error) {
