@@ -1,3 +1,4 @@
+// Kakao Maps types
 declare namespace kakao {
   namespace maps {
     function load(callback: () => void): void;
@@ -78,6 +79,13 @@ declare namespace kakao {
       function removeListener(target: object): void;
     }
   }
+}
+
+// Kakao OAuth types
+interface KakaoAuthError {
+  error: string;
+  error_description?: string;
+  error_code?: string;
 }
 
 declare global {
