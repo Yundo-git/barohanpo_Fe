@@ -65,7 +65,7 @@ const useBookCancel = () => {
         };
       }
     },
-    [userId]
+    [userId, dispatch]
   );
 
   return { bookCancel };

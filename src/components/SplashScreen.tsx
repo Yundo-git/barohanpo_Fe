@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { useAppDispatch } from "@/store/store";
 import { fetchFiveStarReviews } from "@/store/reviewSlice";
 import { fetchNearbyPharmacies } from "@/store/pharmacySlice";
@@ -29,6 +30,7 @@ export default function SplashScreen({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const hasInitialized = useRef<boolean>(false);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const maxWaitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -40,15 +42,15 @@ export default function SplashScreen({
     };
   }, []);
 
-  const waitMinDuration = async () => {
+  const waitMinDuration = useCallback(async () => {
     const elapsed = Date.now() - startTimeRef.current;
     const remain = Math.max(0, minDurationMs - elapsed);
     if (remain > 0) {
       await new Promise<void>((resolve) => setTimeout(resolve, remain));
     }
-  };
+  }, [minDurationMs]);
 
-  const finishSplash = async () => {
+  const finishSplash = useCallback(async () => {
     try {
       // 최소 노출시간 보장
       await waitMinDuration();
@@ -72,7 +74,7 @@ export default function SplashScreen({
       onLoaded();
       setVisible(false);
     }
-  };
+  }, [mounted, onLoaded, waitMinDuration]);
 
   // Effect to check Redux state and close when data is loaded
   useEffect(() => {
@@ -93,19 +95,22 @@ export default function SplashScreen({
     checkDataLoaded();
 
     // Subscribe to store changes
-    const unsubscribe = store.subscribe(checkDataLoaded);
+    // Store the unsubscribe function in the ref
+    unsubscribeRef.current = store.subscribe(checkDataLoaded);
 
     // Set a timeout to force close after maxWaitMs
     const timeoutId = setTimeout(() => {
       console.warn("Forcing splash screen to close after timeout");
       void finishSplash();
-    }, 15000);
+    }, maxWaitMs);
 
     return () => {
       clearTimeout(timeoutId);
-      unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
     };
-  }, [mounted]);
+  }, [mounted, finishSplash, maxWaitMs]);
 
   useEffect(() => {
     let isMountedFlag = true;
@@ -122,7 +127,7 @@ export default function SplashScreen({
           onLoaded();
           setVisible(false);
         }
-      }, 15000); // 15초 타임아웃
+      }, maxWaitMs); // Use the prop value for timeout
 
       try {
         const currentState = store.getState();
@@ -219,7 +224,7 @@ export default function SplashScreen({
       if (maxWaitTimer) clearTimeout(maxWaitTimer);
       if (maxWaitTimerRef.current) clearTimeout(maxWaitTimerRef.current);
     };
-  }, [dispatch, maxWaitMs, onLoaded]);
+  }, [dispatch, maxWaitMs, onLoaded, finishSplash]);
 
   // 포털 렌더 전, 또는 이미 종료한 경우
   if (!mounted || !visible) return null;
@@ -242,11 +247,16 @@ export default function SplashScreen({
       <div className="text-center space-y-6">
         <div className="animate-pulse">
           <div className="w-24 h-24 mx-auto">
-            <img
-              src="/logo.svg"
-              alt="바로한포 로고"
-              className="w-[24vh] h-[24vh] object-contain"
-            />
+            <div className="relative w-[24vh] h-[24vh]">
+              <Image
+                src="/logo.svg"
+                alt="바로한포 로고"
+                fill
+                className="object-contain"
+                priority
+                sizes="24vh"
+              />
+            </div>
           </div>
         </div>
 

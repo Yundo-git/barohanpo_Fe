@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { Review } from "@/types/review";
 import { Star } from "lucide-react";
 import Profile from "../auth/Profile";
@@ -6,15 +7,21 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 
 interface ReviewCardProps {
-  review: Review;
-  showPharmacyName?: boolean;
+  review: Review & {
+    user_name?: string;
+    user_profile_image?: string;
+    pharmacy_name?: string;
+    updated_at?: string;
+    reply?: string;
+  };
   className?: string;
+  showPharmacyName?: boolean;
 }
 
 const ReviewCard: React.FC<ReviewCardProps> = ({
   review,
-  showPharmacyName = false,
   className = "",
+  showPharmacyName = true,
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -24,104 +31,109 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       day: "numeric",
     }).format(date);
   };
-  console.log("review", review);
-  const toImageSrc = (photo: Review["photos"][number]): string | null => {
-    try {
-      const blobAny: any = (photo as any)?.review_photo_blob;
-      // Case 1: { data: number[] }
-      const dataArr: number[] | undefined = blobAny?.data;
-      if (Array.isArray(dataArr) && dataArr.length > 0) {
-        const uint8Array = new Uint8Array(dataArr);
-        const base64String = btoa(
-          Array.from(uint8Array)
-            .map((byte) => String.fromCharCode(byte))
-            .join("")
-        );
-        return `data:image/jpeg;base64,${base64String}`;
-      }
-      // Case 2: Node Buffer-like { type: 'Buffer', data: number[] }
-      if (
-        blobAny &&
-        typeof blobAny === "object" &&
-        blobAny.type === "Buffer" &&
-        Array.isArray(blobAny.data)
-      ) {
-        const uint8Array = new Uint8Array(blobAny.data as number[]);
-        const base64String = btoa(
-          Array.from(uint8Array)
-            .map((byte) => String.fromCharCode(byte))
-            .join("")
-        );
-        return `data:image/jpeg;base64,${base64String}`;
-      }
-      // Case 3: base64 string
-      if (typeof blobAny === "string" && blobAny.startsWith("data:")) {
-        return blobAny;
-      }
-      // Case 4: URL string
-      if (typeof (photo as any)?.url === "string") {
-        return (photo as any).url as string;
-      }
-      return null;
-    } catch (e) {
-      console.error("Error building image src:", e);
-      return null;
-    }
-  };
-  const user = useSelector((state: RootState) => state.user.user);
-  return (
-    <div
-      className={`bg-white rounded-lg p-4 shadow-sm border border-gray-100 ${className}`}
-    >
-      <div className="flex text-yellow-400">
-        {[...Array(5)].map((_, i) => (
+
+  const { user } = useSelector((state: RootState) => state.user);
+  const isCurrentUser = user?.user_id === review.user_id;
+
+  const renderRating = (score: number) => {
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
           <Star
-            key={i}
-            className={`w-4 h-4 ${
-              i < (review.score || 0) ? "fill-current" : "text-gray-300"
+            key={star}
+            className={`h-4 w-4 ${
+              star <= score ? "text-yellow-400 fill-current" : "text-gray-300"
             }`}
           />
         ))}
       </div>
-      {Array.isArray(review.photos) && review.photos.length > 0 && (
-        <div className="flex gap-2 mt-2 overflow-x-auto py-2">
-          {review.photos.map((photo, photoIndex) => {
-            const src = toImageSrc(photo);
-            if (!src) return null;
-            return (
-              <div key={photoIndex} className="flex-shrink-0 w-24 h-24">
-                <img
-                  src={src}
-                  alt={`Review photo ${photoIndex + 1}`}
-                  className="w-full h-full object-cover rounded"
-                  onError={(e) => {
-                    console.error("Error loading image:", e);
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              </div>
-            );
-          })}
+    );
+  };
+
+  const renderImages = () => {
+    if (!review.photos || review.photos.length === 0) return null;
+
+    return (
+      <div className="mt-2 flex space-x-2 overflow-x-auto">
+        {review.photos.map((photo, index) => {
+          if (!photo.review_photo_blob?.data) return null;
+          
+          // Convert the array of numbers to a Uint8Array
+          const bytes = new Uint8Array(photo.review_photo_blob.data);
+          // Convert to a binary string
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          // Convert to base64
+          const base64String = btoa(binary);
+          
+          return (
+            <div key={`${photo.review_photo_id}-${index}`} className="relative h-20 w-20 flex-shrink-0">
+              <Image
+                src={`data:image/jpeg;base64,${base64String}`}
+                alt={`Review image ${index + 1}`}
+                fill
+                className="rounded object-cover"
+                unoptimized={true}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div className={`bg-white p-4 rounded-lg shadow ${className}`}>
+      <div className="flex justify-between items-start">
+        <div className="flex items-center space-x-3">
+          <Profile
+            size={40}
+            src={review.user_profile_image || "/default-profile.png"}
+            alt={review.user_name || 'User'}
+            rounded="full"
+            unoptimized={true}
+          />
+          <div>
+            <div className="font-medium">{review.user_name || '익명'}</div>
+            <div className="text-sm text-gray-500">
+              {formatDate(review.create_at || review.updated_at || new Date().toISOString())}
+            </div>
+          </div>
         </div>
+        {isCurrentUser && (
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+            내 리뷰
+          </span>
+        )}
+      </div>
+
+      {showPharmacyName && review.pharmacy_name && (
+        <div className="mt-2 text-sm font-medium">{review.pharmacy_name}</div>
       )}
 
+      <div className="mt-2">{renderRating(review.score)}</div>
+      
       {review.comment && (
-        <p className="text-gray-700 text-sm leading-relaxed">
+        <p className="mt-2 text-gray-700 whitespace-pre-line">
           {review.comment}
         </p>
       )}
-      <section className=" flex  items-center gap-2 text-sm text-gray-500">
-        <Profile
-          userId={review.user_id || 0}
-          version={review?.profileImageVersion}
-          alt="사용자 프로필"
-          size={20}
-          rounded="full"
-          className="w-[4.5rem] h-[4.5rem]"
-        />
-        <p>{user?.nickname} . </p>
-        {formatDate(review.create_at)}
-      </section>
+
+      {renderImages()}
+
+      {review.reply && (
+        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div className="font-medium text-sm text-gray-700">사장님 댓글</div>
+            <div className="text-xs text-gray-500">
+              {formatDate(review.updated_at || review.create_at || new Date().toISOString())}
+            </div>
+          </div>
+          <p className="mt-1 text-sm text-gray-600">{review.reply}</p>
+        </div>
+      )}
     </div>
   );
 };

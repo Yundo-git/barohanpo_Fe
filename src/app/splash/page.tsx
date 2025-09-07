@@ -11,9 +11,7 @@ import { useLocationPermission } from "@/hooks/useLocationPermission";
 export default function SplashPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { pharmacies, isLoading, lastLocation } = useAppSelector(
-    (s) => s.pharmacy
-  );
+  const { pharmacies, lastLocation } = useAppSelector((s) => s.pharmacy);
   const { reviews } = useAppSelector((s) => s.review);
 
   const { getCurrentPosition } = useMapHandlers({

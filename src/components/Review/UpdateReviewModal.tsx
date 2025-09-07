@@ -1,13 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 import useUpdateReview, {
   type UpdateReviewParams,
 } from "@/hooks/useUpdateReview";
-import useImageUpload, { type ImageFile } from "@/hooks/useImageUpload";
-import { Review, ReviewPhoto } from "@/types/review";
+import useImageUpload from "@/hooks/useImageUpload";
+import { Review } from "@/types/review";
+
+interface ReviewImage {
+  id: string;
+  file: File;
+  previewUrl: string;
+  isExisting?: boolean;
+}
+
+interface ReviewWithPharmacyId extends Review {
+  pharmacy_id?: number;
+}
 
 interface UpdateReviewModalProps {
   isOpen: boolean;
@@ -33,7 +45,6 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
     error: imageError,
     handleFileChange,
     removeImage,
-    resetImages,
     setImages,
     getValidImages,
   } = useImageUpload({ maxFiles: 3 });
@@ -120,7 +131,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
     setIsSubmitting(true);
     try {
       // Get only valid images (with actual file data or marked as existing)
-      const validImages = getValidImages();
+      const validImages = getValidImages() as ReviewImage[];
 
       const updateData: UpdateReviewParams = {
         reviewId: review.review_id,
@@ -128,18 +139,14 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
         score,
         comment,
         images: validImages
-          .filter((img) => !(img as any).isExisting) // Filter out existing images
+          .filter((img) => !img.isExisting) // Filter out existing images
           .map((img) => img.file), // Get only the file objects
       };
 
-      console.log("Updating review with data:", {
-        ...updateData,
-        images: updateData.images?.map((f) => f.name),
-      });
-
       // Add pharmacyId only if it exists on the review
-      if ("pharmacy_id" in review) {
-        updateData.pharmacyId = (review as any).pharmacy_id;
+      const reviewWithPharmacy = review as ReviewWithPharmacyId;
+      if (reviewWithPharmacy.pharmacy_id) {
+        updateData.pharmacyId = reviewWithPharmacy.pharmacy_id;
       }
 
       await updateReview(updateData);
@@ -226,19 +233,23 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
                 <div className="flex space-x-2 overflow-x-auto py-2">
                   {images.map((image, index) => (
                     <div key={index} className="relative">
-                      <img
-                        src={image.previewUrl}
-                        alt={`미리보기 ${index + 1}`}
-                        className="h-20 w-20 object-cover rounded cursor-pointer hover:opacity-80"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(image.id)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                        disabled={isSubmitting}
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
+                      <div className="relative h-20 w-20">
+                        <Image
+                          src={image.previewUrl}
+                          alt={`미리보기 ${index + 1}`}
+                          fill
+                          className="object-cover rounded cursor-pointer hover:opacity-80"
+                          sizes="80px"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(image.id)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                          disabled={isSubmitting}
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

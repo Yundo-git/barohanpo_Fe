@@ -15,7 +15,6 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
   pharmacies,
   selectedPharmacy,
   sheetView,
-  onPharmacySelect,
   onReserve,
   children,
 }) => {

@@ -103,7 +103,7 @@ const useCreateReview = () => {
         throw error;
       }
     },
-    [userId]
+    [userId, dispatch]
   );
 
   return { createReview };

@@ -2,9 +2,10 @@ import { useState, useCallback, ChangeEvent, useMemo, useEffect } from "react";
 
 export interface ImageFile {
   id: string;
-  file: File;
+  file: File & { isExisting?: boolean };
   previewUrl: string;
   error?: string;
+  isExisting?: boolean;
 }
 
 interface UseImageUploadOptions {
@@ -47,7 +48,8 @@ export default function useImageUpload({
     return [];
   });
 
-  const [isUploading, setIsUploading] = useState(false);
+  // Remove unused state setter since it's not used in the component
+  const [isUploading, _setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 허용된 파일 타입을 문자열로 변환 (input의 accept 속성용)
@@ -55,13 +57,16 @@ export default function useImageUpload({
 
   // 이미지 파일 검증
   const validateImage = useCallback(
-    (file: File): boolean => {
+    (file: File): { isValid: boolean; error?: string } => {
       // Skip validation for existing files
-      if ("isExisting" in file) return true;
+      if ("isExisting" in file) return { isValid: true };
 
       // 파일 타입 검사
       if (!accept.includes(file.type)) {
-        throw new Error(`${file.name}: 지원하지 않는 파일 형식입니다.`);
+        return {
+          isValid: false,
+          error: `${file.name}: 지원하지 않는 파일 형식입니다.`,
+        };
       }
 
       // 파일 크기 검사
@@ -71,7 +76,7 @@ export default function useImageUpload({
         );
       }
 
-      return true;
+      return { isValid: true };
     },
     [accept, maxSizeMB]
   );
@@ -112,12 +117,14 @@ export default function useImageUpload({
       if (newImages.length > 0) {
         if (singleImage) {
           // 기존 이미지의 URL 해제
-          images.forEach((img) => {
-            if (img.previewUrl.startsWith("blob:")) {
-              URL.revokeObjectURL(img.previewUrl);
-            }
+          setImages((prev) => {
+            prev.forEach((img) => {
+              if (img.previewUrl.startsWith("blob:")) {
+                URL.revokeObjectURL(img.previewUrl);
+              }
+            });
+            return newImages.slice(0, 1);
           });
-          setImages(newImages.slice(0, 1));
         } else {
           setImages((prev) => {
             const updated = [...prev, ...newImages].slice(0, maxFiles);
@@ -139,7 +146,7 @@ export default function useImageUpload({
       // 입력 필드 초기화 (동일한 파일을 다시 선택할 수 있도록)
       e.target.value = "";
     },
-    [accept, images, maxFiles, maxSizeMB, singleImage]
+    [maxFiles, singleImage, validateImage]
   );
 
   // 특정 이미지 제거
@@ -148,10 +155,10 @@ export default function useImageUpload({
   }, []);
 
   // Filter out any existing images that don't have a file
-  const getValidImages = useCallback(() => {
+  const getValidImages = useCallback((): ImageFile[] => {
     return images.filter((img) => {
       // Keep existing images or images with actual file data
-      return (img as any).isExisting || img.file.size > 0;
+      return img.isExisting || img.file.size > 0;
     });
   }, [images]);
 
@@ -161,19 +168,14 @@ export default function useImageUpload({
     setError(null);
   }, []);
 
-  // 상태 업데이트 함수
-  const setUploadingStatus = useCallback((uploading: boolean) => {
-    setIsUploading(uploading);
-  }, []);
-
   // 단일 이미지 모드를 위한 호환성 유지
   const singleImageProps = singleImage
     ? {
-        file: images[0]?.file || null,
+        file: images[0]?.file,
         previewUrl: images[0]?.previewUrl || "",
         resetImage: resetImages,
       }
-    : {};
+    : undefined;
 
   // 컴포넌트 언마운트 시 또는 maxFiles 변경 시 정리
   useEffect(() => {
@@ -195,10 +197,10 @@ export default function useImageUpload({
     handleFileChange,
     removeImage,
     resetImages,
-    setImages, // Add setImages to the return object
+    setImages,
     accept: acceptString,
     maxFiles,
     remainingSlots: maxFiles - images.length,
-    ...singleImageProps,
-  } as const; // Use const assertion to preserve literal types
+    ...(singleImage ? singleImageProps : {}),
+  } as const;
 }

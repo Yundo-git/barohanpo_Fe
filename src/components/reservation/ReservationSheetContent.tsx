@@ -1,7 +1,7 @@
 // src/components/reservation/ReservationSheetContent.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format, parseISO } from "date-fns";
@@ -51,14 +51,10 @@ export default function ReservationSheetContent({
   const [isReservationComplete, setIsReservationComplete] =
     useState<boolean>(false);
   // 고정 노출 슬롯
-  const fixedTimeSlots: string[] = [
-    "09:00",
-    "10:00",
-    "11:00",
-    "14:00",
-    "15:00",
-    "16:00",
-  ];
+  const fixedTimeSlots = useMemo(
+    () => ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"],
+    []
+  );
 
   // 로그인 유저
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
@@ -68,31 +64,39 @@ export default function ReservationSheetContent({
     },
   });
 
-  // 오늘 ~ 7일(포함) 범위 계산
-  const today = new Date();
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const maxSelectableDate = new Date(todayStart);
-  maxSelectableDate.setDate(maxSelectableDate.getDate() + 6); // 오늘 포함 7일 간
+  // 오늘 날짜와 시간 계산을 한 번에 메모이제이션
+  const { todayStart, maxSelectableDate, nowHM, todayStr } = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    const endDate = new Date(startOfDay);
+    endDate.setDate(endDate.getDate() + 6); // 오늘 포함 7일 간
 
-  // 현재 시간(분) & 오늘 문자열
-  const nowHM: number = today.getHours() * 60 + today.getMinutes();
-  const todayStr: string = format(todayStart, "yyyy-MM-dd");
+    return {
+      todayStart: startOfDay,
+      maxSelectableDate: endDate,
+      nowHM: now.getHours() * 60 + now.getMinutes(),
+      todayStr: format(startOfDay, "yyyy-MM-dd"),
+    };
+  }, []); // 의존성 배열이 비어있어 컴포넌트 마운트 시 한 번만 계산
 
   // HH:mm -> 총 분으로 변환
-  const toHM = (t: string): number => {
+  const toHM = useCallback((t: string): number => {
     const [h, m] = t.split(":").map((n) => Number(n));
     return h * 60 + m;
-  };
+  }, []);
 
   // 해당 슬롯이 "미래"인지 판정 (오늘만 시간 비교, 그 외 날짜는 모두 미래로 간주)
-  const isFutureSlot = (dateStr: string, hhmm: string): boolean => {
-    if (dateStr !== todayStr) return true;
-    return toHM(hhmm) > nowHM;
-  };
+  const isFutureSlot = useCallback(
+    (dateStr: string, hhmm: string): boolean => {
+      if (dateStr !== todayStr) return true;
+      return toHM(hhmm) > nowHM;
+    },
+    [todayStr, toHM, nowHM]
+  );
 
   // 초기 날짜 적용
   useEffect(() => {
@@ -106,16 +110,17 @@ export default function ReservationSheetContent({
 
   // 데이터 로드 (캐시 사용)
   useEffect(() => {
+    const rangeStart = format(todayStart, "yyyy-MM-dd");
+    const rangeEnd = format(maxSelectableDate, "yyyy-MM-dd");
+
     const fetchAndProcessDates = async (): Promise<void> => {
       try {
         setIsLoading(true);
-        const rangeStart = format(todayStart, "yyyy-MM-dd");
-        const rangeEnd = format(maxSelectableDate, "yyyy-MM-dd");
         const cached = slotCache.get(pharmacyId);
+
         if (
-          cached &&
-          cached.rangeStart === rangeStart &&
-          cached.rangeEnd === rangeEnd
+          cached?.rangeStart === rangeStart &&
+          cached?.rangeEnd === rangeEnd
         ) {
           setAvailableSlots(cached.slots);
           setIsLoading(false);
@@ -129,9 +134,8 @@ export default function ReservationSheetContent({
 
         const slots: SlotMap = {};
         data.forEach(({ date, time, is_available }) => {
-          const hhmm = time.slice(0, 5); // "15:00:00" -> "15:00"
+          const hhmm = time.slice(0, 5);
           if (!slots[date]) slots[date] = {};
-          // 고정 슬롯만 관리(혹시 API가 다른 시간 내려줘도 필터)
           if (fixedTimeSlots.includes(hhmm)) {
             slots[date][hhmm] = is_available === 1;
           }
@@ -153,12 +157,7 @@ export default function ReservationSheetContent({
     };
 
     void fetchAndProcessDates();
-  }, [
-    pharmacyId,
-    fixedTimeSlots.join(","),
-    todayStart.getTime(),
-    maxSelectableDate.getTime(),
-  ]);
+  }, [pharmacyId, todayStart, maxSelectableDate, fixedTimeSlots]);
 
   // 선택 가능한 날짜(오늘~7일) 중에서 "미래 기준으로 true 슬롯이 하나라도 있는 날짜"만 허용
   const enabledDateSet = useMemo((): Set<string> => {
@@ -177,13 +176,7 @@ export default function ReservationSheetContent({
       if (hasAnyAvailable) set.add(dateStr);
     }
     return set;
-  }, [
-    availableSlots,
-    todayStr,
-    nowHM,
-    todayStart.getTime(),
-    maxSelectableDate.getTime(),
-  ]);
+  }, [availableSlots, todayStart, maxSelectableDate, isFutureSlot]);
 
   // 선택된 날짜의 시간 리스트(오늘이면 과거 시간 제거)
   const availableTimes = useMemo((): Array<{
@@ -203,8 +196,8 @@ export default function ReservationSheetContent({
     selectedDate,
     availableSlots,
     enabledDateSet,
-    nowHM,
-    fixedTimeSlots.join(","),
+    isFutureSlot,
+    fixedTimeSlots,
   ]);
 
   // 날짜 변경
@@ -222,7 +215,7 @@ export default function ReservationSheetContent({
     if (!isFutureSlot(dateStr, selectedTime)) {
       setSelectedTime(null);
     }
-  }, [selectedDate, selectedTime, nowHM]);
+  }, [selectedDate, selectedTime, isFutureSlot]);
 
   if (isLoading) {
     return (

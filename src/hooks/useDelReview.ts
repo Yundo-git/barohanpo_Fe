@@ -8,7 +8,13 @@ import { fetchFiveStarReviews } from "@/store/reviewSlice";
 interface ApiResponse {
   success: boolean;
   message?: string;
-  data?: any;
+  data?: {
+    success: boolean;
+    message?: string;
+    review_id?: number;
+    // Add other possible fields from the API response
+    [key: string]: unknown;
+  };
 }
 
 export default function useDelReview() {

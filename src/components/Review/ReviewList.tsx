@@ -2,6 +2,7 @@
 
 import { Review } from "@/types/review";
 import { useState } from "react";
+import Image from "next/image";
 import UpdateReviewModal from "./UpdateReviewModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import useDelReview from "@/hooks/useDelReview";
@@ -119,50 +120,59 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
                         key={`${review.review_id}-${photoIndex}`}
                         className="relative flex-shrink-0 w-24 h-24 group"
                       >
-                        <img
-                          src={`data:image/jpeg;base64,${base64String}`}
-                          alt={`리뷰 사진 ${photoIndex + 1}`}
-                          className="w-24 h-24 object-cover rounded-lg border border-gray-200 flex-shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const newWindow = window.open("", "_blank");
-                            if (newWindow) {
-                              newWindow.document.write(`
-                                <!DOCTYPE html>
-                                <html>
-                                  <head>
-                                    <title>리뷰 사진</title>
-                                    <style>
-                                      body { 
-                                        margin: 0; 
-                                        display: flex; 
-                                        justify-content: center; 
-                                        align-items: center; 
-                                        height: 100vh; 
-                                        background-color: #f5f5f5;
-                                      }
-                                      img { 
-                                        max-width: 90vw; 
-                                        max-height: 90vh; 
-                                        object-fit: contain; 
-                                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                                        border-radius: 0.5rem;
-                                      }
-                                    </style>
-                                  </head>
-                                  <body>
-                                    <img src="data:image/jpeg;base64,${base64String}" alt="리뷰 사진" />
-                                  </body>
-                                </html>
-                              `);
-                              newWindow.document.close();
-                            }
-                          }}
-                          onError={(e) => {
-                            console.error("Error loading image:", e);
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
+                        <div className="relative w-24 h-24 flex-shrink-0">
+                          <Image
+                            src={`data:image/jpeg;base64,${base64String}`}
+                            alt={`리뷰 사진 ${photoIndex + 1}`}
+                            fill
+                            className="object-cover rounded-lg border border-gray-200 cursor-pointer"
+                            sizes="96px"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newWindow = window.open("", "_blank");
+                              if (newWindow) {
+                                newWindow.document.write(`
+                                  <!DOCTYPE html>
+                                  <html>
+                                    <head>
+                                      <title>리뷰 사진</title>
+                                      <style>
+                                        body { 
+                                          margin: 0; 
+                                          display: flex; 
+                                          justify-content: center; 
+                                          align-items: center; 
+                                          height: 100vh; 
+                                          background-color: #f5f5f5;
+                                        }
+                                        img { 
+                                          max-width: 90vw; 
+                                          max-height: 90vh; 
+                                          object-fit: contain; 
+                                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                                          border-radius: 0.5rem;
+                                        }
+                                      </style>
+                                    </head>
+                                    <body>
+                                      <img 
+                                        src="data:image/jpeg;base64,${base64String}" 
+                                        alt="리뷰 사진"
+                                        style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                                      />
+                                    </body>
+                                  </html>
+                                `);
+                                newWindow.document.close();
+                              }
+                            }}
+                            onError={(e) => {
+                              console.error("Error loading image:", e);
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                        </div>
                         {review.photos.length > 1 && (
                           <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded">
                             {photoIndex + 1}/{review.photos.length}

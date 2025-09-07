@@ -10,18 +10,29 @@ export interface UpdateReviewParams {
   userId: number;
   score: number;
   comment: string;
+  images?: Array<File | { isExisting?: boolean; id?: string }>;
+  pharmacyId?: number;
+}
+
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+interface ReviewUpdateData {
+  reviewId: number;
+  userId: number;
+  score: number;
+  comment: string;
   images?: File[];
   pharmacyId?: number;
 }
 
-interface ApiResponse {
-  success: boolean;
-  message?: string;
-  data?: any;
-}
-
 const useUpdateReview = (): {
-  updateReview: (params: UpdateReviewParams) => Promise<ApiResponse>;
+  updateReview: (
+    params: UpdateReviewParams
+  ) => Promise<ApiResponse<ReviewUpdateData>>;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -30,7 +41,7 @@ const useUpdateReview = (): {
   const dispatch = useDispatch<AppDispatch>();
 
   const updateReviewMutation = useMutation<
-    ApiResponse,
+    ApiResponse<ReviewUpdateData>,
     Error,
     UpdateReviewParams
   >({
@@ -39,24 +50,25 @@ const useUpdateReview = (): {
       formData.append("score", score.toString());
       formData.append("comment", comment);
 
-      // Separate new and existing images
+      // Separate new and existing images with proper typing
       const newImages = images.filter(
-        (img) => img instanceof File && !("isExisting" in img)
+        (img): img is File => img instanceof File && !("isExisting" in img)
       );
-      const existingImages = images.filter((img) => "isExisting" in img);
+
+      const existingImages = images.filter(
+        (img): img is { isExisting: boolean; id?: string } =>
+          img && "isExisting" in img
+      );
 
       // Add new images
       newImages.forEach((file) => {
-        if (file instanceof File) {
-          // Use the same field name that multer is configured to handle
-          formData.append("photos", file);
-        }
+        formData.append("photos", file);
       });
 
       // Add info about existing images to keep
       const existingPhotoIds = existingImages
-        .map((img) => (img as any).id?.replace("existing-", ""))
-        .filter(Boolean);
+        .map((img) => img.id?.replace("existing-", ""))
+        .filter((id): id is string => Boolean(id));
 
       formData.append("existing_photo_ids", JSON.stringify(existingPhotoIds));
       formData.append(

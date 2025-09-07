@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, ChangeEvent } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 import useCreateReview from "@/hooks/useCreateReview";
-import useImageUpload, { type ImageFile } from "@/hooks/useImageUpload";
+import useImageUpload from "@/hooks/useImageUpload";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createReview } = useCreateReview();
-  
+
   // 이미지 업로드 훅 (최대 3장)
   const {
     images,
@@ -35,9 +36,8 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
     error: imageError,
     handleFileChange,
     removeImage,
-    resetImages
   } = useImageUpload({ maxFiles: 3 });
-  
+
   if (!isOpen) return null;
 
   // 리뷰제출 함수
@@ -57,20 +57,22 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
         p_id,
         book_date,
         book_time,
-        images: images.map(img => img.file)
+        images: images.map((img) => img.file),
       });
-      
+
       // 폼 초기화
       setScore(5);
       setComment("");
-      resetImages();
       onClose();
-      
+
       // 성공 알림 (추가적인 UI 피드백이 필요할 수 있음)
       alert("리뷰가 성공적으로 등록되었습니다.");
     } catch (error) {
       console.error("리뷰 제출 중 오류 발생:", error);
-      const errorMessage = error instanceof Error ? error.message : "리뷰 등록 중 오류가 발생했습니다.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "리뷰 등록 중 오류가 발생했습니다.";
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -134,7 +136,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                 placeholder="리뷰를 작성해주세요."
                 required
               />
-              
+
               {/* 이미지 업로드 영역 */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -147,28 +149,32 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                       {images.map((image, index) => (
                         <div key={image.id} className="relative group">
                           <div className="aspect-square overflow-hidden rounded-md bg-gray-100">
-                            <img
-                              src={image.previewUrl}
-                              alt={`미리보기 ${index + 1}`}
-                              className="h-full w-full object-cover"
-                            />
+                            <div className="relative h-full w-full">
+                              <Image
+                                src={image.previewUrl}
+                                alt={`미리보기 ${index + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeImage(image.id);
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                              aria-label="이미지 제거"
+                            >
+                              <XMarkIcon className="w-3 h-3" />
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeImage(image.id);
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            aria-label="이미지 제거"
-                          >
-                            <XMarkIcon className="w-3 h-3" />
-                          </button>
                         </div>
                       ))}
                     </div>
                   )}
-                  
+
                   {/* 파일 입력 */}
                   {images.length < 3 && (
                     <div>
@@ -189,7 +195,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                       </p>
                     </div>
                   )}
-                  
+
                   {imageError && (
                     <p className="text-sm text-red-600 mt-1">{imageError}</p>
                   )}

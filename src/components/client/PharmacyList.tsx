@@ -2,10 +2,10 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect } from 'react';
 import { usePharmacies } from "@/hooks/usePharmacies";
-import { Pharmacy } from "@/types/pharmacy";
 import { useRouter } from "next/navigation";
+import type { Pharmacy } from "@/types/pharmacy";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
 
 //주변에 약국없을때 화면 필요
@@ -32,12 +32,10 @@ const extractCityDistrict = (address?: string): string => {
 export default function PharmacyList({}: PharmacyListProps) {
   const { pharmacies, isLoading, error, findNearbyPharmacies } =
     usePharmacies();
-  const [isSearching, setIsSearching] = useState(false);
-  const hasFetchedRef = useRef(false);
   const router = useRouter();
 
   // useMapHandlers에서 필요한 함수만 가져오기
-  const { getCurrentPosition, locationError } = useMapHandlers({
+  const { locationError } = useMapHandlers({
     createPharmacyMarkers: () => [], // 필수 파라미터이지만 여기서는 사용하지 않음
     adjustMapBounds: () => {}, // 필수 파라미터
     handleMarkerClick: () => {}, // 필수 파라미터
@@ -55,7 +53,7 @@ export default function PharmacyList({}: PharmacyListProps) {
   }, [locationError]);
 
   // pharmacies가 비어있고 로딩 중이거나 검색 중인 경우에만 로딩 표시
-  if ((pharmacies.length === 0 && isLoading) || isSearching) {
+  if (pharmacies.length === 0 && isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-2">

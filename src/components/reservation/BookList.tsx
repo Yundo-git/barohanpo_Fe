@@ -14,12 +14,10 @@ interface BookListProps {
 
 type ReservationItem = Reservation;
 // 훅 반환 타입 예시: { book_id: number }[]
-type CompletedReview = { book_id: number | string };
 
 const BookList: React.FC<BookListProps> = ({
   reservation,
   onCancelSuccess,
-  userId,
 }) => {
   const { bookCancel } = useBookCencel();
   const completedReviews = useAppSelector(

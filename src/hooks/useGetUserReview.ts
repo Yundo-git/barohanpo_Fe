@@ -15,7 +15,6 @@ const useGetUserReview = (userId: number): UseGetUserReviewReturn => {
     data: reviewsData = [],
     isLoading,
     error,
-    refetch,
   } = useQuery<Review[]>({
     queryKey: ["userReviews", userId],
     queryFn: async () => {
