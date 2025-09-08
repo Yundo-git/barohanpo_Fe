@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Providers from "@/store/Provider";
 import LocalPermission from "@/components/map/LocalPermission";
 import { QueryClientProvider } from "@/providers/QueryClientProvider";
+import AuthBootstrap from "@/components/auth/AuthBootstrap";
 
 export const metadata: Metadata = {
   title: "바로한포",
@@ -25,6 +26,8 @@ export default function RootLayout({
         {/* <UserProvider> */}
         <Providers>
           <QueryClientProvider>
+          <AuthBootstrap />
+
             <LocalPermission />
             <div className="fixed top-0 left-0 right-0 z-50">
               <Header />

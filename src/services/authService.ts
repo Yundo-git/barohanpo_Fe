@@ -105,7 +105,6 @@ export async function refresh(): Promise<RefreshResponse> {
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
-          "X-Retry-Attempt": "true",
         },
       }
     );
