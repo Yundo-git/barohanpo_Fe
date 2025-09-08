@@ -25,8 +25,8 @@ export default function MobileNavBar() {
     { href: "/", label: "홈", Icon: HomeIcon },
     { href: "/map", label: "약국", Icon: BuildingStorefrontIcon },
     {
-      href: isLoggedIn ? "/mybook/" + user?.user_id : "/auth?from=reservation",
-      label: "예약",
+      href: isLoggedIn ? "/mybook" : "/auth?from=reservation",
+      label: "예약내역",
       Icon: UserIcon,
     },
     { 
