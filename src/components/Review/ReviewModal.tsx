@@ -40,7 +40,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
 
   if (!isOpen) return null;
 
-  // 리뷰제출 함수
+  // 리뷰 제출 처리 함수
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) {

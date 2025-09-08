@@ -58,14 +58,14 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         {review.photos.map((photo, index) => {
           if (!photo.review_photo_blob?.data) return null;
           
-          // Convert the array of numbers to a Uint8Array
+          // 숫자 배열을 Uint8Array로 변환
           const bytes = new Uint8Array(photo.review_photo_blob.data);
-          // Convert to a binary string
+          // 바이너리 문자열로 변환
           let binary = '';
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
           }
-          // Convert to base64
+          // base64로 인코딩
           const base64String = btoa(binary);
           
           return (

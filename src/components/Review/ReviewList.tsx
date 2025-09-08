@@ -35,15 +35,15 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
 
     try {
       await delReview(reviewToDelete);
-      // Call the onDelete callback to refresh the reviews list
+      // 리뷰 목록을 새로고침하기 위해 onDelete 콜백 호출
       if (onDelete) {
         onDelete();
       }
-      // Show success message after the list is refreshed
+      // 목록이 새로고침된 후 성공 메시지 표시
       alert("리뷰가 삭제되었습니다.");
     } catch (error) {
       console.error("리뷰 삭제 중 오류:", error);
-      // Error is already handled in the hook, so we don't need to show another alert
+      // 오류는 이미 훅에서 처리되었으므로 별도의 알림을 표시할 필요 없음
     } finally {
       setReviewToDelete(null);
     }
@@ -70,7 +70,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
             />
           )}
 
-          {/* 리뷰헤더 */}
+          {/* 리뷰 헤더 */}
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center">
@@ -93,7 +93,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
             </div>
           </div>
 
-          {/* 리뷰 내용 영역*/}
+          {/* 리뷰 내용 영역 */}
           <p className="mt-3 text-gray-800 whitespace-pre-line">
             {review.comment || "내용 없음"}
           </p>

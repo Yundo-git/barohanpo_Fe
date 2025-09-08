@@ -64,9 +64,9 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
           let blobData = "";
           const photoBlob = photo.review_photo_blob as unknown;
 
-          // Handle different formats of review_photo_blob with proper type checking
+          // review_photo_blob의 다양한 형식을 타입 체크와 함께 처리
           if (photoBlob !== null && typeof photoBlob === "object") {
-            // If it's an object with data property (like a Buffer)
+            // 데이터 속성을 가진 객체인 경우 (Buffer 등)
             if (
               "data" in photoBlob &&
               Array.isArray((photoBlob as { data: unknown }).data)
@@ -74,7 +74,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
               const bufferData = (photoBlob as { data: number[] }).data;
               blobData = Buffer.from(bufferData).toString("base64");
             }
-            // If it's a File or Blob
+            // File이나 Blob인 경우
             else if (photoBlob instanceof Blob || photoBlob instanceof File) {
               return {
                 id: `existing-${photo.review_photo_id}`,
@@ -83,7 +83,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
               };
             }
           } else if (typeof photoBlob === "string") {
-            // If it's already a base64 string
+            // 이미 base64 문자열인 경우
             const blobStr = photoBlob;
             if (blobStr.startsWith("data:image/")) {
               const parts = blobStr.split(",");
@@ -93,7 +93,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
             }
           }
 
-          // Clean up any non-base64 characters
+          // base64가 아닌 문자 제거
           const cleanBlobData =
             typeof blobData === "string"
               ? blobData.replace(/^data:image\/\w+;base64,/, "")

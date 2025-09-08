@@ -21,11 +21,11 @@ interface BottomSheetProps {
   children: ReactNode;
   /** 스크린 대비 최대 높이 (vh). 컨텐츠가 더 작으면 그만큼만 차지 */
   maxHeightVh?: number; // default 85
-  /** 오버레이 클릭으로 닫기 */
+  /** 오버레이 클릭으로 닫기 가능 여부 */
   closeOnOverlay?: boolean; // default true
-  /** ESC 키로 닫기 */
+  /** ESC 키로 닫기 가능 여부 */
   closeOnEsc?: boolean; // default true
-  /** 접근성 레이블 */
+  /** 접근성을 위한 레이블 */
   ariaLabel?: string; // default "바텀시트"
 }
 
@@ -46,7 +46,7 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     const scrollableRef = useRef<HTMLDivElement | null>(null);
     const lastActiveRef = useRef<HTMLElement | null>(null);
 
-    // expose reset()
+    // reset() 메서드 외부 노출
     useImperativeHandle(
       ref,
       () => ({
@@ -59,24 +59,24 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       []
     );
 
-    // Body scroll lock + ESC + focus restore
+    // 바디 스크롤 잠금 + ESC 키 처리 + 포커스 복원
     useEffect(() => {
       if (!isOpen) return;
 
-      // Save current active element to restore focus later
+      // 나중에 포커스를 복원하기 위해 현재 활성 요소 저장
       lastActiveRef.current = document.activeElement as HTMLElement;
 
-      // Save current styles and scroll position
+      // 현재 스타일과 스크롤 위치 저장
       const { overflow, position, width, top } = document.body.style;
       const scrollY = window.scrollY;
 
-      // Apply styles to prevent scrolling
+      // 스크롤 방지를 위한 스타일 적용
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.style.top = `-${scrollY}px`;
 
-      // ESC to close
+      // ESC 키로 닫기 처리
       const onKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape" && closeOnEsc) {
           onClose();
@@ -84,26 +84,26 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       };
       document.addEventListener("keydown", onKeyDown);
 
-      // Initial focus to sheet
+      // 바텀시트에 초기 포커스 설정
       requestAnimationFrame(() => {
         panelRef.current?.focus();
       });
 
-      // Cleanup function
+      // 정리 함수
       return () => {
-        // Remove event listener
+        // 이벤트 리스너 제거
         document.removeEventListener("keydown", onKeyDown);
 
-        // Restore styles
+        // 스타일 복원
         document.body.style.overflow = overflow;
         document.body.style.position = position;
         document.body.style.width = width;
         document.body.style.top = top;
 
-        // Restore scroll position
+        // 스크롤 위치 복원
         window.scrollTo(0, scrollY);
 
-        // Restore focus
+        // 포커스 복원
         lastActiveRef.current?.focus?.();
       };
     }, [isOpen, onClose, closeOnEsc]);
@@ -134,10 +134,10 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
               role="dialog"
               aria-modal="true"
               aria-label={ariaLabel}
-              // 포커스 받을 수 있도록
+              // 포커스 받을 수 있도록 설정
               tabIndex={-1}
               ref={panelRef}
-              // 패널 클릭이 오버레이로 전파되어 닫히지 않게
+              // 패널 클릭 시 오버레이로 이벤트가 전파되어 닫히지 않도록 방지
               onClick={(e) => e.stopPropagation()}
               className={[
                 "absolute inset-x-0 bottom-0  w-full ",
@@ -156,13 +156,13 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
                 stiffness: 400,
                 damping: 35,
               }}
-              // 드래그로 닫기
+              // 드래그로 닫기 동작 처리
               drag="y"
               dragElastic={0.1}
               dragConstraints={{ top: 0, bottom: 0 }}
               onDragEnd={(_, info) => {
-                const draggedFar = info.offset.y > 120; // 드래그 거리 임계값
-                const flungDown = info.velocity.y > 800; // 플링 속도 임계값
+                const draggedFar = info.offset.y > 120; // 드래그 거리 임계값 (120px 이상)
+ const flungDown = info.velocity.y > 800; // 플링 속도 임계값 (800 이상)
                 if (draggedFar || flungDown) onClose();
               }}
             >
@@ -176,7 +176,7 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
                 ref={scrollableRef}
                 className="px-4 pb-4 overflow-y-auto"
                 style={{
-                  // handle 높이만큼 여백 포함 후, 내부에서만 스크롤
+                  // 핸들 높이만큼 여백을 포함한 후, 내부에서만 스크롤 가능하도록 설정
                   maxHeight: `calc(${maxHeightVh}vh - 2.5rem)`,
                 }}
               >

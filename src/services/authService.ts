@@ -1,88 +1,79 @@
 import axios, { AxiosError } from "axios";
-import type {
-  LoginResponse,
-  RefreshTokenResponse,
-  ErrorResponse,
-} from "@/types/user";
+import type { User } from "@/types/user";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-/**
- * 로그인 API 호출
- * 성공 시 서버에서 refreshToken을 HttpOnly 쿠키로 설정
- */
-export const login = async (
-  email: string,
-  password: string
-): Promise<LoginResponse> => {
-  console.log('authService - Login request:', { 
-    url: `${API_BASE_URL}/api/auth/login`,
-    email: email, // Only log email for security
-    hasPassword: !!password // Don't log actual password
-  });
+type LoginSuccess = {
+  user: User;
+  accessToken: string;
+};
+export type LoginResponse =
+  | { success: true; data: LoginSuccess }
+  | { success: false; error: string };
 
+export type RefreshResponse =
+  | { success: true; accessToken: string }
+  | { success: false; error: string; isUnauthorized?: boolean };
+
+type ErrorResponse = { error?: string; message?: string };
+
+/** 로그인: refresh는 httpOnly 쿠키로 내려오고, JSON엔 { user, accessToken }만 */
+// src/services/authService.ts (login만 교체)
+export async function login(email: string, password: string): Promise<LoginResponse> {
   try {
-    const response = await axios.post<LoginResponse>(
+    // 제네릭 제거: 런타임 응답을 그대로 받아서 가공
+    const res = await axios.post(
       `${API_BASE_URL}/api/auth/login`,
       { email, password },
       {
-        withCredentials: true,
+        withCredentials: true, // httpOnly refresh 쿠키 수신
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
         },
       }
     );
-    
-    if (!response.data) {
-      console.error('authService - No response data received');
-      throw new Error('No response data received');
-    }
-    
-    // Log response headers for debugging
-    const responseHeaders = response.headers ? {
-      'content-type': response.headers['content-type'],
-      'set-cookie': response.headers['set-cookie'] ? 'present' : 'not present',
-      'authorization': response.headers['authorization'] ? 'present' : 'not present'
-    } : 'No headers';
 
-    console.log('authService - Login response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders,
-      data: {
-        success: response.data.success,
-        hasUserData: !!response.data.data?.user,
-        hasAccessToken: !!response.data.data?.tokens?.accessToken,
-        accessTokenLength: response.data.data?.tokens?.accessToken?.length || 0
-      }
-    });
-    
-    // Ensure the response has the expected structure
-    if (!response.data.data?.tokens?.accessToken) {
-      console.warn('No access token in login response');
+    // 기대되는 실제 응답: { success: true, data: { tokens: { accessToken }, user } }
+    const raw = res.data;
+
+    const user = raw?.data?.user;
+    const accessToken =
+      raw?.data?.tokens?.accessToken ??
+      raw?.data?.accessToken ??
+      raw?.accessToken; // 혹시 모를 변형 대비
+
+    if (raw?.success === true && user && typeof accessToken === "string" && accessToken.length > 0) {
+      return { success: true, data: { user, accessToken } };
     }
-    
-    return response.data;
-  } catch (error) {
-    console.error("Login error:", error);
-    const axiosError = error as AxiosError<ErrorResponse>;
+
+    // 다른 포맷도 혹시 처리 (여유분)
+    if (raw?.user && (raw?.tokens?.accessToken || raw?.accessToken)) {
+      return {
+        success: true,
+        data: {
+          user: raw.user,
+          accessToken: raw.tokens?.accessToken ?? raw.accessToken,
+        },
+      };
+    }
+
+    return { success: false, error: "Invalid response format" };
+  } catch (e) {
+    const err = e as AxiosError<{ error?: string; message?: string }>;
     return {
       success: false,
-      error:
-        axiosError.response?.data?.error || "로그인 중 오류가 발생했습니다.",
+      error: err.response?.data?.error || err.response?.data?.message || "로그인 중 오류가 발생했습니다.",
     };
   }
-};
+}
 
-/**
- * 로그아웃 API 호출
- * 서버에서 refreshToken 쿠키를 제거
- */
-export const logout = async (): Promise<boolean> => {
+
+/** 로그아웃: 서버에서 refresh 무효화 + 쿠키 제거 */
+export async function logout(): Promise<boolean> {
   try {
     await axios.post(
-      `${API_BASE_URL}/api/auth/logout`,
+      `${API_BASE_URL}/auth/logout`,
       {},
       {
         withCredentials: true,
@@ -93,72 +84,50 @@ export const logout = async (): Promise<boolean> => {
       }
     );
     return true;
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError<ErrorResponse>;
-    
-    // If the error is 401 (Unauthorized), the token is likely expired
-    // but we can still consider the logout successful since the user will be logged out on the client side
-    if (axiosError.response?.status === 401) {
-      console.log('Session already expired, proceeding with client-side cleanup');
-      return true;
-    }
-    
-    console.error("Logout error:", error);
+  } catch (e) {
+    const err = e as AxiosError<ErrorResponse>;
+    if (err.response?.status === 401) return true; // 이미 만료된 세션도 OK
+    console.error("Logout error:", e);
     return false;
   }
-};
+}
 
-/** 토큰 갱신 API 호출
- * refreshToken은 HttpOnly 쿠키로 자동 전송됨*/
-export const refreshToken = async (): Promise<RefreshTokenResponse> => {
-  // 클라이언트 사이드에서만 실행
-  if (typeof window === "undefined") {
-    console.warn("refreshToken: 클라이언트 사이드에서만 실행 가능합니다.");
-    return {
-      success: false,
-      error: "클라이언트에서만 실행 가능합니다.",
-    };
-  }
-
+/** 액세스 재발급: refresh는 httpOnly 쿠키로 자동 전송됨 */
+export async function refresh(): Promise<RefreshResponse> {
   try {
-    const response = await axios.post<RefreshTokenResponse>(
-      `${API_BASE_URL}/api/auth/refresh-token`,
+    const res = await axios.post<{ accessToken: string }>(
+      `${API_BASE_URL}/auth/refresh`,
       {},
       {
         withCredentials: true,
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
-          "X-Retry-Attempt": "true"
+          "X-Retry-Attempt": "true",
         },
       }
     );
-
-    return response.data;
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError<ErrorResponse>;
-
-    if (axiosError.response?.status === 401) {
-      return {
-        success: false,
-        error: "세션이 만료되었습니다. 다시 로그인해 주세요.",
-        isUnauthorized: true,
-      };
+    return { success: true, accessToken: res.data.accessToken };
+  } catch (e) {
+    const err = e as AxiosError<ErrorResponse>;
+    if (err.response?.status === 401) {
+      return { success: false, error: "세션이 만료되었습니다. 다시 로그인해 주세요.", isUnauthorized: true };
     }
-
-    console.error("Refresh token error:", error);
     return {
       success: false,
-      error:
-        axiosError.response?.data?.error || "토큰 갱신 중 오류가 발생했습니다.",
+      error: err.response?.data?.error || err.response?.data?.message || "토큰 갱신 중 오류가 발생했습니다.",
     };
   }
-};
+}
 
-const authService = {
-  login,
-  logout,
-  refreshToken,
-} as const;
+/** 세션 확인: refresh 쿠키만으로 현재 로그인 유저 반환 */
+export async function session(): Promise<{ ok: boolean; user?: User }> {
+  const res = await axios.get<{ ok: boolean; user?: User }>(
+    `${API_BASE_URL}/auth/session`,
+    { withCredentials: true }
+  );
+  return res.data;
+}
 
+const authService = { login, logout, refresh, session } as const;
 export default authService;

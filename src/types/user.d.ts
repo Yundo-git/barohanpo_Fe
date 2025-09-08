@@ -41,3 +41,8 @@ declare global {
     user: LoginResponse;
   }
 }
+
+export interface LoginApiResponse {
+  success: boolean;
+  data: LoginResponseData;
+}

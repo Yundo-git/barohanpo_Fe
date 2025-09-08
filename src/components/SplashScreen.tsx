@@ -10,9 +10,9 @@ import { store } from "@/store/store";
 
 type SplashScreenProps = {
   onLoaded: () => void;
-  /** 스플래시 최소 노출 시간(ms). 기본 800ms */
+  /** 스플래시 최소 노출 시간(밀리초). 기본값 800ms */
   minDurationMs?: number;
-  /** 로딩 최대 대기 시간(ms). 기본 15000ms */
+  /** 로딩 최대 대기 시간(밀리초). 기본값 15000ms */
   maxWaitMs?: number;
 };
 
@@ -24,7 +24,7 @@ export default function SplashScreen({
   const dispatch = useAppDispatch();
 
   const [mounted, setMounted] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(true); // false면 컴포넌트 자체 언마운트
+  const [visible, setVisible] = useState<boolean>(true); // false이면 컴포넌트가 언마운트됨
   const [isFading, setIsFading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -52,31 +52,31 @@ export default function SplashScreen({
 
   const finishSplash = useCallback(async () => {
     try {
-      // 최소 노출시간 보장
+      // 최소 노출 시간 보장
       await waitMinDuration();
 
       if (!mounted) return;
 
-      // 페이드아웃
+      // 페이드아웃 효과 적용
       setIsFading(true);
       await new Promise<void>((resolve) => setTimeout(resolve, 300));
 
       if (!mounted) return;
 
-      // 부모 콜백 호출
+      // 부모 컴포넌트의 콜백 함수 호출
       onLoaded();
 
-      // 자체 언마운트
+      // 컴포넌트 언마운트
       setVisible(false);
     } catch (error) {
-      console.error("Error in finishSplash:", error);
-      // 에러 발생 시에도 최대한 정리
+      console.error("finishSplash에서 오류 발생:", error);
+      // 오류가 발생해도 정리 작업 수행
       onLoaded();
       setVisible(false);
     }
   }, [mounted, onLoaded, waitMinDuration]);
 
-  // Effect to check Redux state and close when data is loaded
+  // Redux 상태를 확인하고 데이터가 로드되면 닫는 효과
   useEffect(() => {
     if (!mounted) return;
 
@@ -91,14 +91,14 @@ export default function SplashScreen({
       }
     };
 
-    // Check immediately in case data is already loaded
+    // 이미 데이터가 로드된 경우 즉시 확인
     checkDataLoaded();
 
-    // Subscribe to store changes
-    // Store the unsubscribe function in the ref
+    // 스토어 변경 사항 구독
+    // 구독 해제 함수를 ref에 저장
     unsubscribeRef.current = store.subscribe(checkDataLoaded);
 
-    // Set a timeout to force close after maxWaitMs
+    // 최대 대기 시간 후 강제로 닫기 위한 타임아웃 설정
     const timeoutId = setTimeout(() => {
       console.warn("Forcing splash screen to close after timeout");
       void finishSplash();
@@ -124,22 +124,22 @@ export default function SplashScreen({
       const hasReviews = (currentState.review.reviews?.length ?? 0) > 0;
       const hasPharmacies = (currentState.pharmacy.pharmacies?.length ?? 0) > 0;
 
-      // If we already have data, finish immediately
+      // 이미 데이터가 있는 경우 즉시 종료
       if (hasReviews && hasPharmacies) {
         await finishSplash();
         return;
       }
 
-      // Set loading state
+      // 로딩 상태 설정
       setError(null);
       setIsLoading(true);
 
-      // Get user's location
+      // 사용자 위치 정보 가져오기
       const position = await new Promise<GeolocationPosition>((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => resolve(pos),
           () => {
-            // Fallback to Seoul coordinates if geolocation fails
+            // 위치 정보를 가져오지 못한 경우 서울 좌표로 기본값 설정
             const mock: GeolocationPosition = {
               coords: {
                 latitude: 37.5665,
@@ -160,7 +160,7 @@ export default function SplashScreen({
         );
       });
 
-      // Fetch data in parallel
+      // 데이터 병렬로 가져오기
       const fetches: Array<Promise<unknown>> = [];
       
       if (!hasReviews) {
@@ -178,7 +178,7 @@ export default function SplashScreen({
         );
       }
 
-      // Set a timeout to force close if data loading takes too long
+      // 데이터 로딩이 너무 오래 걸리는 경우 강제 종료를 위한 타임아웃 설정
       const timeoutId = setTimeout(() => {
         console.warn("Data loading timeout - forcing splash to close");
         void finishSplash();
@@ -192,7 +192,7 @@ export default function SplashScreen({
           await Promise.all(fetches);
         }
 
-        // Verify data was loaded
+        // 데이터 로드 확인
         const updated = store.getState();
         const allLoaded =
           (updated.review.reviews?.length ?? 0) > 0 &&
@@ -259,7 +259,7 @@ export default function SplashScreen({
       <div className="text-center space-y-6">
         <div className="animate-pulse">
           <div className="w-24 h-24 mx-auto">
-            <div className="relative w-[24vh] h-[24vh]">
+            {/* <div className="relative w-[24vh] h-[24vh]"> */}
               <Image
                 src="/logo.svg"
                 alt="바로한포 로고"
@@ -268,7 +268,7 @@ export default function SplashScreen({
                 priority
                 sizes="24vh"
               />
-            </div>
+            {/* </div> */}
           </div>
         </div>
 

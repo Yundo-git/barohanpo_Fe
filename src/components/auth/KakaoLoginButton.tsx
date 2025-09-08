@@ -1,31 +1,20 @@
 // src/components/auth/KakaoLoginButton.tsx
-"use client";
+'use client';
 
-import { useMemo } from "react";
+import { useCallback } from 'react';
 
-interface Props {
-  next?: string;
-  className?: string;
-}
-
-export default function KakaoLoginButton({ next, className }: Props) {
-  const startUrl = useMemo(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-    const url = new URL("/auth/kakao/start", base);
-    if (next) url.searchParams.set("next", next);
-    return url.toString();
-  }, [next]);
+export function KakaoLoginButton() {
+  const handleLogin = useCallback(() => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/kakao/login`;
+  }, []);
 
   return (
-    <a
-      href={startUrl}
-      className={`inline-flex items-center justify-center w-full h-12 rounded-lg bg-[#FEE500] text-black font-medium hover:opacity-90 transition ${
-        className ?? ""
-      }`}
+    <button
+      onClick={handleLogin}
+      className="w-full rounded-xl py-3 font-medium bg-yellow-300 hover:bg-yellow-400 transition"
       aria-label="카카오로 로그인"
     >
-      {/* 심볼 자리는 SVG 또는 이미지로 대체 */}
-      <span className="text-base">카카오로 시작하기</span>
-    </a>
+      카카오로 로그인
+    </button>
   );
 }

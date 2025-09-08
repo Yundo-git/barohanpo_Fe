@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import KakaoLoginButton from "@/components/auth/KakaoLoginButton";
+import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAppSelector } from "@/store/store";
@@ -28,7 +28,7 @@ export default function SignupChoice() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="space-y-4 m-4">
           <div className="space-y-4 flex flex-col">
-            <KakaoLoginButton next={next} />
+            <KakaoLoginButton />
 
             <button
               type="button"
