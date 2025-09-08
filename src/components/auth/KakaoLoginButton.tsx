@@ -1,12 +1,10 @@
 // src/components/auth/KakaoLoginButton.tsx
-'use client';
+"use client";
 
-import { useCallback } from 'react';
-
-export function KakaoLoginButton() {
-  const handleLogin = useCallback(() => {
+export default function KakaoLoginButton() {
+  const handleLogin = (): void => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/kakao/login`;
-  }, []);
+  };
 
   return (
     <button

@@ -1,14 +1,13 @@
 import axios from "axios";
-import { useState, useCallback, useEffect } from "react";
-import { generateRandomNickname } from "@/utils/nicknameGenerator";
+import { useState, useCallback } from "react";
 import useLogin from "@/hooks/useLogin";
 import { useRouter } from "next/navigation";
+
 interface SignupFormData {
   email: string;
   password: string;
   confirmPassword: string;
   name: string;
-  nickname: string;
   phone: string;
   verificationCode: string;
   agreements: {
@@ -24,7 +23,6 @@ export const useSignupForm = () => {
     password: "",
     confirmPassword: "",
     name: "",
-    nickname: "",
     phone: "",
     verificationCode: "",
     agreements: {
@@ -33,14 +31,8 @@ export const useSignupForm = () => {
       marketing: false,
     },
   });
-  const { login } = useLogin();
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      nickname: generateRandomNickname(),
-    }));
-  }, []);
 
+  const { login } = useLogin();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,23 +75,6 @@ export const useSignupForm = () => {
     }));
   }, []);
 
-  //   // 인증번호 전송 함수
-  //   const sendVerificationCode = useCallback(async (phoneNumber: string) => {
-  //     try {
-  //       setIsLoading(true);
-  //       setError(null);
-  //       // TODO: 실제 인증번호 전송 API 호출
-  //       // const response = await api.sendVerificationCode(phoneNumber);
-  //       // return response.success;
-  //       return true; // 임시 반환값
-  //     } catch (err) {
-  //       setError("인증번호 전송에 실패했습니다.");
-  //       return false;
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   }, []);
-
   // 회원가입 제출 함수
   const submitSignup = useCallback(async () => {
     // 필수 동의사항 체크
@@ -113,15 +88,23 @@ export const useSignupForm = () => {
       setError("비밀번호가 일치하지 않습니다.");
       return false;
     }
-    console.log(formData);
+
     try {
       setIsLoading(true);
       setError(null);
-      // Make the signup request
+
+      // 회원가입 요청 (nickname 제거된 상태)
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/signup`,
-        formData
+        {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          phone: formData.phone,
+        }
       );
+
+      // 회원가입 직후 자동 로그인 시도
       try {
         const loginData = {
           email: formData.email,
@@ -134,13 +117,13 @@ export const useSignupForm = () => {
         }
         return loginResponse.success;
       } catch (error) {
-        setError("회원가입 중 오류가 발생했습니다.");
-        console.error("회원가입 중 오류가 발생했습니다.", error);
+        setError("회원가입 후 로그인 중 오류가 발생했습니다.");
+        console.error(error);
         return false;
       }
     } catch (err) {
       setError("회원가입 중 오류가 발생했습니다.");
-      console.error("회원가입 중 오류가 발생했습니다.", err);
+      console.error(err);
       return false;
     } finally {
       setIsLoading(false);
@@ -153,7 +136,6 @@ export const useSignupForm = () => {
     error,
     handleInputChange,
     handleAllAgreements,
-    // sendVerificationCode,
     submitSignup,
   };
 };

@@ -162,11 +162,11 @@ export default function SplashScreen({
 
       // 데이터 병렬로 가져오기
       const fetches: Array<Promise<unknown>> = [];
-      
+
       if (!hasReviews) {
         fetches.push(dispatch(fetchFiveStarReviews()).unwrap());
       }
-      
+
       if (!hasPharmacies) {
         fetches.push(
           dispatch(
@@ -247,7 +247,7 @@ export default function SplashScreen({
   return createPortal(
     <div
       className={[
-        "fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4",
+        "fixed inset-0 z-[9999] flex items-center justify-center p-4",
         "transition-opacity duration-300",
         isFading ? "opacity-0" : "opacity-100",
         "bg-[#00bfa5]",
@@ -256,24 +256,34 @@ export default function SplashScreen({
       role="status"
       key="splash-screen"
     >
-      <div className="text-center space-y-6">
-        <div className="animate-pulse">
-          <div className="w-24 h-24 mx-auto">
-            {/* <div className="relative w-[24vh] h-[24vh]"> */}
-              <Image
-                src="/logo.svg"
-                alt="바로한포 로고"
-                fill
-                className="object-contain"
-                priority
-                sizes="24vh"
-              />
-            {/* </div> */}
+      <div className="flex flex-col items-center justify-center w-full h-full">
+        <div className="animate-pulse z-10">
+          <div
+            className="mx-auto"
+            style={{
+              width: "10vh",
+              height: "10vh",
+              minWidth: "3rem",
+              minHeight: "3rem",
+              maxWidth: "6rem",
+              maxHeight: "6rem",
+              position: "relative",
+            }}
+          >
+            <Image
+              src="/logo.svg"
+              alt="바로한포 로고"
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="w-full h-auto object-contain"
+              priority
+            />
           </div>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md">
+          <div className="mt-4 p-3 z-50 bg-red-50 text-red-600 rounded-md">
             {error}
             <div className="mt-2">
               <button

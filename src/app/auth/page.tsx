@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
+import KakaoLoginButton from "@/components/auth/KakaoLoginButton";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAppSelector } from "@/store/store";
