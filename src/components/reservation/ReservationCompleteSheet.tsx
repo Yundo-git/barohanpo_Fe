@@ -14,7 +14,7 @@ export default function ReservationCompleteSheet({
   pharmacyName,
 }: ReservationCompleteSheetProps) {
   const router = useRouter();
-  const user = useSelector((state: RootState) => state.user.user);
+  // const user = useSelector((state: RootState) => state.user.user);
 
   if (!date || !time) {
     return (
@@ -29,9 +29,15 @@ export default function ReservationCompleteSheet({
       <div className="flex-1 overflow-y-auto p-4">
         <h1 className="text-xl font-bold mb-4">예약이 완료되었습니다.</h1>
         <div className="space-y-2 text-gray-700 mb-6">
-          <p>약국  <b>{pharmacyName}</b></p>
-          <p>예약 일정  <b>{date} {time}</b></p>
-         
+          <p>
+            약국 <b>{pharmacyName}</b>
+          </p>
+          <p>
+            예약 일정{" "}
+            <b>
+              {date} {time}
+            </b>
+          </p>
         </div>
       </div>
 
@@ -43,8 +49,6 @@ export default function ReservationCompleteSheet({
           >
             예약 상세보기
           </button>
-      
-          
         </div>
       </div>
     </div>

@@ -53,8 +53,8 @@ type UseImageUploadArgs = {
 /** 이미지 아이템(기존/신규 구분을 위해 isExisting 추가) */
 export type ImageItem = {
   id: string;
-  file: File;          // 리사이즈/압축된 파일(WebP 권장)
-  previewUrl: string;  // blob: 또는 data:
+  file: File; // 리사이즈/압축된 파일(WebP 권장)
+  previewUrl: string; // blob: 또는 data:
   isExisting?: boolean; // 서버에 이미 존재하는 이미지라면 true
 };
 
@@ -130,48 +130,62 @@ const useImageUpload = ({
     );
     if (!blob) throw new Error("이미지 변환 실패");
 
-    const webpFile = new File(
-      [blob],
-      file.name.replace(/\.[^/.]+$/, ".webp"),
-      { type: "image/webp" }
-    );
+    const webpFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+      type: "image/webp",
+    });
     return webpFile;
   }, []);
 
-  /** input[type=file] onChange (다중 선택 지원) */
+  /** 파일 선택 핸들러 */
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const fileList = e.target.files;
-      e.currentTarget.value = ""; // 같은 파일 재선택 허용
-      if (!fileList || fileList.length === 0) return;
-
-      const remain = Math.max(0, maxFiles - images.length);
-      const files = Array.from(fileList).slice(0, remain);
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
 
       try {
-        const processed: ImageItem[] = [];
-        for (const raw of files) {
-          validate(raw);
-          const resized = await resizeToWebp(raw);
-          const previewUrl = URL.createObjectURL(resized);
-          processed.push({
-            id:
-              typeof crypto !== "undefined" && "randomUUID" in crypto
-                ? crypto.randomUUID()
-                : `${Date.now()}-${Math.random()}`,
-            file: resized,
+        setError(null);
+        const newImages: ImageItem[] = [];
+        const fileArray = Array.from(files);
+
+        // 최대 개수 초과 검사
+        if (images.length + fileArray.length > maxFiles) {
+          throw new Error(`최대 ${maxFiles}장까지 업로드할 수 있습니다.`);
+        }
+
+        // 각 파일 처리
+        for (const file of fileArray) {
+          validate(file);
+
+          // WebP로 변환 (원본 유지)
+          const webpFile = await resizeToWebp(file);
+
+          // 미리보기 URL 생성
+          const previewUrl = URL.createObjectURL(webpFile);
+
+          newImages.push({
+            id: `preview-${Date.now()}-${Math.random()
+              .toString(36)
+              .substr(2, 9)}`,
+            file: webpFile,
             previewUrl,
-            isExisting: false,
           });
         }
-        setImages((prev) => [...prev, ...processed]);
+
+        // 상태 업데이트
+        setImages((prev) => [...prev, ...newImages]);
+
+        // 파일 입력 초기화 (동일 파일 재선택 가능하도록)
+        e.target.value = "";
       } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "이미지 처리 중 오류가 발생했습니다.";
-        setError(msg);
+        console.error("이미지 처리 중 오류:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "이미지 처리 중 오류가 발생했습니다."
+        );
       }
     },
-    [images.length, maxFiles, resizeToWebp, validate]
+    [images.length, maxFiles, validate, resizeToWebp]
   );
 
   /** 단일 이미지 제거 */
@@ -239,9 +253,7 @@ const useImageUpload = ({
 
         // 단일/다중 응답 모두 대응
         const urls: string[] = Array.isArray(json)
-          ? (json
-              .map((o) => o.imageUrl || o.url)
-              .filter(Boolean) as string[])
+          ? (json.map((o) => o.imageUrl || o.url).filter(Boolean) as string[])
           : ([json.imageUrl || json.url].filter(Boolean) as string[]);
 
         onUploadSuccess?.(urls);
@@ -277,12 +289,12 @@ const useImageUpload = ({
 
   return {
     // 상태
-    images,            // [{ id, file, previewUrl, isExisting? }]
+    images, // [{ id, file, previewUrl, isExisting? }]
     isUploading,
     error,
 
     // 액션
-    handleFileChange,  // input[type=file] onChange에 연결
+    handleFileChange, // input[type=file] onChange에 연결
     removeImage,
     clearAll,
     uploadAll,
@@ -291,8 +303,8 @@ const useImageUpload = ({
     files: useMemo(() => images.map((i) => i.file), [images]),
 
     // 외부 제어/호환
-    setImages,        // 기존 서버 이미지 세팅 등에서 사용
-    getValidImages,   // 제출 전 필터링 등에서 사용
+    setImages, // 기존 서버 이미지 세팅 등에서 사용
+    getValidImages, // 제출 전 필터링 등에서 사용
   };
 };
 

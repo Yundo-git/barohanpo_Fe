@@ -130,17 +130,27 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Get only valid images (with actual file data or marked as existing)
-      const validImages = getValidImages() as ReviewImage[];
+      // Get all images (both new and existing)
+      const allImages = [...images];
+
+      // Separate new files and existing images
+      const newFiles = allImages
+        .filter((img) => !img.isExisting && img.file instanceof File)
+        .map((img) => img.file);
+
+      const existingImages = allImages
+        .filter((img) => img.isExisting)
+        .map((img) => ({
+          isExisting: true,
+          id: img.id.replace("existing-", ""), // Remove the 'existing-' prefix
+        }));
 
       const updateData: UpdateReviewParams = {
         reviewId: review.review_id,
         userId: review.user_id,
         score,
         comment,
-        images: validImages
-          .filter((img) => !img.isExisting) // Filter out existing images
-          .map((img) => img.file), // Get only the file objects
+        images: [...newFiles, ...existingImages],
       };
 
       // Add pharmacyId only if it exists on the review
