@@ -43,7 +43,7 @@ function MyBookContent({ userId }: { userId: number }) {
   const handleRefresh = () => {
     void loadData();
   };
-
+  console.log('reservations', reservations);
   const tabItems = [
     {
       key: "reservations",

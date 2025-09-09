@@ -38,7 +38,7 @@ export default function ReservationCompleteSheet({
       <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4">
         <div className="flex flex-col space-y-2">
           <button
-            onClick={() => router.push(`/mybook/${user?.user_id}`)}
+            onClick={() => router.push(`/mybook`)}
             className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             예약 상세보기

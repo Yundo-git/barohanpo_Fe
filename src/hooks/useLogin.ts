@@ -61,7 +61,7 @@ const useLogin = (): UseLoginReturn => {
         })
       );
 
-      // 로그인 직후 유저 관련 데이터 선조회(필요한 것만)
+      // 로그인 직후 유저 관련 데이터 선 조회(필요한 것만)
       if (user?.user_id) {
         const uid = Number(user.user_id);
         await Promise.all([
