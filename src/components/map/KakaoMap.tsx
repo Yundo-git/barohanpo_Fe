@@ -159,6 +159,7 @@ export default function KakaoMap({ initialPharmacies }: KakaoMapProps) {
         ref={bottomSheetRef}
         isOpen={isBottomSheetOpen}
         onClose={closeBottomSheet}
+        onDragUp={() => setSheetView("list" as SheetView)}
       >
         {sheetView === "reserve" && selectedPharmacy ? (
           <ReservationSheetContent

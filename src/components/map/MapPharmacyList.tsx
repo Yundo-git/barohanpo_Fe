@@ -25,9 +25,9 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
   // When a pharmacy is selected, show only that pharmacy
   if (selectedPharmacy && sheetView === "detail") {
     return (
-      <div className="space-y-2 max-h-[50vh] overflow-y-auto px-2">
-        <div className="border border-gray-200 rounded-md">
-          <div className="flex gap-2 p-2">
+      <div className="space-y-2 max-h-full overflow-y-auto px-2">
+        <div>
+          <div className="flex gap-2">
             <div className="w-[60vw]">
               <p className="text-base font-medium">
                 {selectedPharmacy.name || "이름 없음"} &gt;
@@ -51,7 +51,7 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
               이미지 영역
             </div>
           </div>
-          <div className="p-2">
+          <div>
             <Bookbtn
               pharmacyId={Number(selectedPharmacy.p_id)}
               onReserve={(_, date) => onReserve(selectedPharmacy, date)}
@@ -65,15 +65,15 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
   return (
     <div className="space-y-2 max-h-[75vh] px-2">
       {pharmacies.map((pharmacy) => (
-        <div key={pharmacy.p_id} className="border border-gray-200 rounded-md">
+        <div key={pharmacy.p_id}>
           <div
-            className="flex gap-2 p-2 cursor-pointer hover:bg-gray-50"
+            className="flex gap-2 cursor-pointer hover:bg-gray-50"
             onClick={() =>
               (window.location.href = `/pharmacy/${pharmacy.p_id}`)
             }
           >
             <div className="w-[60vw]">
-              <p>{pharmacy.name ? `${pharmacy.name} >` : "이름 없음"}</p>
+              <p>{pharmacy.name ? `${pharmacy.name}` : "이름 없음"}</p>
               <p className="text-xs text-gray-600">
                 {pharmacy.address || "주소 정보 없음"}
               </p>
@@ -93,7 +93,7 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
               이미지 영역
             </div>
           </div>
-          <div className="p-2">
+          <div>
             <Bookbtn
               pharmacyId={Number(pharmacy.p_id)}
               onReserve={(_, date) => onReserve(pharmacy, date)}

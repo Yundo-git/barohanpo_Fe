@@ -27,6 +27,7 @@ interface BottomSheetProps {
   closeOnEsc?: boolean; // default true
   /** 접근성을 위한 레이블 */
   ariaLabel?: string; // default "바텀시트"
+  onDragUp?: () => void;
 }
 
 const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
@@ -39,6 +40,7 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       closeOnOverlay = true,
       closeOnEsc = true,
       ariaLabel = "바텀시트",
+      onDragUp,
     },
     ref
   ) => {
@@ -161,8 +163,14 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
               dragElastic={0.1}
               dragConstraints={{ top: 0, bottom: 0 }}
               onDragEnd={(_, info) => {
-                const draggedFar = info.offset.y > 120; // 드래그 거리 임계값 (120px 이상)
- const flungDown = info.velocity.y > 800; // 플링 속도 임계값 (800 이상)
+                const draggedFar = info.offset.y > 120;
+                const flungDown = info.velocity.y > 800;
+
+                // Detect upward drag
+                if (info.offset.y < -50) {
+                  onDragUp?.();
+                }
+
                 if (draggedFar || flungDown) onClose();
               }}
             >

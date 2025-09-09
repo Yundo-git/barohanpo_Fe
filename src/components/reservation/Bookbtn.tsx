@@ -51,7 +51,7 @@ export default function Bookbtn({
     return <p className="text-sm text-gray-400 px-2">예약 정보 없음</p>;
 
   return (
-    <div className={["px-2 pb-2", className ?? ""].join(" ")}>
+    <div className={[className ?? ""].join(" ")}>
       <button
         onClick={handleClick}
         className=" rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"

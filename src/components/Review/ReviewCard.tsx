@@ -57,19 +57,22 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       <div className="mt-2 flex space-x-2 overflow-x-auto">
         {review.photos.map((photo, index) => {
           if (!photo.review_photo_blob?.data) return null;
-          
+
           // 숫자 배열을 Uint8Array로 변환
           const bytes = new Uint8Array(photo.review_photo_blob.data);
           // 바이너리 문자열로 변환
-          let binary = '';
+          let binary = "";
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
           }
           // base64로 인코딩
           const base64String = btoa(binary);
-          
+
           return (
-            <div key={`${photo.review_photo_id}-${index}`} className="relative h-20 w-20 flex-shrink-0">
+            <div
+              key={`${photo.review_photo_id}-${index}`}
+              className="relative h-32 w-full flex-shrink-0"
+            >
               <Image
                 src={`data:image/jpeg;base64,${base64String}`}
                 alt={`Review image ${index + 1}`}
@@ -91,13 +94,17 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           <Profile
             size={40}
             imageUrl={review.user_profile_image || "/sample_profile.svg"}
-            alt={review.user_name || 'User'}
+            alt={review.user_name || "User"}
             rounded="full"
           />
           <div>
-            <div className="font-medium">{review.user_name || '익명'}</div>
+            <div className="font-medium">{review.user_name || "익명"}</div>
             <div className="text-sm text-gray-500">
-              {formatDate(review.create_at || review.updated_at || new Date().toISOString())}
+              {formatDate(
+                review.create_at ||
+                  review.updated_at ||
+                  new Date().toISOString()
+              )}
             </div>
           </div>
         </div>
@@ -113,7 +120,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       )}
 
       <div className="mt-2">{renderRating(review.score)}</div>
-      
+
       {review.comment && (
         <p className="mt-2 text-gray-700 whitespace-pre-line">
           {review.comment}
@@ -127,7 +134,11 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           <div className="flex justify-between items-center">
             <div className="font-medium text-sm text-gray-700">사장님 댓글</div>
             <div className="text-xs text-gray-500">
-              {formatDate(review.updated_at || review.create_at || new Date().toISOString())}
+              {formatDate(
+                review.updated_at ||
+                  review.create_at ||
+                  new Date().toISOString()
+              )}
             </div>
           </div>
           <p className="mt-1 text-sm text-gray-600">{review.reply}</p>
