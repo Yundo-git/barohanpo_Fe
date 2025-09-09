@@ -8,9 +8,10 @@ import type { RootState } from "@/store/store";
 
 interface ReviewCardProps {
   review: Review & {
-    user_name?: string;
+    nickname?: string;
     user_profile_image?: string;
-    pharmacy_name?: string;
+    name?: string;
+    address?: string;
     updated_at?: string;
     reply?: string;
   };
@@ -23,6 +24,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   className = "",
   showPharmacyName = true,
 }) => {
+  console.log(review);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("ko-KR", {
@@ -94,11 +96,11 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           <Profile
             size={40}
             imageUrl={review.user_profile_image || "/sample_profile.svg"}
-            alt={review.user_name || "User"}
+            alt={review.nickname || "User"}
             rounded="full"
           />
           <div>
-            <div className="font-medium">{review.user_name || "익명"}</div>
+            <div className="font-medium">{review.nickname || "익명"}</div>
             <div className="text-sm text-gray-500">
               {formatDate(
                 review.created_at ||
@@ -115,10 +117,6 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         )}
       </div>
 
-      {showPharmacyName && review.pharmacy_name && (
-        <div className="mt-2 text-sm font-medium">{review.pharmacy_name}</div>
-      )}
-
       <div className="mt-2">{renderRating(review.score)}</div>
 
       {review.comment && (
@@ -129,19 +127,10 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
 
       {renderImages()}
 
-      {review.reply && (
-        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-          <div className="flex justify-between items-center">
-            <div className="font-medium text-sm text-gray-700">사장님 댓글</div>
-            <div className="text-xs text-gray-500">
-              {formatDate(
-                review.updated_at ||
-                  review.created_at ||
-                  new Date().toISOString()
-              )}
-            </div>
-          </div>
-          <p className="mt-1 text-sm text-gray-600">{review.reply}</p>
+      {showPharmacyName && review.name && (
+        <div>
+          <h1 className="mt-2 text-sm font-medium">{review.name}</h1>
+          <h2>{review.address}</h2>
         </div>
       )}
     </div>
