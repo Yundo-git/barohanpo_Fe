@@ -10,12 +10,12 @@ import useUpdateReview, {
 import useImageUpload from "@/hooks/useImageUpload";
 import { Review } from "@/types/review";
 
-interface ReviewImage {
-  id: string;
-  file: File;
-  previewUrl: string;
-  isExisting?: boolean;
-}
+// interface ReviewImage {
+//   id: string;
+//   file: File;
+//   previewUrl: string;
+//   isExisting?: boolean;
+// }
 
 interface ReviewWithPharmacyId extends Review {
   pharmacy_id?: number;
@@ -46,7 +46,6 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
     handleFileChange,
     removeImage,
     setImages,
-    getValidImages,
   } = useImageUpload({ maxFiles: 3 });
   // 리뷰 데이터가 변경되면 폼 초기화
   useEffect(() => {

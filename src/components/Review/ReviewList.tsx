@@ -82,8 +82,8 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
                 </span>
               </div>
               <p className="text-gray-500 text-sm mt-1">
-                {review.create_at
-                  ? new Date(review.create_at).toLocaleDateString("ko-KR", {
+                {review.created_at
+                  ? new Date(review.created_at).toLocaleDateString("ko-KR", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -168,7 +168,8 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
                             }}
                             onError={(e) => {
                               console.error("Error loading image:", e);
-                              const target = e.currentTarget as HTMLImageElement;
+                              const target =
+                                e.currentTarget as HTMLImageElement;
                               target.style.display = "none";
                             }}
                           />

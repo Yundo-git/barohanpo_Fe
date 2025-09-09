@@ -132,7 +132,10 @@ const useAuth = (): UseAuthReturn => {
           !accessToken;
 
         if (shouldBootstrap) {
-          await afterAuthBootstrap(dispatch, { user: nextUser, accessToken: token });
+          await afterAuthBootstrap(dispatch, {
+            user: nextUser,
+            accessToken: token,
+          });
         } else {
           // 동일 유저 + 콜백 아님 → 불필요한 대량 프리패치 방지
           // 토큰만 갱신된 상태라면 setAuth 내부 로직이 이미 유지되고 있을 것.
@@ -156,7 +159,10 @@ const useAuth = (): UseAuthReturn => {
 
       const me2: MeResult = await authService.me(newToken);
       if (me2.ok && me2.user) {
-        await afterAuthBootstrap(dispatch, { user: me2.user, accessToken: newToken });
+        await afterAuthBootstrap(dispatch, {
+          user: me2.user,
+          accessToken: newToken,
+        });
         return me2.user;
       }
 
@@ -173,7 +179,14 @@ const useAuth = (): UseAuthReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchParams, getTokenFromStateOrStorage, persistToken, dispatch, currentUserId, accessToken]);
+  }, [
+    searchParams,
+    getTokenFromStateOrStorage,
+    persistToken,
+    dispatch,
+    currentUserId,
+    accessToken,
+  ]);
 
   /**
    * 이메일/비밀번호 로그인:
@@ -220,7 +233,6 @@ const useAuth = (): UseAuthReturn => {
     try {
       await authService.logout();
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error("Logout error:", e);
     } finally {
       dispatch(clearAuth());

@@ -1,6 +1,4 @@
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store/store";
 
 interface ReservationCompleteSheetProps {
   date: string | null;

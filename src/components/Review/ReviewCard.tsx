@@ -101,7 +101,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
             <div className="font-medium">{review.user_name || "익명"}</div>
             <div className="text-sm text-gray-500">
               {formatDate(
-                review.create_at ||
+                review.created_at ||
                   review.updated_at ||
                   new Date().toISOString()
               )}
@@ -136,7 +136,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
             <div className="text-xs text-gray-500">
               {formatDate(
                 review.updated_at ||
-                  review.create_at ||
+                  review.created_at ||
                   new Date().toISOString()
               )}
             </div>

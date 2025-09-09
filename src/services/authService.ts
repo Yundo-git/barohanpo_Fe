@@ -18,9 +18,7 @@ export type RefreshResponse =
 type ErrorResponse = { error?: string; message?: string };
 
 /** ← 추가: me() 전용 판별 유니온 타입 */
-export type MeResult =
-  | { ok: true; user: User }
-  | { ok: false; user: null };
+export type MeResult = { ok: true; user: User } | { ok: false; user: null };
 
 /**
  * 로그인
@@ -90,7 +88,6 @@ export async function logout(): Promise<boolean> {
   } catch (e) {
     const err = e as AxiosError<ErrorResponse>;
     if (err.response?.status === 401) return true;
-    // eslint-disable-next-line no-console
     console.error("Logout error:", e);
     return false;
   }
