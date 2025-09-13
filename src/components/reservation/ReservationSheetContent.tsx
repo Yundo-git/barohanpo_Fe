@@ -46,10 +46,13 @@ export default function ReservationSheetContent({
 }: Props) {
   const [availableSlots, setAvailableSlots] = useState<SlotMap>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    initialDate ? parseISO(initialDate) : new Date()
+  );  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isReservationComplete, setIsReservationComplete] =
     useState<boolean>(false);
+
+    console.log("selectedDate", selectedDate);
   // 고정 노출 슬롯
   const fixedTimeSlots = useMemo(
     () => ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"],
@@ -103,6 +106,7 @@ export default function ReservationSheetContent({
     if (!initialDate) return;
     try {
       setSelectedDate(parseISO(initialDate));
+      // console.log("selectedDate in useEffect", selectedDate);
     } catch {
       // ignore
     }
@@ -199,6 +203,20 @@ export default function ReservationSheetContent({
     isFutureSlot,
     fixedTimeSlots,
   ]);
+  // 예약 가능한 가장 빠른 날짜를 초기값으로 설정
+  useEffect(() => {
+    // availableSlots가 비어있지 않고, enabledDateSet이 준비되면 실행
+    if (Object.keys(availableSlots).length > 0 && enabledDateSet.size > 0) {
+      // 예약 가능한 첫 번째 날짜를 찾습니다.
+      const firstAvailableDateStr = Array.from(enabledDateSet).sort()[0];
+      if (firstAvailableDateStr) {
+        setSelectedDate(parseISO(firstAvailableDateStr));
+      } else {
+        // 예약 가능한 날짜가 없다면 selectedDate를 null로 유지
+        setSelectedDate(null);
+      }
+    }
+  }, [availableSlots, enabledDateSet]);
 
   // 날짜 변경
   const onDateChange = (v: Value): void => {
@@ -253,6 +271,9 @@ export default function ReservationSheetContent({
       </div>
     );
   }
+  console.log("availableSlots:", availableSlots);
+console.log("enabledDateSet:", enabledDateSet);
+console.log("selectedDate:", selectedDate);
 
   return (
     <div className="flex flex-col h-full">
