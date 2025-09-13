@@ -1,5 +1,6 @@
+// src/hooks/usePharmacyMarkers.ts
 import { useCallback } from "react";
-import { PharmacyWithUser } from "@/types/pharmacy";
+import type { PharmacyWithUser } from "@/types/pharmacy";
 
 export const usePharmacyMarkers = () => {
   // 약국 마커 생성
@@ -7,7 +8,8 @@ export const usePharmacyMarkers = () => {
     (
       map: kakao.maps.Map,
       pharmacies: PharmacyWithUser[],
-      onClick: (pharmacy: PharmacyWithUser) => void
+      onClick: (pharmacy: PharmacyWithUser) => void,
+      markerImage?: kakao.maps.MarkerImage // optional
     ): kakao.maps.Marker[] => {
       if (!window.kakao?.maps || !map) {
         console.error("Kakao Maps not available or map not initialized");
@@ -41,11 +43,17 @@ export const usePharmacyMarkers = () => {
 
             const position = new window.kakao.maps.LatLng(lat, lng);
 
-            const marker = new window.kakao.maps.Marker({
+            const markerOpts: kakao.maps.MarkerOptions = {
               position,
               title: pharmacy.name || "이름 없음",
               clickable: true,
-            });
+            };
+
+            if (markerImage) {
+              markerOpts.image = markerImage;
+            }
+
+            const marker = new window.kakao.maps.Marker(markerOpts);
 
             marker.setMap(map);
 
@@ -81,12 +89,12 @@ export const usePharmacyMarkers = () => {
         }
       });
 
-      if (!bounds.isEmpty()) {
-        try {
+      try {
+        if (!bounds.isEmpty()) {
           map.setBounds(bounds);
-        } catch (error) {
-          console.error("Map bounds set error:", error);
         }
+      } catch (error) {
+        console.error("Map bounds set error:", error);
       }
     },
     []

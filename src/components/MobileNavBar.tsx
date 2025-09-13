@@ -40,7 +40,7 @@ export default function MobileNavBar() {
       style={{ bottom: 0 }}
       className="fixed z-50 h-14 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden"
     >
-      <ul className="flex h-full divide-x divide-gray-100">
+      <ul className="flex h-full ">
         {navItems(isLoggedIn).map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
