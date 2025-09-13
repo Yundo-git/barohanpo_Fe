@@ -179,7 +179,7 @@ a {
 
 /* === 커스텀 상태 클래스들 === */
 .rc-tile--selected {
-  background: #2563eb !important;
+  background: #00bfa5 !important;
   color: #fff !important;
   transform: translateY(-1px);
   box-shadow: none;
@@ -199,7 +199,7 @@ a {
   transform: translateX(-50%);
   width: 6px;
   height: 6px;
-  background: #2563eb;
+  background: #00bfa5;
 }
 .rc-tile--unavailable {
   opacity: 1; /* CHANGED: 타일은 진하게 두고 */

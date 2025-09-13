@@ -7,7 +7,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "var(--primary-color)",
+        primary: "var(--primary-color)", 
+        main: "#00bfa5", // ex: bg-main
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],

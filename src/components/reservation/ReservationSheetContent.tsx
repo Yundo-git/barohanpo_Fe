@@ -48,19 +48,20 @@ export default function ReservationSheetContent({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     initialDate ? parseISO(initialDate) : new Date()
-  );  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  );
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isReservationComplete, setIsReservationComplete] =
     useState<boolean>(false);
 
-    console.log("selectedDate", selectedDate);
   // 고정 노출 슬롯
   const fixedTimeSlots = useMemo(
     () => ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"],
     []
   );
 
-  // 로그인 유저
+  // 로그인 유저 (user_id는 number 형태라 가정)
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
+
   const { handleReservation } = useReservation(String(pharmacyId), {
     onSuccess: () => {
       setIsReservationComplete(true);
@@ -70,11 +71,7 @@ export default function ReservationSheetContent({
   // 오늘 날짜와 시간 계산을 한 번에 메모이제이션
   const { todayStart, maxSelectableDate, nowHM, todayStr } = useMemo(() => {
     const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endDate = new Date(startOfDay);
     endDate.setDate(endDate.getDate() + 6); // 오늘 포함 7일 간
 
@@ -84,7 +81,7 @@ export default function ReservationSheetContent({
       nowHM: now.getHours() * 60 + now.getMinutes(),
       todayStr: format(startOfDay, "yyyy-MM-dd"),
     };
-  }, []); // 의존성 배열이 비어있어 컴포넌트 마운트 시 한 번만 계산
+  }, []);
 
   // HH:mm -> 총 분으로 변환
   const toHM = useCallback((t: string): number => {
@@ -101,14 +98,14 @@ export default function ReservationSheetContent({
     [todayStr, toHM, nowHM]
   );
 
-  // 초기 날짜 적용
+  // 초기 날짜 적용 (초기 prop이 바뀔 수 있으니 useEffect로 처리)
   useEffect(() => {
     if (!initialDate) return;
     try {
       setSelectedDate(parseISO(initialDate));
-      // console.log("selectedDate in useEffect", selectedDate);
+      setSelectedTime(null);
     } catch {
-      // ignore
+      // ignore invalid date
     }
   }, [initialDate]);
 
@@ -153,6 +150,7 @@ export default function ReservationSheetContent({
           fetchedAt: Date.now(),
         });
       } catch (e) {
+        // 실패 시 빈 상태로 유지
         console.error("예약 가능 날짜 로드 실패:", e);
         setAvailableSlots({});
       } finally {
@@ -189,30 +187,21 @@ export default function ReservationSheetContent({
   }> => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, "yyyy-MM-dd");
-    // 선택된 날짜가 아예 비활성(주차 외/가용 없음)이면 빈 배열
     if (!enabledDateSet.has(dateStr)) return [];
     return fixedTimeSlots.map((t) => {
       const ok = availableSlots[dateStr]?.[t] ?? false;
       const future = isFutureSlot(dateStr, t);
       return { time: t, isAvailable: ok && future };
     });
-  }, [
-    selectedDate,
-    availableSlots,
-    enabledDateSet,
-    isFutureSlot,
-    fixedTimeSlots,
-  ]);
+  }, [selectedDate, availableSlots, enabledDateSet, isFutureSlot, fixedTimeSlots]);
+
   // 예약 가능한 가장 빠른 날짜를 초기값으로 설정
   useEffect(() => {
-    // availableSlots가 비어있지 않고, enabledDateSet이 준비되면 실행
     if (Object.keys(availableSlots).length > 0 && enabledDateSet.size > 0) {
-      // 예약 가능한 첫 번째 날짜를 찾습니다.
       const firstAvailableDateStr = Array.from(enabledDateSet).sort()[0];
       if (firstAvailableDateStr) {
         setSelectedDate(parseISO(firstAvailableDateStr));
       } else {
-        // 예약 가능한 날짜가 없다면 selectedDate를 null로 유지
         setSelectedDate(null);
       }
     }
@@ -236,9 +225,7 @@ export default function ReservationSheetContent({
   }, [selectedDate, selectedTime, isFutureSlot]);
 
   if (isLoading) {
-    return (
-      <div className="p-4 text-center">예약 가능한 날짜를 불러오는 중...</div>
-    );
+    return <div className="p-4 text-center">예약 가능한 날짜를 불러오는 중...</div>;
   }
 
   if (isReservationComplete && selectedDate && selectedTime) {
@@ -255,9 +242,7 @@ export default function ReservationSheetContent({
     return (
       <div className="p-4">
         <header className="mb-3">
-          <h2 className="text-base font-semibold">
-            {pharmacyName ?? "약국"} 예약
-          </h2>
+          <h2 className="text-base font-semibold">{pharmacyName ?? "약국"} 예약</h2>
         </header>
         <p>예약 가능한 날짜가 없습니다.</p>
         <div className="mt-4 flex justify-end">
@@ -271,9 +256,6 @@ export default function ReservationSheetContent({
       </div>
     );
   }
-  console.log("availableSlots:", availableSlots);
-console.log("enabledDateSet:", enabledDateSet);
-console.log("selectedDate:", selectedDate);
 
   return (
     <div className="flex flex-col h-full">
@@ -293,8 +275,9 @@ console.log("selectedDate:", selectedDate);
               return !enabledDateSet.has(dateStr);
             }}
             tileClassName={({ date }) =>
+              // 여기서 Tailwind 유틸 대신 강한 우선순위가 정의된 기존 클래스 사용
               selectedDate?.toDateString() === date.toDateString()
-                ? "bg-red-600 text-white rounded-full"
+                ? "rc-tile--selected"
                 : "hover:bg-gray-50 rounded-full"
             }
             formatShortWeekday={(_, date) =>
@@ -319,7 +302,7 @@ console.log("selectedDate:", selectedDate);
                       className={[
                         "py-2 px-4 rounded-md text-center transition-colors font-medium",
                         selected
-                          ? "bg-blue-600 text-white"
+                          ? "bg-main text-white"
                           : !isAvailable
                           ? "bg-gray-50 text-gray-300 border border-gray-200 cursor-not-allowed"
                           : "bg-white hover:bg-gray-50 text-gray-800 border border-gray-200",
@@ -351,28 +334,24 @@ console.log("selectedDate:", selectedDate);
 
                     const dateStr = format(selectedDate, "yyyy-MM-dd");
                     if (!isFutureSlot(dateStr, selectedTime)) {
-                      alert(
-                        "이미 지난 시간대입니다. 다른 시간을 선택해주세요."
-                      );
+                      alert("이미 지난 시간대입니다. 다른 시간을 선택해주세요.");
                       setSelectedTime(null);
                       return;
                     }
 
+                    // handleReservation은 hook에서 제공되므로, 호출시 필요한 값은 보장된 상태에서 호출
                     handleReservation(userId, selectedDate, selectedTime);
                   }}
                   disabled={!selectedTime}
                   className={[
                     "rounded-md px-4 py-2 text-sm font-medium",
                     selectedTime
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      ? "bg-main text-white hover:bg-blue-700"
                       : "bg-gray-300 text-gray-500 cursor-not-allowed",
                   ].join(" ")}
                 >
                   {selectedTime
-                    ? `${format(
-                        selectedDate,
-                        "yyyy년 MM월 dd일"
-                      )} ${selectedTime} 예약하기`
+                    ? `${format(selectedDate, "yyyy년 MM월 dd일")} ${selectedTime} 예약하기`
                     : "시간을 선택해주세요"}
                 </button>
               </div>
