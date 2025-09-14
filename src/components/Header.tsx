@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import BackButton from "./BackButton";
+import Image from "next/image";
 
 export default function Header() {
   const pathname = usePathname();
@@ -24,7 +25,7 @@ export default function Header() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <img src="/favicon.svg" alt="로고" className="w-8 h-8" />
+          <Image src="/favicon.svg" alt="로고"width={32} height={32} />
           <h1 className="font-bold">{getPageTitle()}</h1>
         </div>
       )}

@@ -77,7 +77,7 @@ declare namespace kakao {
       ): void;
       
       function removeListener(target: object): void;
-      function clearInstanceListeners(target: any): void;
+      function clearInstanceListeners(target: object): void;
 
     }
   }

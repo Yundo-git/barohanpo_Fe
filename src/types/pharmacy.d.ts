@@ -4,8 +4,8 @@ export interface Pharmacy {
   address?: string;
   phone?: string;
   number?: string;
-  lat?: number | string;
-  lng?: number | string;
+  lat: number; // string | number | undefined -> number
+  lng: number; // string | number | undefined -> number
   latitude?: number | string;
   longitude?: number | string;
   [key: string]: unknown;

@@ -3,10 +3,9 @@
 "use client";
 
 import { useEffect } from 'react';
-import { usePharmacies } from "@/hooks/usePharmacies";
 import { useRouter } from "next/navigation";
+import { usePharmacies } from "@/hooks/usePharmacies";
 import type { Pharmacy } from "@/types/pharmacy";
-import { useMapHandlers } from "@/hooks/useMapHandlers";
 
 //주변에 약국없을때 화면 필요
 
@@ -30,27 +29,24 @@ const extractCityDistrict = (address?: string): string => {
 };
 
 export default function PharmacyList({}: PharmacyListProps) {
-  const { pharmacies, isLoading, error, findNearbyPharmacies } =
+  const { pharmacies, isLoading, error } =
     usePharmacies();
   const router = useRouter();
 
-  // useMapHandlers에서 필요한 함수만 가져오기
-  const { locationError } = useMapHandlers({
-    createPharmacyMarkers: () => [], // 필수 파라미터이지만 여기서는 사용하지 않음
-    adjustMapBounds: () => {}, // 필수 파라미터
-    handleMarkerClick: () => {}, // 필수 파라미터
-    findNearbyPharmacies, // 실제로 사용할 함수
-  });
+  // PharmacyList에서는 지도 관련 기능이 필요하지 않으므로, useMapHandlers 대신 직접 필요한 상태만 가져옵니다.
+  // locationError는 여기서는 사용하지 않으므로 제거합니다.
+  // findNearbyPharmacies는 이미 usePharmacies 훅에서 가져왔으므로 그대로 사용합니다.
+  
 
   // 스플래시에서 미리 로드하므로 여기서는 별도 fetch를 하지 않음
 
   // 에러가 있으면 사용자에게 표시
   useEffect(() => {
-    if (locationError) {
-      console.error("위치 오류:", locationError);
+    if (error) {
+      console.error("약국 정보를 불러오는 중 오류 발생:", error);
       // 여기서 토스트 메시지나 알림을 표시할 수 있습니다.
     }
-  }, [locationError]);
+  }, [error]);
 
   // pharmacies가 비어있고 로딩 중이거나 검색 중인 경우에만 로딩 표시
   if (pharmacies.length === 0 && isLoading) {
