@@ -3,6 +3,8 @@
 
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 type Round = "full" | "lg" | "md" | "sm";
 
@@ -24,7 +26,7 @@ export interface ProfileProps {
   onFileSelect?: (file: File) => void;
   isLoading?: boolean;
   version?: number;
-  imageUrl?: string; // 외부에서 직접 URL 내려줄 때
+  imageUrl?: string; // <--- imageUrl prop 추가
 }
 
 const roundedClass: Record<Round, string> = {
@@ -33,6 +35,9 @@ const roundedClass: Record<Round, string> = {
   md: "rounded-lg",
   sm: "rounded-sm",
 };
+
+const MAX_SIZE_MB = 5;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export default function Profile({
   userId,
@@ -43,54 +48,68 @@ export default function Profile({
   fallbackSrc = "/sample_profile.jpeg",
   apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
   version,
-  imageUrl,
   onFileSelect,
-  isLoading = false,
+  isLoading,
+  imageUrl, // <--- imageUrl prop 받아서 사용
 }: ProfileProps) {
-  const baseSrc = useMemo<string>(() => {
-    if (imageUrl) {
-      return version ? `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}v=${version}` : imageUrl;
-    }
-    if (!userId) return fallbackSrc || "";
-    const root = `${apiBaseUrl}/api/profile/${userId}/photo`;
-    return version ? `${root}?v=${version}` : root;
-  }, [apiBaseUrl, userId, version, imageUrl, fallbackSrc]);
-
-  const [src, setSrc] = useState<string>(baseSrc);
   const [isFallback, setIsFallback] = useState<boolean>(false);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    setSrc(baseSrc);
+  // 로컬 미리보기 URL이 있으면 사용, 없으면 prop으로 받은 imageUrl 사용
+  const currentImageUrl = useMemo(() => {
+    return localPreviewUrl || imageUrl;
+  }, [localPreviewUrl, imageUrl]);
+
+  const src = useMemo(() => {
+    if (isFallback) {
+      return fallbackSrc;
+    }
+    return currentImageUrl || fallbackSrc;
+  }, [currentImageUrl, isFallback, fallbackSrc]);
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.currentTarget.value = ""; // 동일 파일 재선택 가능하게
+    if (!file) {
+      return;
+    }
+
+    // 파일 유효성 검사
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("JPEG, PNG, WebP 형식의 이미지만 업로드 가능합니다.");
+      return;
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast.error(`이미지 크기는 ${MAX_SIZE_MB}MB 이하로 업로드해주세요.`);
+      return;
+    }
+
+    // 기존 URL 해제 및 새 미리보기 URL 생성
+    if (localPreviewUrl) {
+      URL.revokeObjectURL(localPreviewUrl);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreviewUrl(objectUrl);
     setIsFallback(false);
-  }, [baseSrc]);
+
+    // 부모 컴포넌트에 파일 전달
+    onFileSelect?.(file);
+  };
+
+  const handleImageError = () => {
+    setIsFallback(true);
+  };
 
   const isBlobOrData = src.startsWith("blob:") || src.startsWith("data:");
 
-  const handleError = () => {
-    if (isFallback) return;
-    setIsFallback(true);
-    setSrc(fallbackSrc);
-  };
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const objectUrl = URL.createObjectURL(file);
-    setSrc(objectUrl); // 미리보기
-    setIsFallback(false);
-    onFileSelect?.(file);
-
-    // input 재선택 가능하도록 리셋
-    e.currentTarget.value = "";
-  };
-
-  // 언마운트 시 blob URL 정리
   useEffect(() => {
+    // 컴포넌트 언마운트 시 로컬 미리보기 URL 해제
     return () => {
-      if (src.startsWith("blob:")) URL.revokeObjectURL(src);
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+      }
     };
-  }, [src]);
+  }, [localPreviewUrl]);
 
   return (
     <div
@@ -99,7 +118,7 @@ export default function Profile({
     >
       <div className="relative w-full h-full">
         <Image
-          src={src || fallbackSrc}
+          src={src}
           alt={alt}
           fill
           sizes={`${size}px`}
@@ -108,13 +127,11 @@ export default function Profile({
             roundedClass[rounded],
             isLoading ? "opacity-50" : "opacity-100"
           )}
-          onError={handleError}
-          // blob/data URL, 미리보기, 또는 외부 도메인에서 최적화 안 하고 싶을 때
+          onError={handleImageError}
           unoptimized={isBlobOrData}
-          // 외부 도메인은 next.config.js remotePatterns에 등록 필요
           priority
         />
-
+        
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -122,7 +139,6 @@ export default function Profile({
         )}
       </div>
 
-      {/* 클릭해서 파일 선택 */}
       {onFileSelect && (
         <label
           className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-all cursor-pointer"

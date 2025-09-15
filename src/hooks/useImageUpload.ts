@@ -148,7 +148,7 @@ const useImageUpload = ({
         const fileArray = Array.from(files);
 
         // 최대 개수 초과 검사
-        if (images.length + fileArray.length > maxFiles) {
+        if (fileArray.length > maxFiles) {
           throw new Error(`최대 ${maxFiles}장까지 업로드할 수 있습니다.`);
         }
 

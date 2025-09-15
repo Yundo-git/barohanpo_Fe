@@ -1,3 +1,4 @@
+// src/pages/mypage/[user_id]/page.tsx
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
@@ -8,40 +9,34 @@ import Profile from "@/components/auth/Profile";
 import NicknameEditModal from "@/components/auth/NicknameEditModal";
 import { toast } from "react-toastify";
 import useChangeNick from "@/hooks/useChangeNick";
+import axios from "axios";
 
 interface ProfileImageState {
   file: File | null;
-  previewUrl: string;
   isUploading: boolean;
 }
 
 export default function AuthPage() {
   const router = useRouter();
-  // const params = useParams();
-  // const userId = params?.user_id as string;
   const user = useAppSelector((state) => state.user.user);
   const dispatch = useAppDispatch();
   const { usenickname } = useChangeNick();
 
-  // Local state for form inputs
   const [editedNickname, setEditedNickname] = useState(user?.nickname || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<ProfileImageState>({
     file: null,
-    previewUrl: "",
     isUploading: false,
   });
   
-  // Get the current image URL from Redux or use the default one
   const profileImageUrl = useMemo(() => {
     if (user?.profileImageUrl) return user.profileImageUrl;
     if (user?.user_id) return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
-    return "/sample_profile.svg";
+    return "/sample_profile.jpeg";
   }, [user]);
 
-  // Update local state when user changes
   useEffect(() => {
     if (user?.nickname) {
       setEditedNickname(user.nickname);
@@ -49,44 +44,11 @@ export default function AuthPage() {
   }, [user?.nickname]);
 
   const handleFileSelect = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setProfileImage((prev) => ({
-        ...prev,
-        file,
-        previewUrl: reader.result as string,
-        isUploading: false,
-      }));
-    };
-    reader.onerror = () => {
-      toast.error("이미지 파일을 읽을 수 없습니다.");
-      setProfileImage((prev) => ({ ...prev, isUploading: false }));
-    };
-    reader.readAsDataURL(file);
+    setProfileImage({
+      file,
+      isUploading: false,
+    });
   }, []);
-
-  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> =
-    useCallback(
-      (e) => {
-        const file = e.target.files?.[0];
-        e.currentTarget.value = ""; // Allow re-selecting the same file
-        if (!file || !user?.user_id) return;
-
-        // Simple validation (5MB, jpeg/png/webp)
-        const okTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-        if (!okTypes.has(file.type)) {
-          toast.error("JPEG, PNG, WebP 형식의 이미지만 업로드 가능합니다.");
-          return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-          toast.error("이미지 크기는 5MB 이하로 업로드해주세요.");
-          return;
-        }
-
-        handleFileSelect(file);
-      },
-      [user?.user_id, handleFileSelect]
-    );
 
   const handleSaveNickname = useCallback((newNickname: string) => {
     setEditedNickname(newNickname);
@@ -96,16 +58,17 @@ export default function AuthPage() {
   const handleSaveToBackend = useCallback(async () => {
     if (!user) return;
 
-    // Check if there are any changes
     if (editedNickname === user.nickname && !profileImage.file) {
       toast.info("변경된 내용이 없습니다.");
       return;
     }
 
     setIsSaving(true);
+    let newImageUrl = profileImageUrl;
+    let newProfileVersion = user.profileImageVersion ?? 0; // <-- 널 병합 연산자 사용
 
     try {
-      // Update nickname if changed
+      // 닉네임 변경
       if (editedNickname !== user.nickname) {
         await usenickname(editedNickname);
         dispatch(
@@ -117,58 +80,56 @@ export default function AuthPage() {
         toast.success("닉네임이 변경되었습니다.");
       }
 
-      // Upload profile image if selected
+      // 프로필 이미지 업로드
       if (profileImage.file) {
         setProfileImage((prev) => ({ ...prev, isUploading: true }));
 
         const formData = new FormData();
         formData.append("file", profileImage.file);
 
-        const response = await fetch(
+        const response = await axios.put(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo/upload`,
+          formData,
           {
-            method: "PUT",
-            body: formData,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           }
         );
 
-        if (!response.ok) {
+        if (response.status !== 200) {
           throw new Error("프로필 이미지 업로드에 실패했습니다.");
         }
 
-        // Get the image URL from the response if available
-        const result = await response.json();
-        const imageUrl = result.imageUrl || `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
-        
-        // Update Redux with the new image version and URL
-        const timestamp = Date.now();
-        dispatch(updateProfileImage({
-          user_id: user.user_id,
-          profileImageVersion: timestamp,
-          profileImageUrl: imageUrl
-        }));
+        newImageUrl = response.data.data.photoUrl;
+        newProfileVersion = Date.now();
 
-        // Reset the file state
         setProfileImage((prev) => ({
           ...prev,
           file: null,
-          previewUrl: "",
           isUploading: false,
         }));
       }
 
-      // Show success modal
+      // Redux 상태 업데이트
+      dispatch(updateProfileImage({
+        user_id: user.user_id,
+        profileImageVersion: newProfileVersion,
+        profileImageUrl: newImageUrl,
+      }));
+      
       setIsSuccessModalOpen(true);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "프로필 저장에 실패했습니다.";
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "프로필 저장에 실패했습니다.";
       toast.error(message);
     } finally {
       setIsSaving(false);
+      setProfileImage((prev) => ({ ...prev, isUploading: false }));
     }
-  }, [
-    user, editedNickname, profileImage.file, dispatch, usenickname]
-  );
+  }, [user, editedNickname, profileImage.file, dispatch, usenickname, profileImageUrl]);
 
   if (!user) {
     return <div>사용자 정보를 불러오는 중입니다...</div>;
@@ -178,7 +139,7 @@ export default function AuthPage() {
     <div className="p-4 max-w-md mx-auto">
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-32 h-32">
-<Profile
+          <Profile
             userId={user.user_id}
             alt="프로필 사진"
             size={128}
@@ -186,28 +147,31 @@ export default function AuthPage() {
             className="w-full h-full border-2 border-gray-200"
             fallbackSrc="/sample_profile.jpeg"
             onFileSelect={handleFileSelect}
-            isLoading={profileImage.isUploading}
+            isLoading={isSaving || profileImage.isUploading}
             version={user.profileImageVersion}
             imageUrl={profileImageUrl}
           />
         </div>
 
         <button
-          onClick={() => document.getElementById("profile-file")?.click()}
+          onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            // handleFileSelect를 onChange에 직접 연결
+            input.onchange = (event) => {
+              const file = (event.target as HTMLInputElement).files?.[0];
+              if (file) {
+                handleFileSelect(file);
+              }
+            };
+            input.click();
+          }}
           className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
           disabled={isSaving || profileImage.isUploading}
         >
           프로필 사진 변경
         </button>
-
-        <input
-          id="profile-file"
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={isSaving || profileImage.isUploading}
-        />
       </div>
 
       <section className="mb-8">
@@ -228,9 +192,7 @@ export default function AuthPage() {
       <div className="mt-8">
         <button
           onClick={handleSaveToBackend}
-          disabled={
-            isSaving || (editedNickname === user.nickname && !profileImage.file)
-          }
+          disabled={isSaving || (editedNickname === user.nickname && !profileImage.file)}
           className={`w-full rounded-lg py-3 font-medium transition-colors ${
             isSaving || (editedNickname === user.nickname && !profileImage.file)
               ? "cursor-not-allowed bg-gray-300"

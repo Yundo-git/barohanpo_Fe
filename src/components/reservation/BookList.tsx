@@ -101,7 +101,7 @@ const BookList: React.FC<BookListProps> = ({
     return (
       <button
         onClick={() => openReviewModal(item)}
-        className="w-full rounded-md bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 transition-colors"
+        className="w-full rounded-md bg-main text-white px-4 py-2 hover:bg-blue-600 transition-colors"
       >
         리뷰작성
       </button>
