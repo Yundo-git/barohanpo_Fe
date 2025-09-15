@@ -74,9 +74,6 @@ const useAuth = (): UseAuthReturn => {
   /**
    * 토큰 저장/삭제 (더 이상 localStorage에 저장하지 않음)
    */
-  const persistToken = useCallback((token: string | null) => {
-    // localStorage에 저장하지 않음
-  }, []);
 
   /**
    * 사용자 정보 동기화:
@@ -98,18 +95,15 @@ const useAuth = (): UseAuthReturn => {
           const refreshed = await authService.refresh();
           if (refreshed.success) {
             token = refreshed.accessToken;
-            persistToken(token);
           } else if (isKakaoCallback) {
             // 카카오 콜백인데 refresh 실패 시, 로그인 페이지로 리다이렉트
             console.error('Failed to refresh token after Kakao login');
             dispatch(clearAuth());
-            persistToken(null);
             router.push('/login');
             return null;
           } else {
             // 일반적인 토큰 만료의 경우
             dispatch(clearAuth());
-            persistToken(null);
             return null;
           }
         } catch (refreshError) {
@@ -145,7 +139,6 @@ const useAuth = (): UseAuthReturn => {
           // 동일 유저 + 콜백 아님 → 불필요한 대량 프리패치 방지
           // 토큰만 갱신된 상태라면 setAuth 내부 로직이 이미 유지되고 있을 것.
           // 여기서는 로컬스토리지만 최신화 유지.
-          persistToken(token);
         }
 
         return nextUser;
@@ -155,12 +148,10 @@ const useAuth = (): UseAuthReturn => {
       const refreshedAgain: RefreshResult = await authService.refresh();
       if (!refreshedAgain.success) {
         dispatch(clearAuth());
-        persistToken(null);
         return null;
       }
 
       const newToken = refreshedAgain.accessToken;
-      persistToken(newToken);
 
       const me2: MeResult = await authService.me(newToken);
       if (me2.ok && me2.user) {
@@ -173,13 +164,11 @@ const useAuth = (): UseAuthReturn => {
 
       // 그래도 실패 → 비로그인 처리
       dispatch(clearAuth());
-      persistToken(null);
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to fetch user";
       setError(msg);
       dispatch(clearAuth());
-      persistToken(null);
       return null;
     } finally {
       setIsLoading(false);
@@ -187,7 +176,6 @@ const useAuth = (): UseAuthReturn => {
   }, [
     searchParams,
     getTokenFromState,
-    persistToken,
     dispatch,
     currentUserId,
     accessToken,
@@ -215,9 +203,6 @@ const useAuth = (): UseAuthReturn => {
         // 공통 부트스트랩(스토어 setAuth + 예약/취소/리뷰 병렬 선조회)
         await afterAuthBootstrap(dispatch, { user: nextUser, accessToken: at });
 
-        // 로컬스토리지 토큰도 동기화
-        persistToken(at);
-
         return { success: true };
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Login failed";
@@ -227,7 +212,7 @@ const useAuth = (): UseAuthReturn => {
         setIsLoading(false);
       }
     },
-    [dispatch, persistToken]
+    [dispatch]
   );
 
   /**
@@ -242,12 +227,10 @@ const useAuth = (): UseAuthReturn => {
       console.error("Logout error:", e);
     } finally {
       dispatch(clearAuth());
-      persistToken(null);
-
       const redirectTo = searchParams.get("next") || "/";
       router.push(redirectTo);
     }
-  }, [dispatch, persistToken, router, searchParams]);
+  }, [dispatch, router, searchParams]);
 
   // 최초 마운트/리다이렉트 후 상태 동기화
   useEffect(() => {

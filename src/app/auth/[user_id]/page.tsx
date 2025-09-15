@@ -129,7 +129,7 @@ export default function AuthPage() {
       setIsSaving(false);
       setProfileImage((prev) => ({ ...prev, isUploading: false }));
     }
-  }, [user, editedNickname, profileImage.file, dispatch, usenickname, profileImageUrl]);
+  }, [user, editedNickname,accessToken, profileImage.file, dispatch, usenickname, profileImageUrl]);
 
   if (!user) {
     return <div>사용자 정보를 불러오는 중입니다...</div>;

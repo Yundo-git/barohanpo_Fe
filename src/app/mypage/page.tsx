@@ -29,7 +29,7 @@ export default function MyPage() {
       dispatch(clearAuth());
 
       // 로그인 페이지로 리다이렉트
-      router.push("/auth/user-signin");
+      router.push("/auth");
     }
   };
   const editProfile = () => {

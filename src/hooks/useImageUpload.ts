@@ -185,7 +185,7 @@ const useImageUpload = ({
         );
       }
     },
-    [images.length, maxFiles, validate, resizeToWebp]
+    [maxFiles, validate, resizeToWebp]
   );
 
   /** 단일 이미지 제거 */
