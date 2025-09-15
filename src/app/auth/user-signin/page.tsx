@@ -24,10 +24,10 @@ const UserSignInPage = () => {
       console.log("로그인 시도:", { email: loginData });
 
       const result = await login(loginData);
-
       if (result.success) {
         console.log("로그인 성공, 홈으로 리다이렉트 중...");
         router.push("/");
+        router.refresh(); 
       } else {
         setError(result.error || "로그인에 실패했습니다.");
       }
@@ -37,6 +37,7 @@ const UserSignInPage = () => {
     } finally {
       setIsLoading(false);
     }
+    
   };
 
   return (

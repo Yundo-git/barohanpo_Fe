@@ -16,7 +16,13 @@ const nextConfig: NextConfig = {
         port: "5000",
         pathname: "/api/**", // Allow all API routes
       },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+      },
     ],
+
+ 
     // 또는 간단히:
     // domains: ["localhost"], // (포트 지정은 안 되지만 host만 검사—간단한 케이스면 충분)
   },

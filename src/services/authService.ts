@@ -40,8 +40,8 @@ export async function login(
       }
     );
 
-    const raw = res.data as unknown;
-
+    const raw = res.data
+    console.log('raw in authService',raw)
     const user = (raw as { data?: { user?: User } })?.data?.user;
     const accessToken =
       (

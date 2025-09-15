@@ -30,7 +30,7 @@ export default function AuthPage() {
     file: null,
     isUploading: false,
   });
-  
+
   const profileImageUrl = useMemo(() => {
     if (user?.profileImageUrl) return user.profileImageUrl;
     if (user?.user_id) return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
@@ -43,16 +43,18 @@ export default function AuthPage() {
     }
   }, [user?.nickname]);
 
+  const handleSaveNickname = useCallback((newNickname: string) => {
+    setEditedNickname(newNickname);
+    setIsModalOpen(false);
+  }, []);
+
+
+
   const handleFileSelect = useCallback((file: File) => {
     setProfileImage({
       file,
       isUploading: false,
     });
-  }, []);
-
-  const handleSaveNickname = useCallback((newNickname: string) => {
-    setEditedNickname(newNickname);
-    setIsModalOpen(false);
   }, []);
 
   const handleSaveToBackend = useCallback(async () => {
@@ -65,10 +67,10 @@ export default function AuthPage() {
 
     setIsSaving(true);
     let newImageUrl = profileImageUrl;
-    let newProfileVersion = user.profileImageVersion ?? 0; // <-- 널 병합 연산자 사용
+    let newProfileVersion = user.profileImageVersion ?? 0;
 
     try {
-      // 닉네임 변경
+      // Nickname change logic
       if (editedNickname !== user.nickname) {
         await usenickname(editedNickname);
         dispatch(
@@ -80,7 +82,7 @@ export default function AuthPage() {
         toast.success("닉네임이 변경되었습니다.");
       }
 
-      // 프로필 이미지 업로드
+      // Profile image upload logic
       if (profileImage.file) {
         setProfileImage((prev) => ({ ...prev, isUploading: true }));
 
@@ -102,19 +104,16 @@ export default function AuthPage() {
         }
 
         newImageUrl = response.data.data.photoUrl;
-        newProfileVersion = Date.now();
 
-        setProfileImage((prev) => ({
-          ...prev,
+        setProfileImage({
           file: null,
           isUploading: false,
-        }));
+        });
       }
 
-      // Redux 상태 업데이트
+      // Update Redux state
       dispatch(updateProfileImage({
         user_id: user.user_id,
-        profileImageVersion: newProfileVersion,
         profileImageUrl: newImageUrl,
       }));
       
@@ -140,16 +139,15 @@ export default function AuthPage() {
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-32 h-32">
           <Profile
-            userId={user.user_id}
             alt="프로필 사진"
             size={128}
             rounded="full"
             className="w-full h-full border-2 border-gray-200"
             fallbackSrc="/sample_profile.jpeg"
             onFileSelect={handleFileSelect}
+            imageUrl={user?.profileImageUrl}
             isLoading={isSaving || profileImage.isUploading}
             version={user.profileImageVersion}
-            imageUrl={profileImageUrl}
           />
         </div>
 
@@ -158,8 +156,7 @@ export default function AuthPage() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            // handleFileSelect를 onChange에 직접 연결
-            input.onchange = (event) => {
+            input.onchange = (event: Event) => {
               const file = (event.target as HTMLInputElement).files?.[0];
               if (file) {
                 handleFileSelect(file);
@@ -210,7 +207,6 @@ export default function AuthPage() {
         onSave={handleSaveNickname}
       />
 
-      {/* Success Modal */}
       <div
         className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity ${
           isSuccessModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"

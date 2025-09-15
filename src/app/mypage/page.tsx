@@ -30,7 +30,6 @@ export default function MyPage() {
 
       // 로그인 페이지로 리다이렉트
       router.push("/auth/user-signin");
-      router.refresh(); // Next.js 캐시 초기화
     }
   };
   const editProfile = () => {
@@ -52,8 +51,9 @@ export default function MyPage() {
           <div className="relative group">
             <div onClick={editProfile}>
               <Profile
-                userId={user?.user_id || 0}
                 version={user?.profileImageVersion}
+                imageUrl={user?.profileImageUrl} //
+
                 alt="사용자 프로필"
                 size={56}
                 rounded="full"

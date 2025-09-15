@@ -5,6 +5,8 @@ export interface User {
   phone: number;
   nickname: string;
   role: "user" | "admin";
+  // photo_url: string;
+
   profileImage?: string;
   profileImageVersion?: number;
   profileImageUrl?: string;

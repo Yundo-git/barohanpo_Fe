@@ -3,11 +3,9 @@
 
 import Image from "next/image";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
 
-type Round = "full" | "lg" | "md" | "sm";
-
+// Helper function to concatenate class names
 type ClassValue = string | undefined | null | false;
 function cx(...classes: ClassValue[]): string {
   return classes
@@ -15,18 +13,18 @@ function cx(...classes: ClassValue[]): string {
     .join(" ");
 }
 
+type Round = "full" | "lg" | "md" | "sm";
+
 export interface ProfileProps {
-  userId?: number;
   alt: string;
-  size: number;
+  size?: number;
   rounded?: Round;
   className?: string;
   fallbackSrc?: string;
-  apiBaseUrl?: string;
   onFileSelect?: (file: File) => void;
   isLoading?: boolean;
   version?: number;
-  imageUrl?: string; // <--- imageUrl prop 추가
+  imageUrl?: string;
 }
 
 const roundedClass: Record<Round, string> = {
@@ -40,22 +38,24 @@ const MAX_SIZE_MB = 5;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export default function Profile({
-  userId,
   alt,
   size = 96,
   rounded = "full",
   className = "",
   fallbackSrc = "/sample_profile.jpeg",
-  apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
   version,
   onFileSelect,
   isLoading,
-  imageUrl, // <--- imageUrl prop 받아서 사용
+  imageUrl,
 }: ProfileProps) {
   const [isFallback, setIsFallback] = useState<boolean>(false);
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
 
-  // 로컬 미리보기 URL이 있으면 사용, 없으면 prop으로 받은 imageUrl 사용
+  // imageUrl prop이 변경되면 로컬 미리보기 URL을 초기화합니다.
+  useEffect(() => {
+    setLocalPreviewUrl(null);
+  }, [imageUrl]);
+
   const currentImageUrl = useMemo(() => {
     return localPreviewUrl || imageUrl;
   }, [localPreviewUrl, imageUrl]);
@@ -64,17 +64,25 @@ export default function Profile({
     if (isFallback) {
       return fallbackSrc;
     }
-    return currentImageUrl || fallbackSrc;
-  }, [currentImageUrl, isFallback, fallbackSrc]);
+    const url = currentImageUrl || fallbackSrc;
+    // Add cache buster if version is provided
+    if (version !== undefined && url === imageUrl) {
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}v=${version}`;
+    }
+    return url;
+  }, [currentImageUrl, isFallback, fallbackSrc, imageUrl, version]);
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const isBlobOrData = src.startsWith("blob:") || src.startsWith("data:");
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.currentTarget.value = ""; // 동일 파일 재선택 가능하게
+    e.currentTarget.value = ""; // Allow re-selecting the same file
     if (!file) {
       return;
     }
 
-    // 파일 유효성 검사
+    // File validation
     if (!ALLOWED_TYPES.includes(file.type)) {
       toast.error("JPEG, PNG, WebP 형식의 이미지만 업로드 가능합니다.");
       return;
@@ -84,7 +92,7 @@ export default function Profile({
       return;
     }
 
-    // 기존 URL 해제 및 새 미리보기 URL 생성
+    // Create a local preview URL
     if (localPreviewUrl) {
       URL.revokeObjectURL(localPreviewUrl);
     }
@@ -92,7 +100,7 @@ export default function Profile({
     setLocalPreviewUrl(objectUrl);
     setIsFallback(false);
 
-    // 부모 컴포넌트에 파일 전달
+    // Pass the file to the parent component
     onFileSelect?.(file);
   };
 
@@ -100,10 +108,8 @@ export default function Profile({
     setIsFallback(true);
   };
 
-  const isBlobOrData = src.startsWith("blob:") || src.startsWith("data:");
-
   useEffect(() => {
-    // 컴포넌트 언마운트 시 로컬 미리보기 URL 해제
+    // Revoke the local URL on component unmount
     return () => {
       if (localPreviewUrl) {
         URL.revokeObjectURL(localPreviewUrl);
@@ -131,7 +137,6 @@ export default function Profile({
           unoptimized={isBlobOrData}
           priority
         />
-        
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -142,7 +147,10 @@ export default function Profile({
       {onFileSelect && (
         <label
           className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-all cursor-pointer"
-          style={{ borderRadius: rounded === "full" ? "50%" : "0.5rem", pointerEvents: isLoading ? "none" : "auto" }}
+          style={{
+            borderRadius: rounded === "full" ? "50%" : "0.5rem",
+            pointerEvents: isLoading ? "none" : "auto",
+          }}
         >
           <input
             type="file"

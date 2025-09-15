@@ -41,7 +41,7 @@ const useLogin = (): UseLoginReturn => {
     try {
       // 백엔드: 성공 시 httpOnly refresh 쿠키 + accessToken + user 반환
       const result = (await loginApi(email, password)) as LoginResult;
-
+      console.log('result in useLogin',result)
       if (!result.success) {
         return { success: false, error: result.error || "로그인에 실패했습니다." };
       }

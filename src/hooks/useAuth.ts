@@ -53,8 +53,6 @@ interface UseAuthReturn {
   refreshUser: () => Promise<User | null>;
 }
 
-const ACCESS_TOKEN_KEY = "accessToken";
-
 const useAuth = (): UseAuthReturn => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -67,24 +65,17 @@ const useAuth = (): UseAuthReturn => {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * 안전한 토큰 읽기 (Redux → localStorage)
+   * 토큰 가져오기 (Redux 상태에서만 가져옴)
    */
-  const getTokenFromStateOrStorage = useCallback((): string | null => {
-    if (accessToken) return accessToken;
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+  const getTokenFromState = useCallback((): string | null => {
+    return accessToken;
   }, [accessToken]);
 
   /**
-   * 안전한 토큰 저장/삭제
+   * 토큰 저장/삭제 (더 이상 localStorage에 저장하지 않음)
    */
   const persistToken = useCallback((token: string | null) => {
-    if (typeof window === "undefined") return;
-    if (token) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, token);
-    } else {
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-    }
+    // localStorage에 저장하지 않음
   }, []);
 
   /**
@@ -98,22 +89,36 @@ const useAuth = (): UseAuthReturn => {
     setError(null);
 
     try {
-      const forcedByCallback = searchParams.get("login") === "success";
+      const isKakaoCallback = searchParams.get("login") === "success";
+      let token = getTokenFromState();
 
-      // 1) 토큰 소스 확인
-      let token = getTokenFromStateOrStorage();
-
-      // 2) 토큰이 없거나, 콜백 직후면 refresh 시도
-      if (!token || forcedByCallback) {
-        const refreshed: RefreshResult = await authService.refresh();
-        if (!refreshed.success) {
-          // 세션 없음/만료 → 비로그인 처리
-          dispatch(clearAuth());
-          persistToken(null);
+      // 카카오 콜백이거나 토큰이 없는 경우에만 refresh 시도
+      if (isKakaoCallback || !token) {
+        try {
+          const refreshed = await authService.refresh();
+          if (refreshed.success) {
+            token = refreshed.accessToken;
+            persistToken(token);
+          } else if (isKakaoCallback) {
+            // 카카오 콜백인데 refresh 실패 시, 로그인 페이지로 리다이렉트
+            console.error('Failed to refresh token after Kakao login');
+            dispatch(clearAuth());
+            persistToken(null);
+            router.push('/login');
+            return null;
+          } else {
+            // 일반적인 토큰 만료의 경우
+            dispatch(clearAuth());
+            persistToken(null);
+            return null;
+          }
+        } catch (refreshError) {
+          console.error('Error during token refresh:', refreshError);
+          if (isKakaoCallback) {
+            router.push('/login?error=token_refresh_failed');
+          }
           return null;
         }
-        token = refreshed.accessToken;
-        persistToken(token);
       }
 
       // 3) me 호출 (토큰 유효성 + 유저 정보)
@@ -126,7 +131,7 @@ const useAuth = (): UseAuthReturn => {
         // - 현재 로그인된 유저와 달라졌거나
         // - 토큰이 처음 생긴 경우(= accessToken이 없던 상태)
         const shouldBootstrap =
-          forcedByCallback ||
+          isKakaoCallback ||
           currentUserId === null ||
           Number(currentUserId) !== Number(nextUser.user_id) ||
           !accessToken;
@@ -181,11 +186,12 @@ const useAuth = (): UseAuthReturn => {
     }
   }, [
     searchParams,
-    getTokenFromStateOrStorage,
+    getTokenFromState,
     persistToken,
     dispatch,
     currentUserId,
     accessToken,
+    router,
   ]);
 
   /**
