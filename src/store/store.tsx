@@ -9,6 +9,7 @@ import bookingReducer from "./bookingSlice";
 import reviewCompletionReducer from "./reviewCompletionSlice";
 import userReviewsReducer from "./userReviewsSlice";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import favoritesReducer from "./favoritesSlice";
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   booking: bookingReducer,
   reviewCompletion: reviewCompletionReducer,
   userReviews: userReviewsReducer,
+  favorites: favoritesReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

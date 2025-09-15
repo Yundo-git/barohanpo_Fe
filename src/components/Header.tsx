@@ -1,36 +1,52 @@
 "use client";
 
+import { useEffect } from "react"; // useEffect 임포트
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import BackButton from "./BackButton";
 import Image from "next/image";
-
+import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import { useToggleFavorite } from "@/hooks/useToggleFavorite";
-import { getIsFavorite } from "@/utils/favorites";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { fetchAllFavorites } from "@/utils/favorites";
+import { setFavoriteIds } from "@/store/favoritesSlice";
+import { Pharmacy } from "@/types/pharmacy"; // 실제 파일 경로로 수정
 
 export default function Header() {
   const pathname = usePathname();
-  
+  const dispatch = useDispatch<AppDispatch>();
+
   const pathSegments = pathname.split("/");
-  const p_id = pathSegments.length === 3 ? Number(pathSegments[2]) : null;
+  const p_id: number | null = pathSegments.length === 3 ? Number(pathSegments[2]) : null;
   const isPharmacyPage = pathname.startsWith("/pharmacy/") && !!p_id;
 
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
+  const favoriteIds = useSelector((state: RootState) => state.favorites.favoriteIds);
 
-  // Favorite 상태를 가져오는 쿼리
-  const { data: isFavorite = false, isLoading: isFavoriteLoading } = useQuery({
-    queryKey: ["pharmacy-favorites", userId, p_id],
+  const { data: favorites } = useQuery<Pharmacy[]>({
+    queryKey: ["favorites", userId],
     queryFn: () => {
-      if (!userId || !p_id) return Promise.resolve(false);
-      return getIsFavorite(userId, p_id);
+      if (userId === null || userId === undefined) {
+        return Promise.resolve([]);
+      }
+      return fetchAllFavorites(userId);
     },
-    enabled: isPharmacyPage && !!userId && !!p_id,
-    initialData: false,
-    staleTime: 5 * 60 * 1000, // 5분 동안은 캐시 유지
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
+  // useEffect를 사용하여 favorites 데이터가 변경될 때 Redux를 업데이트
+  useEffect(() => {
+    if (favorites) {
+      const ids = favorites.map(fav => Number(fav.p_id));
+      dispatch(setFavoriteIds(ids));
+    }
+  }, [favorites, dispatch]);
+
+  const isFavorite = !!p_id && favoriteIds.includes(p_id);
   const { mutate: toggleFavorite, isPending: isToggling } = useToggleFavorite();
 
   const showBackButton = !["/", "/map", "/mypage", "/mybook", "/pharmacy/"].includes(pathname);
@@ -44,8 +60,8 @@ export default function Header() {
   };
   
   if (isPharmacyPage) {
-    // 찜 상태에 따라 다른 SVG 아이콘 경로를 지정합니다.
-    const favoriteIconSrc = isFavorite ? "/icon/Favorite-filled.svg" : "/icon/Favorite.svg";
+    const Icon = isFavorite ? HeartSolid : HeartOutline;
+    const iconColor = isFavorite ? "text-red-500" : "text-gray-400";
     
     return (
       <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-4 py-2 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
@@ -55,20 +71,15 @@ export default function Header() {
         <div className="absolute right-4">
           <button
             onClick={() => {
-              if (!userId || !p_id) return;
-              toggleFavorite({ userId, pharmacyId: p_id });
+              if (userId !== null && p_id !== null) {
+                toggleFavorite({ userId: userId!, pharmacyId: p_id });
+              }
             }}
-            disabled={isToggling || isFavoriteLoading}
-            className="p-2 -m-2"
+            disabled={isToggling}
+            className={`p-2 -m-2 ${iconColor}`}
             aria-label={isFavorite ? "찜 취소" : "찜하기"}
           >
-            {/* Image 컴포넌트로 SVG 아이콘을 렌더링합니다. */}
-            <Image
-              src={favoriteIconSrc}
-              alt={isFavorite ? "찜 취소" : "찜하기"}
-              width={24}
-              height={24}
-            />
+            <Icon className="h-6 w-6" />
           </button>
         </div>
       </header>

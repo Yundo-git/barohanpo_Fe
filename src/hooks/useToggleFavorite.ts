@@ -2,12 +2,13 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { useDispatch } from 'react-redux';
+import { addFavorite, removeFavorite } from "@/store/favoritesSlice"; // Redux 액션 임포트
 
-// 1. 백엔드 API 응답 타입을 정의합니다.
 interface ToggleFavoriteResponse {
   success: boolean;
   message: string;
-  action: 'added' | 'removed'; // 'added' 또는 'removed'만 허용
+  action: 'added' | 'removed';
 }
 
 const toggleFavorite = async (userId: number, pharmacyId: number): Promise<ToggleFavoriteResponse> => {
@@ -23,27 +24,30 @@ const toggleFavorite = async (userId: number, pharmacyId: number): Promise<Toggl
     throw new Error('찜 상태 변경 실패');
   }
 
-  // Promise<ToggleFavoriteResponse>로 타입 캐스팅
   return response.json();
 };
 
 export const useToggleFavorite = () => {
   const queryClient = useQueryClient();
+  const dispatch = useDispatch();
 
   return useMutation({
     mutationFn: ({ userId, pharmacyId }: { userId: number; pharmacyId: number }) =>
       toggleFavorite(userId, pharmacyId),
       
-    // 2. onSuccess의 data 타입을 명시합니다.
-    onSuccess: (data: ToggleFavoriteResponse) => {
-      queryClient.invalidateQueries({ queryKey: ['pharmacy-favorites'] });
-      queryClient.invalidateQueries({ queryKey: ['pharmacy-detail'] });
-      
-      const message = data.action === 'added' ? '찜 목록에 추가되었습니다.' : '찜 목록에서 제거되었습니다.';
-      toast.success(message);
+    onSuccess: (data, variables) => {
+      if (data.action === 'added') {
+        dispatch(addFavorite(variables.pharmacyId));
+        toast.success('찜 목록에 추가되었습니다.');
+      } else {
+        dispatch(removeFavorite(variables.pharmacyId));
+        toast.success('찜 목록에서 제거되었습니다.');
+      }
+
+      // 찜 목록 캐시를 무효화 백엔드에서 다시불러옴
+      queryClient.invalidateQueries({ queryKey: ['favorites', variables.userId] });
     },
     
-    // 3. onError의 error 타입을 명시합니다.
     onError: (error: Error) => {
       toast.error(error.message || '찜 상태 변경 중 오류가 발생했습니다.');
     },
