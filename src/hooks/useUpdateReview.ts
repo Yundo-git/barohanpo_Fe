@@ -10,29 +10,21 @@ export interface UpdateReviewParams {
   userId: number;
   score: number;
   comment: string;
-  images?: Array<File | { isExisting?: boolean; id?: string }>;
+  // 기존 이미지와 새로운 이미지를 구분하여 전달
+  newFiles: File[]; // 새로 업로드할 파일 목록
+  existingPhotoIds: string[]; // 유지할 기존 사진 ID 목록
   pharmacyId?: number;
 }
-
 interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
 }
 
-interface ReviewUpdateData {
-  reviewId: number;
-  userId: number;
-  score: number;
-  comment: string;
-  images?: File[];
-  pharmacyId?: number;
-}
-
 const useUpdateReview = (): {
   updateReview: (
     params: UpdateReviewParams
-  ) => Promise<ApiResponse<ReviewUpdateData>>;
+  ) => Promise<ApiResponse<unknown>>;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -41,42 +33,22 @@ const useUpdateReview = (): {
   const dispatch = useDispatch<AppDispatch>();
 
   const updateReviewMutation = useMutation<
-    ApiResponse<ReviewUpdateData>,
+    ApiResponse<unknown>,
     Error,
     UpdateReviewParams
   >({
-    mutationFn: async ({ reviewId, score, comment, images = [] }) => {
+    mutationFn: async ({ reviewId, score, comment, newFiles, existingPhotoIds }) => {
       const formData = new FormData();
       formData.append("score", score.toString());
       formData.append("comment", comment);
 
-      // Separate new and existing images with proper typing
-      const newImages = images.filter(
-        (img): img is File => img instanceof File && !("isExisting" in img)
-      );
-
-      const existingImages = images.filter(
-        (img): img is { isExisting: boolean; id?: string } =>
-          img && "isExisting" in img
-      );
-
-      // Add new images
-      newImages.forEach((file) => {
+      // Add new files directly
+      newFiles.forEach((file) => {
         formData.append("photos", file);
       });
 
       // Add info about existing images to keep
-      const existingPhotoIds = existingImages
-        .map((img) => img.id?.replace("existing-", ""))
-        .filter((id): id is string => Boolean(id));
-
       formData.append("existing_photo_ids", JSON.stringify(existingPhotoIds));
-      formData.append(
-        "has_photo_changes",
-        (
-          newImages.length > 0 || existingImages.length !== images.length
-        ).toString()
-      );
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reviews/${reviewId}/update`,
@@ -95,26 +67,24 @@ const useUpdateReview = (): {
       return response.json();
     },
     onSuccess: async (_, variables) => {
-      // Invalidate all related review queries
       queryClient.invalidateQueries({
         queryKey: ["reviews"],
         refetchType: "active",
       });
 
-      // Invalidate user's reviews
       if (variables.userId) {
+        const uid = Number(variables.userId);
         queryClient.invalidateQueries({
-          queryKey: ["userReviews", variables.userId],
+          queryKey: ["userReviews", uid],
           refetchType: "active",
         });
-        // Redux 동기화: 내 후기/완료된 예약 ID/메인 5점 리뷰
-        const uid = Number(variables.userId);
+        
         void dispatch(fetchUserReviews({ userId: uid }));
         void dispatch(fetchCompletedReviewIds({ userId: uid }));
-        void dispatch(fetchFiveStarReviews());
       }
 
-      // Invalidate pharmacy reviews if pharmacyId is provided
+      void dispatch(fetchFiveStarReviews());
+
       if (variables.pharmacyId) {
         queryClient.invalidateQueries({
           queryKey: ["pharmacy", variables.pharmacyId, "reviews"],

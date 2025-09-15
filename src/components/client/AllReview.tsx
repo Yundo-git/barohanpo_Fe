@@ -35,18 +35,30 @@ export default function AllReview() {
   }
   //리뷰가 없을때
   return (
-    <div className="p-4 max-w-full">
+    <div className=" max-w-full">
       {reviews.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           리뷰가 아직 없습니다.
         </div>
       ) : (
-        //리뷰가 있을때
         <div className="relative">
-          <div className="flex overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex space-x-4">
+          <h1 className="text-2xl font-bold mx-4 my-4">사용자 후기</h1>
+          <div 
+            className="flex overflow-x-auto pb-6 scrollbar-hide"
+            style={{
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <div className="flex space-x-4 px-5">
               {reviews.map((review) => (
-                <div key={review.review_id} className="flex-shrink-0 w-80">
+                <div 
+                  key={review.review_id} 
+                  className="flex-shrink-0 w-80 "
+                  style={{ scrollSnapAlign: 'center' }}
+                >
                   <ReviewCard
                     review={review}
                     showPharmacyName={true}

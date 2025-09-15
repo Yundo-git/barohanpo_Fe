@@ -48,6 +48,10 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       return;
     }
 
+    const filesToUpload = images
+    .map((img) => img.file) // File 또는 undefined를 포함한 배열 생성
+    .filter((file): file is File => file !== undefined);
+
     setIsSubmitting(true);
     try {
       await createReview({
@@ -57,7 +61,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
         p_id,
         book_date,
         book_time,
-        images: images.map((img) => img.file),
+        images: filesToUpload,
       });
 
       // 폼 초기화

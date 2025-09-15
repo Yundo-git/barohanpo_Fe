@@ -1,21 +1,15 @@
+// src/components/review/UpdateReviewModal.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import useUpdateReview, {
-  type UpdateReviewParams,
-} from "@/hooks/useUpdateReview";
+import useUpdateReview, { type UpdateReviewParams } from "@/hooks/useUpdateReview";
 import useImageUpload from "@/hooks/useImageUpload";
-import { Review } from "@/types/review";
-
-// interface ReviewImage {
-//   id: string;
-//   file: File;
-//   previewUrl: string;
-//   isExisting?: boolean;
-// }
+import { Review, ReviewPhoto } from "@/types/review";
+import { ImageItem } from "@/types/upload";
 
 interface ReviewWithPharmacyId extends Review {
   pharmacy_id?: number;
@@ -36,9 +30,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
   const [comment, setComment] = useState(review?.comment || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateReview } = useUpdateReview();
-  console.log(review.photos);
 
-  // 이미지 업로드 훅 (최대 3장)
   const {
     images,
     isUploading: isImageUploading,
@@ -47,73 +39,23 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
     removeImage,
     setImages,
   } = useImageUpload({ maxFiles: 3 });
+
   // 리뷰 데이터가 변경되면 폼 초기화
   useEffect(() => {
     if (review) {
       setScore(review.score || 5);
       setComment(review.comment || "");
 
-      // 기존 이미지가 있으면 미리보기 설정
-      const existingPhotos =
-        review?.photos?.filter((photo) => photo?.review_photo_blob) || [];
-      if (existingPhotos.length > 0) {
-        // 서버에서 받은 이미지 URL을 사용하여 미리보기 설정
-        const existingImages = existingPhotos.map((photo) => {
-          // review_photo_blob이 객체인 경우 data 속성을 확인
-          let blobData = "";
-          const photoBlob = photo.review_photo_blob as unknown;
+      const existingPhotos: ReviewPhoto[] = review.photos || [];
 
-          // review_photo_blob의 다양한 형식을 타입 체크와 함께 처리
-          if (photoBlob !== null && typeof photoBlob === "object") {
-            // 데이터 속성을 가진 객체인 경우 (Buffer 등)
-            if (
-              "data" in photoBlob &&
-              Array.isArray((photoBlob as { data: unknown }).data)
-            ) {
-              const bufferData = (photoBlob as { data: number[] }).data;
-              blobData = Buffer.from(bufferData).toString("base64");
-            }
-            // File이나 Blob인 경우
-            else if (photoBlob instanceof Blob || photoBlob instanceof File) {
-              return {
-                id: `existing-${photo.review_photo_id}`,
-                file: new File([], `existing-${photo.review_photo_id}`),
-                previewUrl: URL.createObjectURL(photoBlob),
-              };
-            }
-          } else if (typeof photoBlob === "string") {
-            // 이미 base64 문자열인 경우
-            const blobStr = photoBlob;
-            if (blobStr.startsWith("data:image/")) {
-              const parts = blobStr.split(",");
-              blobData = parts.length > 1 ? parts[1] : blobStr;
-            } else {
-              blobData = blobStr;
-            }
-          }
+      // 기존 이미지를 ImageItem 타입으로 변환하여 설정
+      const formattedExistingImages: ImageItem[] = existingPhotos.map((photo) => ({
+        id: `existing-${photo.review_photo_id}`,
+        previewUrl: photo.review_photo_url,
+        isExisting: true,
+      }));
 
-          // base64가 아닌 문자 제거
-          const cleanBlobData =
-            typeof blobData === "string"
-              ? blobData.replace(/^data:image\/\w+;base64,/, "")
-              : "";
-
-          const previewUrl =
-            typeof cleanBlobData === "string" &&
-            cleanBlobData.startsWith("blob:")
-              ? cleanBlobData
-              : `data:image/jpeg;base64,${cleanBlobData}`;
-
-          return {
-            id: `existing-${photo.review_photo_id}`,
-            file: new File([], `existing-${photo.review_photo_id}`),
-            previewUrl,
-          };
-        });
-        setImages(existingImages);
-      } else {
-        setImages([]);
-      }
+      setImages(formattedExistingImages);
     }
   }, [review, setImages]);
 
@@ -129,38 +71,30 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Get all images (both new and existing)
-      const allImages = [...images];
-
-      // Separate new files and existing images
-      const newFiles = allImages
-        .filter((img) => !img.isExisting && img.file instanceof File)
-        .map((img) => img.file);
-
-      const existingImages = allImages
-        .filter((img) => img.isExisting)
-        .map((img) => ({
-          isExisting: true,
-          id: img.id.replace("existing-", ""), // Remove the 'existing-' prefix
-        }));
-
+      const existingImagesToKeep = images.filter((img) => img.isExisting);
+      const newFilesToUpload = images
+        .filter((img) => !img.isExisting)
+        .map((img) => img.file)
+        .filter(Boolean);
+      
       const updateData: UpdateReviewParams = {
         reviewId: review.review_id,
         userId: review.user_id,
         score,
         comment,
-        images: [...newFiles, ...existingImages],
+        newFiles: newFilesToUpload as File[],
+        existingPhotoIds: existingImagesToKeep.map((img) =>
+          img.id.replace("existing-", "")
+        ),
       };
 
-      // Add pharmacyId only if it exists on the review
       const reviewWithPharmacy = review as ReviewWithPharmacyId;
       if (reviewWithPharmacy.pharmacy_id) {
         updateData.pharmacyId = reviewWithPharmacy.pharmacy_id;
       }
 
       await updateReview(updateData);
-
-      // 성공 알림
+      
       alert("리뷰가 성공적으로 수정되었습니다.");
       onClose();
     } catch (error) {
@@ -241,14 +175,13 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
               {images.length > 0 && (
                 <div className="flex space-x-2 overflow-x-auto py-2">
                   {images.map((image, index) => (
-                    <div key={index} className="relative">
+                    <div key={image.id} className="relative">
                       <div className="relative h-20 w-20">
                         <Image
                           src={image.previewUrl}
                           alt={`미리보기 ${index + 1}`}
                           fill
                           className="object-cover rounded cursor-pointer hover:opacity-80"
-                          sizes="80px"
                         />
                         <button
                           type="button"

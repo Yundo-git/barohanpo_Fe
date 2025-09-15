@@ -100,102 +100,42 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
 
           {/* 리뷰 사진 영역*/}
           {review.photos && review.photos.length > 0 && (
-            <div className="mt-3">
-              <div className="flex gap-3 overflow-x-auto py-2 pb-3 -mx-1 px-1 scrollbar-hide">
-                {review.photos.map((photo, photoIndex) => {
-                  if (!photo.review_photo_blob?.data) return null;
+    <div className="mt-3">
+      <div className="flex gap-3 overflow-x-auto py-2 pb-3 -mx-1 px-1 scrollbar-hide">
+        {review.photos.map((photo, photoIndex) => {
+          if (!photo.review_photo_url) return null;
 
-                  try {
-                    const uint8Array = new Uint8Array(
-                      photo.review_photo_blob.data
-                    );
-                    const base64String = btoa(
-                      Array.from(uint8Array)
-                        .map((byte) => String.fromCharCode(byte))
-                        .join("")
-                    );
+          const numPhotos = review.photos.length;
+          let photoWrapperClasses = "relative flex-shrink-0";
 
-                    return (
-                      <div
-                        key={`${review.review_id}-${photoIndex}`}
-                        className="relative flex-shrink-0 w-24 h-24 group"
-                      >
-                        <div className="relative w-24 h-24 flex-shrink-0">
-                          <Image
-                            src={`data:image/jpeg;base64,${base64String}`}
-                            alt={`리뷰 사진 ${photoIndex + 1}`}
-                            fill
-                            className="object-cover rounded-lg border border-gray-200 cursor-pointer"
-                            sizes="96px"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const newWindow = window.open("", "_blank");
-                              if (newWindow) {
-                                newWindow.document.write(`
-                                  <!DOCTYPE html>
-                                  <html>
-                                    <head>
-                                      <title>리뷰 사진</title>
-                                      <style>
-                                        body { 
-                                          margin: 0; 
-                                          display: flex; 
-                                          justify-content: center; 
-                                          align-items: center; 
-                                          height: 100vh; 
-                                          background-color: #f5f5f5;
-                                        }
-                                        img { 
-                                          max-width: 90vw; 
-                                          max-height: 90vh; 
-                                          object-fit: contain; 
-                                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                                          border-radius: 0.5rem;
-                                        }
-                                      </style>
-                                    </head>
-                                    <body>
-                                      <img 
-                                        src="data:image/jpeg;base64,${base64String}" 
-                                        alt="리뷰 사진"
-                                        style="max-width: 100%; max-height: 100%; object-fit: contain;"
-                                      />
-                                    </body>
-                                  </html>
-                                `);
-                                newWindow.document.close();
-                              }
-                            }}
-                            onError={(e) => {
-                              console.error("Error loading image:", e);
-                              const target =
-                                e.currentTarget as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                        </div>
-                        {review.photos.length > 1 && (
-                          <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded">
-                            {photoIndex + 1}/{review.photos.length}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  } catch (error) {
-                    console.error("Error processing image:", error);
-                    return null;
-                  }
-                })}
+          if (numPhotos === 1) {
+            photoWrapperClasses += " w-full";
+          } else if (numPhotos === 2) {
+            photoWrapperClasses += " w-1/2";
+          } else {
+            photoWrapperClasses += " w-1/3";
+          }
+          
+          return (
+            <div
+              key={`${review.review_id}-${photoIndex}`}
+              className={photoWrapperClasses}
+            >
+              <div className="relative w-full h-24">
+                <Image
+                  src={photo.review_photo_url}
+                  alt={`리뷰 사진 ${photoIndex + 1}`}
+                  fill
+                  className="object-cover rounded-lg border border-gray-200 cursor-pointer"
+                  // sizes="96px" 속성 제거
+                />
               </div>
-
-              {review.photos.length > 3 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  좌우로 스크롤하여 {review.photos.length}장의 사진을 모두
-                  확인하세요
-                </p>
-              )}
             </div>
-          )}
+          );
+        })}
+      </div>
+    </div>
+)}
           {/* 수정/삭제버튼*/}
           <div className="flex space-x-2 ">
             <button

@@ -1,62 +1,16 @@
+// src/hooks/useImageUpload.tsx
+
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect,  useState } from "react";
 import { toast } from "react-toastify";
-
-/** HTTP 메서드 타입 */
-type HttpMethod = "POST" | "PUT" | "PATCH";
-
-/** 서버 응답 JSON(느슨한 형태) */
-type UploadJSON = {
-  imageUrl?: string;
-  url?: string;
-  [key: string]: unknown;
-};
-
-/** 업로드 결과 타입 */
-type UploadResultSuccess = {
-  success: true;
-  urls: string[];
-  response: UploadJSON | UploadJSON[];
-};
-
-type UploadResultFail = {
-  success: false;
-  message: string;
-};
-
-type UploadResult = UploadResultSuccess | UploadResultFail;
-
-/** fetch 업로드 옵션 */
-export type UploadOptions = {
-  url: string;
-  method?: HttpMethod;
-  headers?: Record<string, string>;
-  /** 서버 필드명 (다중 파일이면 보통 images[] 형태) */
-  fieldName?: string;
-};
-
-/** 훅 인자 */
-type UseImageUploadArgs = {
-  /** 최대 파일 개수 */
-  maxFiles?: number;
-  /** 허용 MIME 타입 */
-  allowedTypes?: string[];
-  /** 개별 파일 최대 크기(MB) */
-  maxSizeMB?: number;
-  /** 훅에서 직접 업로드할 때 사용할 옵션(선택) */
-  upload?: UploadOptions;
-  onUploadSuccess?: (urls: string[]) => void;
-  onUploadError?: (message: string) => void;
-};
-
-/** 이미지 아이템(기존/신규 구분을 위해 isExisting 추가) */
-export type ImageItem = {
-  id: string;
-  file: File; // 리사이즈/압축된 파일(WebP 권장)
-  previewUrl: string; // blob: 또는 data:
-  isExisting?: boolean; // 서버에 이미 존재하는 이미지라면 true
-};
+import {
+  UploadOptions,
+  UploadResult,
+  UseImageUploadArgs,
+  ImageItem,
+  UploadJSON,
+} from "../types/upload";
 
 const DEFAULT_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -144,37 +98,27 @@ const useImageUpload = ({
 
       try {
         setError(null);
-        const newImages: ImageItem[] = [];
         const fileArray = Array.from(files);
 
-        // 최대 개수 초과 검사
-        if (fileArray.length > maxFiles) {
+        if (images.length + fileArray.length > maxFiles) {
           throw new Error(`최대 ${maxFiles}장까지 업로드할 수 있습니다.`);
         }
 
-        // 각 파일 처리
+        const newImages: ImageItem[] = [];
+
         for (const file of fileArray) {
           validate(file);
 
-          // WebP로 변환 (원본 유지)
           const webpFile = await resizeToWebp(file);
-
-          // 미리보기 URL 생성
           const previewUrl = URL.createObjectURL(webpFile);
 
           newImages.push({
-            id: `preview-${Date.now()}-${Math.random()
-              .toString(36)
-              .substr(2, 9)}`,
+            id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             file: webpFile,
             previewUrl,
           });
         }
-
-        // 상태 업데이트
         setImages((prev) => [...prev, ...newImages]);
-
-        // 파일 입력 초기화 (동일 파일 재선택 가능하도록)
         e.target.value = "";
       } catch (err) {
         console.error("이미지 처리 중 오류:", err);
@@ -185,14 +129,14 @@ const useImageUpload = ({
         );
       }
     },
-    [maxFiles, validate, resizeToWebp]
+    [images, maxFiles, validate, resizeToWebp]
   );
 
   /** 단일 이미지 제거 */
   const removeImage = useCallback((id: string) => {
     setImages((prev) => {
       const target = prev.find((i) => i.id === id);
-      if (target?.previewUrl?.startsWith("blob:")) {
+      if (target && !target.isExisting && target.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(target.previewUrl);
       }
       return prev.filter((i) => i.id !== id);
@@ -203,14 +147,21 @@ const useImageUpload = ({
   const clearAll = useCallback(() => {
     setImages((prev) => {
       prev.forEach((i) => {
-        if (i.previewUrl.startsWith("blob:")) URL.revokeObjectURL(i.previewUrl);
+        if (!i.isExisting && i.previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(i.previewUrl);
+        }
       });
       return [];
     });
   }, []);
 
-  /** 현재 보관중인 이미지 배열을 그대로 반환(필요 시 필터 추가 가능) */
-  const getValidImages = useCallback(() => images, [images]);
+  /** 제출 시 사용될 유효한 파일 목록을 반환 */
+  const getFilesForUpload = useCallback(() => {
+    return images
+      .filter((img) => !img.isExisting)
+      .map((img) => img.file)
+      .filter(Boolean) as File[];
+  }, [images]);
 
   /** (선택) 훅에서 직접 업로드 */
   const uploadAll = useCallback(
@@ -218,7 +169,8 @@ const useImageUpload = ({
       if (!upload && !custom?.url) {
         return { success: false, message: "업로드 URL이 설정되지 않았습니다." };
       }
-      if (images.length === 0) {
+      const filesToUpload = getFilesForUpload();
+      if (filesToUpload.length === 0) {
         return { success: false, message: "업로드할 파일이 없습니다." };
       }
 
@@ -229,7 +181,7 @@ const useImageUpload = ({
         const method = opt.method ?? "POST";
 
         const fd = new FormData();
-        images.forEach((img) => fd.append(fieldName, img.file));
+        filesToUpload.forEach((file) => fd.append(fieldName, file));
 
         const res = await fetch(opt.url, {
           method,
@@ -247,11 +199,10 @@ const useImageUpload = ({
 
         const json = (await res
           .json()
-          .catch((): UploadJSON | UploadJSON[] => ({}))) as
+          .catch((): unknown => ({}))) as
           | UploadJSON
           | UploadJSON[];
-
-        // 단일/다중 응답 모두 대응
+        
         const urls: string[] = Array.isArray(json)
           ? (json.map((o) => o.imageUrl || o.url).filter(Boolean) as string[])
           : ([json.imageUrl || json.url].filter(Boolean) as string[]);
@@ -267,7 +218,7 @@ const useImageUpload = ({
         setIsUploading(false);
       }
     },
-    [images, onUploadError, onUploadSuccess, upload]
+    [upload, getFilesForUpload, onUploadError, onUploadSuccess]
   );
 
   /** 에러 토스트 자동 표시 */
@@ -282,29 +233,22 @@ const useImageUpload = ({
   useEffect(() => {
     return () => {
       images.forEach((i) => {
-        if (i.previewUrl.startsWith("blob:")) URL.revokeObjectURL(i.previewUrl);
+        if (!i.isExisting && i.previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(i.previewUrl);
+        }
       });
     };
   }, [images]);
 
   return {
-    // 상태
-    images, // [{ id, file, previewUrl, isExisting? }]
+    images,
     isUploading,
     error,
-
-    // 액션
-    handleFileChange, // input[type=file] onChange에 연결
+    handleFileChange,
     removeImage,
     clearAll,
     uploadAll,
-
-    // 편의
-    files: useMemo(() => images.map((i) => i.file), [images]),
-
-    // 외부 제어/호환
-    setImages, // 기존 서버 이미지 세팅 등에서 사용
-    getValidImages, // 제출 전 필터링 등에서 사용
+    setImages,
   };
 };
 

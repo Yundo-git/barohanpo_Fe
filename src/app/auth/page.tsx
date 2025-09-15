@@ -30,7 +30,7 @@ export default function SignupChoice() {
           <div className="space-y-4 flex flex-col">
             <KakaoLoginButton />
 
-            <button
+            {/* <button
               type="button"
               onClick={() => {
                 // Handle Naver login
@@ -39,7 +39,7 @@ export default function SignupChoice() {
               className="border border-gray-300 rounded-md px-4 py-2"
             >
               네이버로 로그인
-            </button>
+            </button> */}
             <div className="flex justify-around">
               <Link href="/auth/user-signin">이메일 로그인</Link>
               <Link href="/auth/user-signup">회원가입</Link>

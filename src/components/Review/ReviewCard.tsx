@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { Review } from "@/types/review";
+import { Review, ReviewPhoto } from "@/types/review";
 import { Star } from "lucide-react";
 import Profile from "../auth/Profile";
 import { useSelector } from "react-redux";
@@ -9,11 +9,14 @@ import type { RootState } from "@/store/store";
 interface ReviewCardProps {
   review: Review & {
     nickname?: string;
-    photo_url?: string;
+    // user_profile_photo_url: 백엔드에서 넘어오는 필드 이름으로 변경
+    user_profile_photo_url?: string; 
     name?: string;
     address?: string;
     updated_at?: string;
     reply?: string;
+    // photos: ReviewPhoto 배열로 타입 명시
+    photos: ReviewPhoto[]; 
   };
   className?: string;
   showPharmacyName?: boolean;
@@ -54,33 +57,36 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
 
   const renderImages = () => {
     if (!review.photos || review.photos.length === 0) return null;
-
+  
+    // 사진 개수에 따라 Flexbox 클래스 동적 할당
+    const numPhotos = review.photos.length;
+    let photoWrapperClasses = "relative h-32 flex-shrink-0";
+  
+    if (numPhotos === 1) {
+      photoWrapperClasses += " w-full"; // 1개일 때는 전체 너비
+    } else if (numPhotos === 2) {
+      photoWrapperClasses += " w-1/2"; // 2개일 때는 절반 너비
+    } else { // 3개 이상일 때는 3분의 1 너비
+      photoWrapperClasses += " w-1/3";
+    }
+  
     return (
-      <div className="mt-2 flex space-x-2 overflow-x-auto">
+      // 'space-x-2'는 사진 사이에 여백을 줘서 더 자연스럽게 보이게 합니다.
+      <div className="mt-2 flex space-x-2"> 
         {review.photos.map((photo, index) => {
-          if (!photo.review_photo_blob?.data) return null;
-
-          // 숫자 배열을 Uint8Array로 변환
-          const bytes = new Uint8Array(photo.review_photo_blob.data);
-          // 바이너리 문자열로 변환
-          let binary = "";
-          for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
-          }
-          // base64로 인코딩
-          const base64String = btoa(binary);
-
+          if (!photo.review_photo_url) return null;
+  
           return (
             <div
               key={`${photo.review_photo_id}-${index}`}
-              className="relative h-32 w-full flex-shrink-0"
+              className={photoWrapperClasses}
             >
               <Image
-                src={`data:image/jpeg;base64,${base64String}`}
+                src={photo.review_photo_url}
                 alt={`Review image ${index + 1}`}
                 fill
                 className="rounded object-cover"
-                unoptimized={true}
+                // unoptimized 속성 제거 (URL을 사용하므로 최적화 기능 활용)
               />
             </div>
           );
@@ -88,14 +94,13 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       </div>
     );
   };
-
   return (
     <div className={`bg-white p-4 rounded-lg shadow ${className}`}>
       <div className="flex justify-between items-start">
         <div className="flex items-center space-x-3">
           <Profile
             size={40}
-            imageUrl={review.photo_url || "/sample_profile.svg"}
+            imageUrl={review.user_profile_photo_url || "/sample_profile.svg"}
             alt={review.nickname || "User"}
             rounded="full"
           />

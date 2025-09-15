@@ -9,10 +9,13 @@ import Profile from "@/components/auth/Profile";
 import DevelopmentNoticeModal from "@/components/DevelopmentNoticeModal";
 import ReviewListModal from "@/components/Review/ReviewListModal";
 import { useState } from "react";
+import FavoriteListModal from "@/components/auth/FavoriteListModal";
+
 
 export default function MyPage() {
   const [showDevNotice, setShowDevNotice] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showFavoriteModal, setShowFavoriteModal] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.user);
@@ -44,6 +47,10 @@ export default function MyPage() {
     setShowDevNotice(true);
   };
 
+  const handleMyFavorite = () => {
+    setShowFavoriteModal(true);
+  };
+
   return (
     <div className="flex flex-col  min-h-screen p-4">
       <section className="flex justify-between" onClick={editProfile}>
@@ -69,7 +76,7 @@ export default function MyPage() {
       {/* 유저 내역 */}
       <section className="pt-4 flex flex-col gap-4 items-start">
         <button onClick={handlePrescriptionRecord}>내 영양제 처방 기록</button>
-        <button>찜 목록</button>
+        <button onClick={handleMyFavorite}>찜 목록</button>
         <button onClick={handleMyReview}>내 후기</button>
       </section>
 
@@ -81,6 +88,11 @@ export default function MyPage() {
       <ReviewListModal
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
+        userId={user?.user_id || 0}
+      />
+      <FavoriteListModal
+        isOpen={showFavoriteModal}
+        onClose={() => setShowFavoriteModal(false)}
         userId={user?.user_id || 0}
       />
       <section className="border-t pt-4 border-gray-200">
