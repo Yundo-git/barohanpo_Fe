@@ -18,7 +18,7 @@ interface ProfileImageState {
 
 export default function AuthPage() {
   const router = useRouter();
-  const user = useAppSelector((state) => state.user.user);
+  const {user, accessToken} = useAppSelector((state) => state.user);
   const dispatch = useAppDispatch();
   const { usenickname } = useChangeNick();
 
@@ -34,7 +34,7 @@ export default function AuthPage() {
   const profileImageUrl = useMemo(() => {
     if (user?.profileImageUrl) return user.profileImageUrl;
     if (user?.user_id) return `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/profile/${user.user_id}/photo`;
-    return "/sample_profile.jpeg";
+    return "/sample_profile.svg";
   }, [user]);
 
   useEffect(() => {
@@ -67,7 +67,6 @@ export default function AuthPage() {
 
     setIsSaving(true);
     let newImageUrl = profileImageUrl;
-    let newProfileVersion = user.profileImageVersion ?? 0;
 
     try {
       // Nickname change logic
@@ -95,6 +94,8 @@ export default function AuthPage() {
           {
             headers: {
               'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${accessToken}`, 
+
             },
           }
         );
@@ -143,7 +144,7 @@ export default function AuthPage() {
             size={128}
             rounded="full"
             className="w-full h-full border-2 border-gray-200"
-            fallbackSrc="/sample_profile.jpeg"
+            fallbackSrc="/sample_profile.svg"
             onFileSelect={handleFileSelect}
             imageUrl={user?.profileImageUrl}
             isLoading={isSaving || profileImage.isUploading}

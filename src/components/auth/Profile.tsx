@@ -42,7 +42,7 @@ export default function Profile({
   size = 96,
   rounded = "full",
   className = "",
-  fallbackSrc = "/sample_profile.jpeg",
+  fallbackSrc = "/sample_profile.svg",
   version,
   onFileSelect,
   isLoading,

@@ -9,7 +9,7 @@ import type { RootState } from "@/store/store";
 interface ReviewCardProps {
   review: Review & {
     nickname?: string;
-    user_profile_image?: string;
+    photo_url?: string;
     name?: string;
     address?: string;
     updated_at?: string;
@@ -24,7 +24,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   className = "",
   showPharmacyName = true,
 }) => {
-  console.log(review);
+  // console.log('review',review);
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("ko-KR", {
@@ -95,7 +95,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         <div className="flex items-center space-x-3">
           <Profile
             size={40}
-            imageUrl={review.user_profile_image || "/sample_profile.svg"}
+            imageUrl={review.photo_url || "/sample_profile.svg"}
             alt={review.nickname || "User"}
             rounded="full"
           />
