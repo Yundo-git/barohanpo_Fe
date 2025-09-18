@@ -49,8 +49,8 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
     }
 
     const filesToUpload = images
-    .map((img) => img.file) // File 또는 undefined를 포함한 배열 생성
-    .filter((file): file is File => file !== undefined);
+      .map((img) => img.file) // File 또는 undefined를 포함한 배열 생성
+      .filter((file): file is File => file !== undefined);
 
     setIsSubmitting(true);
     try {

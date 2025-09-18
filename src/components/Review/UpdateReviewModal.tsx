@@ -6,7 +6,9 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { PhotoIcon } from "@heroicons/react/24/outline";
-import useUpdateReview, { type UpdateReviewParams } from "@/hooks/useUpdateReview";
+import useUpdateReview, {
+  type UpdateReviewParams,
+} from "@/hooks/useUpdateReview";
 import useImageUpload from "@/hooks/useImageUpload";
 import { Review, ReviewPhoto } from "@/types/review";
 import { ImageItem } from "@/types/upload";
@@ -49,11 +51,13 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
       const existingPhotos: ReviewPhoto[] = review.photos || [];
 
       // 기존 이미지를 ImageItem 타입으로 변환하여 설정
-      const formattedExistingImages: ImageItem[] = existingPhotos.map((photo) => ({
-        id: `existing-${photo.review_photo_id}`,
-        previewUrl: photo.review_photo_url,
-        isExisting: true,
-      }));
+      const formattedExistingImages: ImageItem[] = existingPhotos.map(
+        (photo) => ({
+          id: `existing-${photo.review_photo_id}`,
+          previewUrl: photo.review_photo_url,
+          isExisting: true,
+        })
+      );
 
       setImages(formattedExistingImages);
     }
@@ -76,7 +80,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
         .filter((img) => !img.isExisting)
         .map((img) => img.file)
         .filter(Boolean);
-      
+
       const updateData: UpdateReviewParams = {
         reviewId: review.review_id,
         userId: review.user_id,
@@ -94,7 +98,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
       }
 
       await updateReview(updateData);
-      
+
       alert("리뷰가 성공적으로 수정되었습니다.");
       onClose();
     } catch (error) {
@@ -181,6 +185,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
                           src={image.previewUrl}
                           alt={`미리보기 ${index + 1}`}
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover rounded cursor-pointer hover:opacity-80"
                         />
                         <button

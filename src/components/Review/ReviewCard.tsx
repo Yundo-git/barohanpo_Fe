@@ -10,13 +10,13 @@ interface ReviewCardProps {
   review: Review & {
     nickname?: string;
     // user_profile_photo_url: 백엔드에서 넘어오는 필드 이름으로 변경
-    user_profile_photo_url?: string; 
+    user_profile_photo_url?: string;
     name?: string;
     address?: string;
     updated_at?: string;
     reply?: string;
     // photos: ReviewPhoto 배열로 타입 명시
-    photos: ReviewPhoto[]; 
+    photos: ReviewPhoto[];
   };
   className?: string;
   showPharmacyName?: boolean;
@@ -57,25 +57,26 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
 
   const renderImages = () => {
     if (!review.photos || review.photos.length === 0) return null;
-  
+
     // 사진 개수에 따라 Flexbox 클래스 동적 할당
     const numPhotos = review.photos.length;
     let photoWrapperClasses = "relative h-32 flex-shrink-0";
-  
+
     if (numPhotos === 1) {
       photoWrapperClasses += " w-full"; // 1개일 때는 전체 너비
     } else if (numPhotos === 2) {
       photoWrapperClasses += " w-1/2"; // 2개일 때는 절반 너비
-    } else { // 3개 이상일 때는 3분의 1 너비
+    } else {
+      // 3개 이상일 때는 3분의 1 너비
       photoWrapperClasses += " w-1/3";
     }
-  
+
     return (
       // 'space-x-2'는 사진 사이에 여백을 줘서 더 자연스럽게 보이게 합니다.
-      <div className="mt-2 flex space-x-2"> 
+      <div className="mt-2 flex space-x-2">
         {review.photos.map((photo, index) => {
           if (!photo.review_photo_url) return null;
-  
+
           return (
             <div
               key={`${photo.review_photo_id}-${index}`}
@@ -85,6 +86,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
                 src={photo.review_photo_url}
                 alt={`Review image ${index + 1}`}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="rounded object-cover"
                 // unoptimized 속성 제거 (URL을 사용하므로 최적화 기능 활용)
               />

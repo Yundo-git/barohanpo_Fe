@@ -40,8 +40,8 @@ export async function login(
       }
     );
 
-    const raw = res.data
-    console.log('raw in authService',raw)
+    const raw = res.data;
+    console.log("raw in authService", raw);
     const user = (raw as { data?: { user?: User } })?.data?.user;
     const accessToken =
       (
@@ -105,8 +105,16 @@ export async function refresh(): Promise<RefreshResponse> {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
         },
+        validateStatus: (status) => status < 500,
       }
     );
+    if (res.status === 401) {
+      return {
+        success: false,
+        error: "세션이 만료되었습니다. 다시 로그인해 주세요.",
+        isUnauthorized: true,
+      };
+    }
 
     const raw = res.data as unknown;
     const accessToken =

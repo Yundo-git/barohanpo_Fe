@@ -1,14 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, TouchEvent } from 'react';
-import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef, TouchEvent } from "react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const BANNERS = [
-  '/banner1.svg',
-  '/banner2.svg',
-  '/banner3.svg',
-];
+const BANNERS = ["/banner1.svg", "/banner2.svg", "/banner3.svg"];
 
 export default function BannerCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -43,13 +39,13 @@ export default function BannerCarousel() {
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
-    
+
     if (dragOffset > 50) {
       goToNext();
     } else if (dragOffset < -50) {
       goToPrevious();
     }
-    
+
     setIsDragging(false);
     setDragOffset(0);
   };
@@ -62,7 +58,7 @@ export default function BannerCarousel() {
   }, [isDragging]);
 
   return (
-    <div 
+    <div
       className="relative w-full h-[40vh] overflow-hidden rounded-lg select-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -70,11 +66,13 @@ export default function BannerCarousel() {
       ref={containerRef}
     >
       {/* Banner Images */}
-      <div 
+      <div
         className="flex transition-transform duration-300 ease-out h-full touch-pan-x"
-        style={{ 
-          transform: `translateX(calc(-${currentIndex * 100}% + ${-dragOffset}px))`,
-          cursor: isDragging ? 'grabbing' : 'grab'
+        style={{
+          transform: `translateX(calc(-${
+            currentIndex * 100
+          }% + ${-dragOffset}px))`,
+          cursor: isDragging ? "grabbing" : "grab",
         }}
       >
         {BANNERS.map((banner, index) => (
@@ -84,6 +82,7 @@ export default function BannerCarousel() {
                 src={banner}
                 alt={`Banner ${index + 1}`}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
                 priority={index === 0}
               />
@@ -115,7 +114,7 @@ export default function BannerCarousel() {
             key={index}
             onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-colors ${
-              index === currentIndex ? 'bg-white' : 'bg-white/50'
+              index === currentIndex ? "bg-white" : "bg-white/50"
             }`}
             aria-label={`Go to banner ${index + 1}`}
           />

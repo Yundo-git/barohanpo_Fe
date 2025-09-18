@@ -19,11 +19,14 @@ export default function Header() {
   const dispatch = useDispatch<AppDispatch>();
 
   const pathSegments = pathname.split("/");
-  const p_id: number | null = pathSegments.length === 3 ? Number(pathSegments[2]) : null;
+  const p_id: number | null =
+    pathSegments.length === 3 ? Number(pathSegments[2]) : null;
   const isPharmacyPage = pathname.startsWith("/pharmacy/") && !!p_id;
 
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
-  const favoriteIds = useSelector((state: RootState) => state.favorites.favoriteIds);
+  const favoriteIds = useSelector(
+    (state: RootState) => state.favorites.favoriteIds
+  );
 
   const { data: favorites } = useQuery<Pharmacy[]>({
     queryKey: ["favorites", userId],
@@ -41,7 +44,7 @@ export default function Header() {
   // useEffect를 사용하여 favorites 데이터가 변경될 때 Redux를 업데이트
   useEffect(() => {
     if (favorites) {
-      const ids = favorites.map(fav => Number(fav.p_id));
+      const ids = favorites.map((fav) => Number(fav.p_id));
       dispatch(setFavoriteIds(ids));
     }
   }, [favorites, dispatch]);
@@ -49,7 +52,13 @@ export default function Header() {
   const isFavorite = !!p_id && favoriteIds.includes(p_id);
   const { mutate: toggleFavorite, isPending: isToggling } = useToggleFavorite();
 
-  const showBackButton = !["/", "/map", "/mypage", "/mybook", "/pharmacy/"].includes(pathname);
+  const showBackButton = ![
+    "/",
+    "/map",
+    "/mypage",
+    "/mybook",
+    "/pharmacy/",
+  ].includes(pathname);
 
   const getPageTitle = () => {
     if (pathname === "/") return "바로한포";
@@ -58,11 +67,11 @@ export default function Header() {
     if (pathname === "/mypage") return "마이페이지";
     return "바로한포";
   };
-  
+
   if (isPharmacyPage) {
     const Icon = isFavorite ? HeartSolid : HeartOutline;
     const iconColor = isFavorite ? "text-red-500" : "text-gray-400";
-    
+
     return (
       <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-4 py-2 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
         <div className="absolute left-4">
@@ -94,7 +103,14 @@ export default function Header() {
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Image src="/favicon.svg" alt="로고" width={32} height={32} />
+          <Image
+            src="/favicon.svg"
+            priority
+            alt="로고"
+            width={32}
+            height={32}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
           <h1 className="font-bold">{getPageTitle()}</h1>
         </div>
       )}

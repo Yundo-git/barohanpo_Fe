@@ -100,42 +100,43 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
 
           {/* 리뷰 사진 영역*/}
           {review.photos && review.photos.length > 0 && (
-    <div className="mt-3">
-      <div className="flex gap-3 overflow-x-auto py-2 pb-3 -mx-1 px-1 scrollbar-hide">
-        {review.photos.map((photo, photoIndex) => {
-          if (!photo.review_photo_url) return null;
+            <div className="mt-3">
+              <div className="flex gap-3 overflow-x-auto py-2 pb-3 -mx-1 px-1 scrollbar-hide">
+                {review.photos.map((photo, photoIndex) => {
+                  if (!photo.review_photo_url) return null;
 
-          const numPhotos = review.photos.length;
-          let photoWrapperClasses = "relative flex-shrink-0";
+                  const numPhotos = review.photos.length;
+                  let photoWrapperClasses = "relative flex-shrink-0";
 
-          if (numPhotos === 1) {
-            photoWrapperClasses += " w-full";
-          } else if (numPhotos === 2) {
-            photoWrapperClasses += " w-1/2";
-          } else {
-            photoWrapperClasses += " w-1/3";
-          }
-          
-          return (
-            <div
-              key={`${review.review_id}-${photoIndex}`}
-              className={photoWrapperClasses}
-            >
-              <div className="relative w-full h-24">
-                <Image
-                  src={photo.review_photo_url}
-                  alt={`리뷰 사진 ${photoIndex + 1}`}
-                  fill
-                  className="object-cover rounded-lg border border-gray-200 cursor-pointer"
-                  // sizes="96px" 속성 제거
-                />
+                  if (numPhotos === 1) {
+                    photoWrapperClasses += " w-full";
+                  } else if (numPhotos === 2) {
+                    photoWrapperClasses += " w-1/2";
+                  } else {
+                    photoWrapperClasses += " w-1/3";
+                  }
+
+                  return (
+                    <div
+                      key={`${review.review_id}-${photoIndex}`}
+                      className={photoWrapperClasses}
+                    >
+                      <div className="relative w-full h-24">
+                        <Image
+                          src={photo.review_photo_url}
+                          alt={`리뷰 사진 ${photoIndex + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover rounded-lg border border-gray-200 cursor-pointer"
+                          // sizes="96px" 속성 제거
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-)}
+          )}
           {/* 수정/삭제버튼*/}
           <div className="flex space-x-2 ">
             <button
