@@ -5,7 +5,6 @@ export interface CancelItem {
   book_date: string;
   book_id: number;
   book_time: string;
-  // Add other properties as needed
 }
 
 interface CancelListResponse {
@@ -21,19 +20,19 @@ const useGetCancelList = (userId?: number) => {
 
   const getCancelList = useCallback(async (): Promise<CancelItem[]> => {
     if (!userId) return [];
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation/${userId}/books/cancel/list`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          cache: 'no-store'
+          cache: "no-store",
         }
       );
 
@@ -43,18 +42,20 @@ const useGetCancelList = (userId?: number) => {
 
       const result: CancelListResponse = await response.json();
 
-      // Handle different response formats
       if (Array.isArray(result)) {
         return result;
       } else if (result && Array.isArray(result.data)) {
         return result.data;
       }
-      
+
       return [];
     } catch (error) {
-      const err = error instanceof Error ? error : new Error('Failed to fetch cancel list');
+      const err =
+        error instanceof Error
+          ? error
+          : new Error("Failed to fetch cancel list");
       setError(err);
-      console.error('Error fetching cancel list:', error);
+      console.error("Error fetching cancel list:", error);
       return [];
     } finally {
       setIsLoading(false);
@@ -62,14 +63,14 @@ const useGetCancelList = (userId?: number) => {
   }, [userId]);
 
   const refresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
-  return { 
-    getCancelList, 
-    refresh, 
-    isLoading, 
-    error 
+  return {
+    getCancelList,
+    refresh,
+    isLoading,
+    error,
   };
 };
 

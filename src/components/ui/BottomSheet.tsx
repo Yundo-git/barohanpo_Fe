@@ -174,12 +174,10 @@ const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
                 if (draggedFar || flungDown) onClose();
               }}
             >
-              {/* Handle */}
               <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing bottom-sheet-handle select-none">
                 <span className="h-1.5 w-12 rounded-full bg-gray-300" />
               </div>
 
-              {/* Scrollable content */}
               <div
                 ref={scrollableRef}
                 className="px-4 pb-4 overflow-y-auto"

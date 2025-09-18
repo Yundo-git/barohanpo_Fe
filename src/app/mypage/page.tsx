@@ -6,11 +6,10 @@ import { clearAuth } from "@/store/userSlice";
 import { logout as logoutApi } from "@/services/authService";
 import type { RootState } from "@/store/store";
 import Profile from "@/components/auth/Profile";
-import DevelopmentNoticeModal from "@/components/DevelopmentNoticeModal";
+import DevelopmentNoticeModal from "@/components/ui/DevelopmentNoticeModal";
 import ReviewListModal from "@/components/Review/ReviewListModal";
 import { useState } from "react";
 import FavoriteListModal from "@/components/auth/FavoriteListModal";
-
 
 export default function MyPage() {
   const [showDevNotice, setShowDevNotice] = useState(false);
@@ -60,13 +59,11 @@ export default function MyPage() {
               <Profile
                 version={user?.profileImageVersion}
                 imageUrl={user?.profileImageUrl} //
-
                 alt="사용자 프로필"
                 size={56}
                 rounded="full"
                 className="w-[4.5rem] h-[4.5rem]"
               />
-              
             </div>
           </div>
           <h1>{user?.nickname}</h1>

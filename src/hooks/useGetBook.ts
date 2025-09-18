@@ -6,7 +6,6 @@ interface Reservation {
   book_date: string;
   book_id: number;
   book_time: string;
-  // Add other properties as needed
 }
 
 const useGetBook = (userId?: number) => {

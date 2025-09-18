@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import "./globals.css";
-import MobileNavBar from "@/components/MobileNavBar";
-import Header from "@/components/Header";
+import MobileNavBar from "@/components/ui/MobileNavBar";
+import Header from "@/components/ui/Header";
 import Providers from "@/store/Provider";
 import LocalPermission from "@/components/map/LocalPermission";
 import { QueryClientProvider } from "@/providers/QueryClientProvider";
@@ -26,7 +26,7 @@ export default function RootLayout({
         {/* <UserProvider> */}
         <Providers>
           <QueryClientProvider>
-          <AuthBootstrap />
+            <AuthBootstrap />
 
             <LocalPermission />
             <div className="fixed top-0 left-0 right-0 z-50">

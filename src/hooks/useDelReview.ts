@@ -12,7 +12,6 @@ interface ApiResponse {
     success: boolean;
     message?: string;
     review_id?: number;
-    // Add other possible fields from the API response
     [key: string]: unknown;
   };
 }

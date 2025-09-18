@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useCallback, useEffect, ReactNode } from "react";
 import BookList from "@/components/reservation/BookList";
-import Tab from "@/components/Tab";
+import Tab from "@/components/ui/Tab";
 import CancelList from "@/components/reservation/CancelList";
 import { useAppSelector } from "@/store/store";
 import type { Reservation, CancelItem } from "@/types/reservation";
@@ -43,7 +43,7 @@ function MyBookContent({ userId }: { userId: number }) {
   const handleRefresh = () => {
     void loadData();
   };
-  console.log('reservations', reservations);
+  console.log("reservations", reservations);
   const tabItems = [
     {
       key: "reservations",

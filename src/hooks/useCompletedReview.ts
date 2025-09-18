@@ -16,7 +16,11 @@ function normalizeToIds(input: unknown): number[] {
   return input
     .map((v) => {
       if (typeof v === "number") return v;
-      if (v && typeof v === "object" && "book_id" in (v as Record<string, unknown>)) {
+      if (
+        v &&
+        typeof v === "object" &&
+        "book_id" in (v as Record<string, unknown>)
+      ) {
         const id = (v as { book_id: number | string }).book_id;
         return typeof id === "string" ? Number(id) : id;
       }
@@ -54,7 +58,9 @@ const useCompletedReview = (userId: number): UseCompletedReviewReturn => {
 
       setCompletedReviews(ids);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch reviews"));
+      setError(
+        err instanceof Error ? err : new Error("Failed to fetch reviews")
+      );
       setCompletedReviews([]);
     } finally {
       setIsLoading(false);
@@ -66,7 +72,7 @@ const useCompletedReview = (userId: number): UseCompletedReviewReturn => {
     void fetchReviews();
   }, [fetchReviews]);
 
-  // 디버깅용(선택)
+  // 디버깅용
   // useEffect(() => {
   //   console.log("completedReviews:", completedReviews);
   // }, [completedReviews]);

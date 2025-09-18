@@ -3,13 +3,13 @@
 import { useParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import type { Pharmacy } from "@/types/pharmacy";
-import Tabs from "@/components/Tab";
+import Tabs from "@/components/ui/Tab";
 import type { RootState } from "@/store/store";
 import ReviewCard from "@/components/Review/ReviewCard";
 import useGetPharmaciesReview from "@/hooks/useGetPharmaciesReview";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import BottomSheet from "@/components/BottomSheet";
+import BottomSheet from "@/components/ui/BottomSheet";
 import { format } from "date-fns";
 
 // Dynamically import the reservation sheet to handle SSR

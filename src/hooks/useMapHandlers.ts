@@ -98,7 +98,9 @@ export const useMapHandlers = ({
     }
   };
 
-  const createMarkerImage = useCallback((): kakao.maps.MarkerImage | undefined => {
+  const createMarkerImage = useCallback(():
+    | kakao.maps.MarkerImage
+    | undefined => {
     if (!window.kakao?.maps) return undefined;
     const kakao = window.kakao as typeof window.kakao;
     const imageSrc = "/mapmarker.svg";
@@ -111,24 +113,24 @@ export const useMapHandlers = ({
 
   const createAndDisplayMarkers = useCallback(
     (map: kakao.maps.Map, pharmaciesToDisplay: PharmacyWithUser[]) => {
-      // Clear existing markers
+      // 마커 초기화
       markersRef.current.forEach((marker) => marker.setMap(null));
       markersRef.current = [];
 
-      // Filter out invalid pharmacies
+      // 유효한 약국 필터링
       const validPharmacies = pharmaciesToDisplay.filter(
         (p) => (p.latitude || p.lat) && (p.longitude || p.lng)
       ) as PharmacyWithUser[];
 
       if (validPharmacies.length === 0) {
-        console.warn('No valid pharmacies with coordinates found');
+        console.warn("No valid pharmacies with coordinates found");
         return;
       }
 
-      // Create marker image
+      // 마커 이미지 생성
       const markerImage = createMarkerImage();
 
-      // Create markers using the usePharmacyMarkers hook
+      // 마커 생성 및 표시
       const newMarkers = createPharmacyMarkers(
         map,
         validPharmacies,
@@ -137,11 +139,16 @@ export const useMapHandlers = ({
       );
 
       markersRef.current = newMarkers;
-      
-      // Adjust map bounds to show all markers
+
+      // 지도의 영역을 마커들을 포함하도록 조정
       adjustMapBounds(map, newMarkers);
     },
-    [createMarkerImage, handleMarkerClick, createPharmacyMarkers, adjustMapBounds]
+    [
+      createMarkerImage,
+      handleMarkerClick,
+      createPharmacyMarkers,
+      adjustMapBounds,
+    ]
   );
 
   const clearMarkers = useCallback(() => {
@@ -163,7 +170,9 @@ export const useMapHandlers = ({
         setLocationError(null);
         const hasPermission = await checkLocationPermission();
         if (!hasPermission) {
-          throw new Error("위치 정보 사용 권한이 필요합니다. 설정에서 위치 서비스를 활성화해주세요.");
+          throw new Error(
+            "위치 정보 사용 권한이 필요합니다. 설정에서 위치 서비스를 활성화해주세요."
+          );
         }
 
         const position = await getCurrentPosition();
@@ -173,12 +182,17 @@ export const useMapHandlers = ({
         map.setCenter(center);
         map.setLevel(3);
 
-        const nearbyPharmacies = await findNearbyPharmacies(latitude, longitude);
+        const nearbyPharmacies = await findNearbyPharmacies(
+          latitude,
+          longitude
+        );
         setPharmacies({ pharmacies: nearbyPharmacies });
         createAndDisplayMarkers(map, nearbyPharmacies);
       } catch (error) {
         console.error("Failed to get location or pharmacies:", error);
-        setLocationError("현재 위치를 가져올 수 없습니다. 기본 위치로 지도를 표시합니다.");
+        setLocationError(
+          "현재 위치를 가져올 수 없습니다. 기본 위치로 지도를 표시합니다."
+        );
         const defaultCenter = new window.kakao.maps.LatLng(37.5665, 126.978);
         map.setCenter(defaultCenter);
         map.setLevel(6);

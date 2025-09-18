@@ -10,7 +10,6 @@ interface CancelResponse {
   data?: {
     reservation_id?: number;
     status?: string;
-    // Add other expected properties from the API response
     [key: string]: unknown;
   };
 }

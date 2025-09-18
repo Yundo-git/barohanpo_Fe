@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useCallback, useEffect,  useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
   UploadOptions,
@@ -113,7 +113,9 @@ const useImageUpload = ({
           const previewUrl = URL.createObjectURL(webpFile);
 
           newImages.push({
-            id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            id: `new-${Date.now()}-${Math.random()
+              .toString(36)
+              .substring(2, 9)}`,
             file: webpFile,
             previewUrl,
           });
@@ -136,7 +138,11 @@ const useImageUpload = ({
   const removeImage = useCallback((id: string) => {
     setImages((prev) => {
       const target = prev.find((i) => i.id === id);
-      if (target && !target.isExisting && target.previewUrl.startsWith("blob:")) {
+      if (
+        target &&
+        !target.isExisting &&
+        target.previewUrl.startsWith("blob:")
+      ) {
         URL.revokeObjectURL(target.previewUrl);
       }
       return prev.filter((i) => i.id !== id);
@@ -163,7 +169,6 @@ const useImageUpload = ({
       .filter(Boolean) as File[];
   }, [images]);
 
-  /** (선택) 훅에서 직접 업로드 */
   const uploadAll = useCallback(
     async (custom?: Partial<UploadOptions>): Promise<UploadResult> => {
       if (!upload && !custom?.url) {
@@ -197,12 +202,10 @@ const useImageUpload = ({
           throw new Error(msg);
         }
 
-        const json = (await res
-          .json()
-          .catch((): unknown => ({}))) as
+        const json = (await res.json().catch((): unknown => ({}))) as
           | UploadJSON
           | UploadJSON[];
-        
+
         const urls: string[] = Array.isArray(json)
           ? (json.map((o) => o.imageUrl || o.url).filter(Boolean) as string[])
           : ([json.imageUrl || json.url].filter(Boolean) as string[]);

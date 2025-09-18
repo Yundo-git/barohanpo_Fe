@@ -1,5 +1,3 @@
-// src/components/FavoriteButton.tsx
-
 "use client";
 
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
@@ -12,7 +10,11 @@ interface FavoriteButtonProps {
   isFavorite: boolean; // 찜 상태를 prop로
 }
 
-const FavoriteButton: React.FC<FavoriteButtonProps> = ({ userId, pharmacyId, isFavorite }) => {
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({
+  userId,
+  pharmacyId,
+  isFavorite,
+}) => {
   const { mutate, isPending } = useToggleFavorite();
 
   const handleToggleFavorite = () => {

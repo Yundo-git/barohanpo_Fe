@@ -5,9 +5,7 @@ import { fetchUserReviews } from "@/store/userReviewsSlice";
 import { fetchFiveStarReviews } from "@/store/reviewSlice";
 import { useCallback } from "react";
 
-/**
- * 리뷰 생성 시 필요한 파라미터 타입 정의
- */
+/** 리뷰 생성 시 파라미터 타입 정의 */
 interface CreateReviewParams {
   /** 예약 ID */
   bookId: number;
@@ -25,10 +23,7 @@ interface CreateReviewParams {
   images?: File[];
 }
 
-/**
- * 리뷰 생성을 위한 커스텀 훅
- * @returns 리� 생성을 처리하는 함수를 반환
- */
+/** 리뷰 생성을 위한 커스텀 훅 */
 const useCreateReview = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const userId = user?.user_id;

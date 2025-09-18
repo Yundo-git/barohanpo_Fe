@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
-import BottomSheet from "../BottomSheet";
+import BottomSheet from "../ui/BottomSheet";
 import { useKakaoMap } from "@/hooks/useKakaoMap";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import { useMapHandlers } from "@/hooks/useMapHandlers";
