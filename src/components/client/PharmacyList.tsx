@@ -67,9 +67,9 @@ export default function PharmacyList({}: PharmacyListProps) {
   }
 
   return (
-    <div className="flex-1 p-4">
+    <div className="flex-1 py-6">
       <h2 className="H3_SB_20 text-mainText">내 주변 약국</h2>
-      <div className="space-y-6">
+      <div className="space-y-6 pt-4">
         {pharmacies.map((pharmacy: Pharmacy) => (
           <div key={pharmacy.p_id} className="flex gap-4 items-center">
             <div className="w-[3rem] h-[3rem] rounded-md bg-gray-200 flex justify-center items-center">

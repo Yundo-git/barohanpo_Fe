@@ -73,7 +73,7 @@ export default function Header() {
     const iconColor = isFavorite ? "text-red-500" : "text-gray-400";
 
     return (
-      <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-4 py-2 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
+      <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
         <div className="absolute left-4">
           <BackButton />
         </div>
@@ -96,7 +96,7 @@ export default function Header() {
   }
 
   return (
-    <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-4 py-2 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
+    <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
       {showBackButton ? (
         <div className="absolute left-4">
           <BackButton />
@@ -111,7 +111,7 @@ export default function Header() {
             height={32}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          <h1 className="font-bold">{getPageTitle()}</h1>
+          <h1 className="H3_SB_20 text-mainText">{getPageTitle()}</h1>
         </div>
       )}
     </header>

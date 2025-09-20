@@ -58,63 +58,64 @@ export default function BannerCarousel() {
   }, [isDragging]);
 
   return (
-    <div
-      className="relative w-full h-[40vh] overflow-hidden rounded-lg select-none"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      ref={containerRef}
-    >
-      {/* Banner Images */}
+    <div className="w-full">
       <div
-        className="flex transition-transform duration-300 ease-out h-full touch-pan-x"
-        style={{
-          transform: `translateX(calc(-${
-            currentIndex * 100
-          }% + ${-dragOffset}px))`,
-          cursor: isDragging ? "grabbing" : "grab",
-        }}
+        className="relative w-full h-[40vh] overflow-hidden rounded-lg select-none"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        ref={containerRef}
       >
-        {BANNERS.map((banner, index) => (
-          <div key={index} className="flex-shrink-0 w-full h-full">
-            <div className="relative w-full h-full">
-              <Image
-                src={banner}
-                alt={`Banner ${index + 1}`}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover"
-                priority={index === 0}
-              />
+        {/* 배너이미지 */}
+        <div
+          className="flex transition-transform duration-300 ease-out h-full touch-pan-x"
+          style={{
+            transform: `translateX(calc(-${
+              currentIndex * 100
+            }% + ${-dragOffset}px))`,
+            cursor: isDragging ? "grabbing" : "grab",
+          }}
+        >
+          {BANNERS.map((banner, index) => (
+            <div key={index} className="flex-shrink-0 w-full h-full">
+              <div className="relative w-full h-full">
+                <Image
+                  src={banner}
+                  alt={`Banner ${index + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
+                  priority={index === 0}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        <button
+          onClick={goToPrevious}
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors z-10"
+          aria-label="Previous banner"
+        >
+          <ChevronLeft size={24} />
+        </button>
+        <button
+          onClick={goToNext}
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors z-10"
+          aria-label="Next banner"
+        >
+          <ChevronRight size={24} />
+        </button>
       </div>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={goToPrevious}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-        aria-label="Previous banner"
-      >
-        <ChevronLeft size={24} />
-      </button>
-      <button
-        onClick={goToNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-        aria-label="Next banner"
-      >
-        <ChevronRight size={24} />
-      </button>
-
-      {/* Indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+      {/* 인디케이터  배너아래 ... 이거 */}
+      <div className="flex justify-center my-6 space-x-2">
         {BANNERS.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-colors ${
-              index === currentIndex ? "bg-white" : "bg-white/50"
+              index === currentIndex ? "bg-gray-700" : "bg-gray-300"
             }`}
             aria-label={`Go to banner ${index + 1}`}
           />
