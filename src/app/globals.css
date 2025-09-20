@@ -1,8 +1,160 @@
+/* 테일윈드 공통설정은 tailwind.config.js에 있습니다~*/
+
 @import "react-datepicker/dist/react-datepicker.css";
+/*   'Pretendard' 폰트 불러오기 */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* global.css */
+
+@layer components {
+  /* Headline Styles */
+  .H1_SB_32 {
+    @apply text-h1-32 font-sb tracking-tight-2_5;
+  }
+  .H1_MD_32 {
+    @apply text-h1-32 font-md tracking-tight-2_5;
+  }
+  .H1_RG_32 {
+    @apply text-h1-32 font-rg tracking-tight-2_5;
+  }
+
+  .H2_SB_28 {
+    @apply text-h2-28 font-sb tracking-tight-2_5;
+  }
+  .H2_MD_28 {
+    @apply text-h2-28 font-md tracking-tight-2_5;
+  }
+  .H2_RG_28 {
+    @apply text-h2-28 font-rg tracking-tight-2_5;
+  }
+
+  .H3_SB_24 {
+    @apply text-h3-24 font-sb tracking-tight-2_5;
+  }
+  .H3_MD_24 {
+    @apply text-h3-24 font-md tracking-tight-2_5;
+  }
+  .H3_RG_24 {
+    @apply text-h3-24 font-rg tracking-tight-2_5;
+  }
+
+  .H3_SB_20 {
+    @apply text-h3-20 font-sb tracking-tight-2_5;
+  }
+  .H3_MD_20 {
+    @apply text-h3-20 font-md tracking-tight-2_5;
+  }
+  .H3_RG_20 {
+    @apply text-h3-20 font-rg tracking-tight-2_5;
+  }
+
+  .H4_SB_18 {
+    @apply text-h4-18 font-sb tracking-tight-2_5;
+  }
+  .H4_MD_18 {
+    @apply text-h4-18 font-md tracking-tight-2_5;
+  }
+  .H4_RG_18 {
+    @apply text-h4-18 font-rg tracking-tight-2_5;
+  }
+
+  .H6_SB_16 {
+    @apply text-h6-16 font-sb tracking-tight-2_5;
+  }
+  .H6_MD_16 {
+    @apply text-h6-16 font-md tracking-tight-2_5;
+  }
+  .H6_RG_16 {
+    @apply text-h6-16 font-rg tracking-tight-2_5;
+  }
+
+  /* Title Styles */
+  .T1_RG_24 {
+    @apply text-t1-24 font-rg tracking-tight-2_5;
+  }
+  .T1_MD_24 {
+    @apply text-t1-24 font-md tracking-tight-2_5;
+  }
+  .T1_SB_24 {
+    @apply text-t1-24 font-sb tracking-tight-2_5;
+  }
+
+  .T2_RG_20 {
+    @apply text-t2-20 font-rg tracking-tight-2_5;
+  }
+  .T2_MD_20 {
+    @apply text-t2-20 font-md tracking-tight-2_5;
+  }
+  .T2_SB_20 {
+    @apply text-t2-20 font-sb tracking-tight-2_5;
+  }
+
+  .T3_RG_18 {
+    @apply text-t3-18 font-rg tracking-tight-2_5;
+  }
+  .T3_MD_18 {
+    @apply text-t3-18 font-md tracking-tight-2_5;
+  }
+  .T3_SB_18 {
+    @apply text-t3-18 font-sb tracking-tight-2_5;
+  }
+
+  .T4_RG_16 {
+    @apply text-t4-16 font-rg tracking-tight-2_5;
+  }
+  .T4_MD_16 {
+    @apply text-t4-16 font-md tracking-tight-2_5;
+  }
+  .T4_SB_16 {
+    @apply text-t4-16 font-sb tracking-tight-2_5;
+  }
+
+  /* Body Styles */
+  .B1_RG_15 {
+    @apply text-b1-15 font-rg tracking-tight-2_5;
+  }
+  .B1_MD_15 {
+    @apply text-b1-15 font-md tracking-tight-2_5;
+  }
+  .B1_SB_15 {
+    @apply text-b1-15 font-sb tracking-tight-2_5;
+  }
+
+  .B2_RG_14 {
+    @apply text-b2-14 font-rg tracking-tight-2_5;
+  }
+  .B2_MD_14 {
+    @apply text-b2-14 font-md tracking-tight-2_5;
+  }
+  .B2_SB_14 {
+    @apply text-b2-14 font-sb tracking-tight-2_5;
+  }
+
+  .B3_RG_13 {
+    @apply text-b3-13 font-rg tracking-tight-2_5;
+  }
+  .B3_MD_13 {
+    @apply text-b3-13 font-md tracking-tight-2_5;
+  }
+  .B3_SB_13 {
+    @apply text-b3-13 font-sb tracking-tight-2_5;
+  }
+
+  .B4_RG_12 {
+    @apply text-b4-12 font-rg tracking-tight-2_5;
+  }
+  .B4_MD_12 {
+    @apply text-b4-12 font-md tracking-tight-2_5;
+  }
+  .B4_SB_12 {
+    @apply text-b4-12 font-sb tracking-tight-2_5;
+  }
+}
 
 :root {
   --background: #ffffff;
@@ -38,12 +190,10 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  /* -webkit-font-smoothing: antialiased; */
-  /* -moz-osx-font-smoothing: grayscale; */
 }
 
 * {
+  font-family: "Pretendard";
   box-sizing: border-box;
   padding: 0;
   margin: 0;

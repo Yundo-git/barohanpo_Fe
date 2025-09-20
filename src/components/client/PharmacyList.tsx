@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePharmacies } from "@/hooks/usePharmacies";
 import type { Pharmacy } from "@/types/pharmacy";
@@ -29,14 +29,12 @@ const extractCityDistrict = (address?: string): string => {
 };
 
 export default function PharmacyList({}: PharmacyListProps) {
-  const { pharmacies, isLoading, error } =
-    usePharmacies();
+  const { pharmacies, isLoading, error } = usePharmacies();
   const router = useRouter();
 
   // PharmacyList에서는 지도 관련 기능이 필요하지 않으므로, useMapHandlers 대신 직접 필요한 상태만 가져옵니다.
   // locationError는 여기서는 사용하지 않으므로 제거합니다.
   // findNearbyPharmacies는 이미 usePharmacies 훅에서 가져왔으므로 그대로 사용합니다.
-  
 
   // 스플래시에서 미리 로드하므로 여기서는 별도 fetch를 하지 않음
 
@@ -70,7 +68,7 @@ export default function PharmacyList({}: PharmacyListProps) {
 
   return (
     <div className="flex-1 p-4">
-      <h2 className="text-xl font-bold mb-4">내 주변 약국</h2>
+      <h2 className="H3_SB_20">내 주변 약국</h2>
       <div className="space-y-6">
         {pharmacies.map((pharmacy: Pharmacy) => (
           <div key={pharmacy.p_id} className="flex gap-4 items-center">
