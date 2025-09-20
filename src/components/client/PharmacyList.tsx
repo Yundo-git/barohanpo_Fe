@@ -68,7 +68,7 @@ export default function PharmacyList({}: PharmacyListProps) {
 
   return (
     <div className="flex-1 p-4">
-      <h2 className="H3_SB_20">내 주변 약국</h2>
+      <h2 className="H3_SB_20 text-mainText">내 주변 약국</h2>
       <div className="space-y-6">
         {pharmacies.map((pharmacy: Pharmacy) => (
           <div key={pharmacy.p_id} className="flex gap-4 items-center">
@@ -79,8 +79,8 @@ export default function PharmacyList({}: PharmacyListProps) {
               className="w-[80vw] cursor-pointer"
               onClick={() => router.push(`/pharmacy/${pharmacy.p_id}`)}
             >
-              <h3 className="font-bold">{pharmacy.name}</h3>
-              <p className="text-gray-600">
+              <h3 className="T3_SB_18 text-mainText">{pharmacy.name}</h3>
+              <p className="B1_RG_15 text-subText2">
                 {extractCityDistrict(pharmacy.address)}
               </p>
             </div>

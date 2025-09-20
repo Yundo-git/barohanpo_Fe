@@ -9,6 +9,7 @@ const config: Config = {
         main: "#00bfa5",
         mainText: "#111111",
         subText: "#505050",
+        subText2: "#767676",
         disabled: "#999999",
       },
       fontFamily: {
