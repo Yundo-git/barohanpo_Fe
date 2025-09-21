@@ -9,7 +9,7 @@ const KakaoMap = dynamic(() => import("./KakaoMap"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-[65vh] flex flex-col items-center justify-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-main mb-4"></div>
       <p className="text-gray-600">지도를 로드하는 중입니다...</p>
     </div>
   ),
@@ -30,7 +30,7 @@ export default function MapLoader({ initialPharmacies }: MapLoaderProps) {
   if (!isMounted) {
     return (
       <div className="w-full h-[65vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-main"></div>
       </div>
     );
   }

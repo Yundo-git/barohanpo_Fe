@@ -14,6 +14,7 @@ export default function NicknameEditModal({
   onClose,
   onSave,
 }: NicknameEditModalProps) {
+  const MAX_LEN = 6;
   const [nickname, setNickname] = useState(currentNickname);
 
   useEffect(() => {
@@ -24,7 +25,8 @@ export default function NicknameEditModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(nickname);
+    if (!nickname.trim()) return;
+    onSave(nickname.trim());
   };
 
   return (
@@ -39,17 +41,20 @@ export default function NicknameEditModal({
               type="text"
               id="nickname"
               value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
+              onChange={(e) => setNickname(e.target.value.slice(0, MAX_LEN))}
               className="w-full p-4 border border-gray-200 rounded-xl text-center text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="닉네임을 입력해주세요"
+              maxLength={MAX_LEN}
               autoFocus
             />
+            <div className="mt-2 text-xs text-gray-500 text-center">최대 {MAX_LEN}자 (현재 {nickname.length}/{MAX_LEN})</div>
           </div>
 
           <div className="flex justify-center">
             <button
               type="submit"
-              className="w-full py-4 bg-blue-600 text-white rounded-xl text-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={!nickname.trim()}
+              className="w-full py-4 bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl text-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               확인
             </button>

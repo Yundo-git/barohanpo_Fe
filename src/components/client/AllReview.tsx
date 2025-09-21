@@ -42,7 +42,7 @@ export default function AllReview() {
         </div>
       ) : (
         <div className="relative">
-          <h1 className="text-2xl font-bold mx-4 my-4">사용자 후기</h1>
+          <h1 className="H3_SB_20 text-mainText px-5">사용자 후기</h1>
           <div 
             className="flex overflow-x-auto pb-6 scrollbar-hide"
             style={{
@@ -52,7 +52,7 @@ export default function AllReview() {
               msOverflowStyle: 'none',
             }}
           >
-            <div className="flex space-x-4 px-5">
+            <div className="flex space-x-4 w-full">
               {reviews.map((review) => (
                 <div 
                   key={review.review_id} 
@@ -62,7 +62,7 @@ export default function AllReview() {
                   <ReviewCard
                     review={review}
                     showPharmacyName={true}
-                    className="h-full"
+                    className="h-full w-full"
                   />
                 </div>
               ))}

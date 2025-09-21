@@ -28,13 +28,37 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   showPharmacyName = true,
 }) => {
   // console.log('review',review);
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date);
+  const formatRelativeTime = (dateString: string) => {
+    const target = new Date(dateString);
+    const now = new Date();
+
+    const diffMs = Math.max(0, now.getTime() - target.getTime());
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // 7일 이상은 절대 날짜로 표시
+    if (diffDays >= 7) {
+      const y = target.getFullYear();
+      const m = `${target.getMonth() + 1}`.padStart(2, "0");
+      const d = `${target.getDate()}`.padStart(2, "0");
+      return `${y}.${m}.${d}`;
+    }
+
+    // 같은 날이면 시간/분 단위로 표기
+    const sameDay =
+      target.getFullYear() === now.getFullYear() &&
+      target.getMonth() === now.getMonth() &&
+      target.getDate() === now.getDate();
+
+    if (sameDay) {
+      if (diffMinutes < 1) return "방금 전";
+      if (diffMinutes < 60) return `${diffMinutes}분 전`;
+      return `${diffHours}시간 전`;
+    }
+
+    // 1~6일 전
+    return `${diffDays}일 전`;
   };
 
   const { user } = useSelector((state: RootState) => state.user);
@@ -72,7 +96,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     }
 
     return (
-      // 'space-x-2'는 사진 사이에 여백을 줘서 더 자연스럽게 보이게 합니다.
+      // 'space-x-2'는 사진 사이에 여백 주기
       <div className="mt-2 flex space-x-2">
         {review.photos.map((photo, index) => {
           if (!photo.review_photo_url) return null;
@@ -99,7 +123,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   return (
     <div className={`bg-white p-4 rounded-lg shadow ${className}`}>
       <div className="flex justify-between items-start">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           <Profile
             size={40}
             imageUrl={review.user_profile_photo_url || "/sample_profile.svg"}
@@ -109,7 +133,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           <div>
             <div className="font-medium">{review.nickname || "익명"}</div>
             <div className="text-sm text-gray-500">
-              {formatDate(
+              {formatRelativeTime(
                 review.created_at ||
                   review.updated_at ||
                   new Date().toISOString()
@@ -117,11 +141,11 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
             </div>
           </div>
         </div>
-        {isCurrentUser && (
+        {/* {isCurrentUser && (
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
             내 리뷰
           </span>
-        )}
+        )} */}
       </div>
 
       <div className="mt-2">{renderRating(review.score)}</div>

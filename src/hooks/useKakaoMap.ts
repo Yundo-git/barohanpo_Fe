@@ -60,35 +60,29 @@ export const useKakaoMap = (
     document.head.appendChild(script);
 
     return () => {
-      // 컴포넌트 언마운트 시 스크립트 제거
-      const existingScript = document.getElementById(scriptId);
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
+      // 다른 컴포넌트에서 카카오맵을 사용할 수 있으니 스크립트는 제거하지 않음
       mapRef.current = null;
     };
   }, [mapLoaded, scriptId]);
 
-  // 2. 스크립트 로드 완료 후 지도 생성
+  // 2. 스크립트 로드 완료 후 지도 생성 (컨테이너가 늦게 렌더되는 경우를 대비해 재시도 로직 포함)
   useEffect(() => {
     if (!mapLoaded || mapRef.current) {
       return;
     }
 
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.warn(`useKakaoMap: Map container with ID "${containerId}" not found. Retrying...`);
-      return;
-    }
+    let attempts = 0;
+    const maxAttempts = 30; // 최대 30회 시도 (~3초)
+    const intervalMs = 100;
 
-    const initializeMap = async () => {
+    const initializeMap = async (container: HTMLElement) => {
       try {
         console.log("useKakaoMap: 지도 생성 시작.");
-        
+
         // 기본 위치는 서울 시청으로 설정
         let defaultLat = 37.5665;
         let defaultLng = 126.978;
-        
+
         // 사용자 위치 가져오기 시도
         if (navigator.geolocation) {
           try {
@@ -96,10 +90,10 @@ export const useKakaoMap = (
               navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
                 timeout: 5000,
-                maximumAge: 0
+                maximumAge: 0,
               });
             });
-            
+
             // 사용자 위치로 기본 위치 업데이트
             defaultLat = position.coords.latitude;
             defaultLng = position.coords.longitude;
@@ -108,13 +102,13 @@ export const useKakaoMap = (
             console.warn("useKakaoMap: 사용자 위치를 가져오는데 실패했습니다.", error);
           }
         }
-        
+
         const defaultCenter = new window.kakao.maps.LatLng(defaultLat, defaultLng);
         const defaultOptions = {
           center: defaultCenter,
           level: 3, // 더 가까운 레벨로 조정
         };
-        
+
         const newMap = new window.kakao.maps.Map(container, defaultOptions);
         mapRef.current = newMap;
         console.log("useKakaoMap: 지도 인스턴스 생성 완료.");
@@ -125,8 +119,37 @@ export const useKakaoMap = (
         console.error("useKakaoMap: 지도 초기화 중 오류 발생:", error);
       }
     };
-    
-    initializeMap();
+
+    const tryInit = () => {
+      if (mapRef.current) return; // 이미 초기화됨
+      const container = document.getElementById(containerId);
+      if (!container) {
+        attempts += 1;
+        if (attempts <= maxAttempts) {
+          if (attempts === 1) {
+            console.warn(`useKakaoMap: container #${containerId} not found. Retrying...`);
+          }
+          setTimeout(tryInit, intervalMs);
+        } else {
+          console.error(`useKakaoMap: Failed to find container #${containerId} after ${maxAttempts} attempts.`);
+        }
+        return;
+      }
+      // 컨테이너가 표시되었지만 아직 사이즈가 0인 경우 초기화를 지연
+      const rect = container.getBoundingClientRect();
+      if ((rect.width === 0 || rect.height === 0) && attempts <= maxAttempts) {
+        attempts += 1;
+        if (attempts % 5 === 1) {
+          console.warn(`useKakaoMap: container #${containerId} size is 0. Retrying...`, rect);
+        }
+        setTimeout(tryInit, intervalMs);
+        return;
+      }
+
+      void initializeMap(container);
+    };
+
+    tryInit();
   }, [mapLoaded, containerId, onMapLoad, initialPharmacies]);
 
   return { getMap };

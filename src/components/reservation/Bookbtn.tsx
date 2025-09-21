@@ -48,7 +48,7 @@ export default function Bookbtn({
   if (loading) return <p className="text-sm text-gray-500 px-2">로딩 중...</p>;
   if (error) return <p className="text-sm text-red-500 px-2">에러 발생</p>;
   if (!typedSlots.length)
-    return <p className="text-sm text-gray-400 px-2">예약 정보 없음</p>;
+    return <p className="text-sm text-gray-400 px-2">로딩 중...</p>;
 
   return (
     <div className={[className ?? ""].join(" ")}>
