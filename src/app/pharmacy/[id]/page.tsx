@@ -11,10 +11,17 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { format } from "date-fns";
+import Image from "next/image";
 
 // Dynamically import the reservation sheet to handle SSR
 const ReservationSheetContent = dynamic(
   () => import("@/components/reservation/ReservationSheetContent"),
+  { ssr: false }
+);
+
+// Dynamic import for a lightweight static location map
+const StaticLocationMap = dynamic(
+  () => import("@/components/map/StaticLocationMap"),
   { ssr: false }
 );
 
@@ -30,6 +37,22 @@ export default function PharmacyDetail() {
   const pharmacy = pharmacies.find(
     (p: Pharmacy) => Number(p.p_id) === pharmacyId
   );
+
+  // Derive robust numeric coordinates (handle lat/lng or latitude/longitude, string values)
+  const derivedLat = pharmacy
+    ? Number(
+        typeof pharmacy.lat !== "undefined"
+          ? pharmacy.lat
+          : pharmacy.latitude
+      )
+    : undefined;
+  const derivedLng = pharmacy
+    ? Number(
+        typeof pharmacy.lng !== "undefined"
+          ? pharmacy.lng
+          : pharmacy.longitude
+      )
+    : undefined;
 
   const { reviews, isLoading, error, fetchReviews } =
     useGetPharmaciesReview(pharmacyId);
@@ -51,23 +74,31 @@ export default function PharmacyDetail() {
   return (
     <div className="min-h-[100dvh] pb-16">
       {/* 페이지 여백 */}
-      <div className="p-4">
+      {/* <div className="p-4"> */}
         {/* 중앙 정렬 컨테이너 */}
         <div className="mx-auto w-full max-w-3xl">
           {/* 상단 이미지/기본 정보 */}
           <div className="flex flex-col">
             <div className="flex justify-center items-center">
-              <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-200 rounded-lg flex justify-center items-center">
+              <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-200  flex justify-center items-center">
                 이미지영역
               </div>
             </div>
 
             {pharmacy && (
-              <div className="mt-4">
-                <h1 className="text-2xl font-bold">{pharmacy.name}</h1>
-                <p className="text-gray-600">{pharmacy.address}</p>
-                <p className="text-gray-600">영업시간 영역</p>
-                <p className="text-gray-600">전화 : {pharmacy.user?.number}</p>
+              <div className="py-6 px-5">
+                <h1 className="T2_SB_20">{pharmacy.name}</h1>
+                <div className="flex gap-1.5 B2_RG_14 text-subText2 mt-4 items-center">
+                  <Image
+                    src="/icon/Environment.svg"
+                    alt="주소"
+                    width={16}
+                    height={16}
+                    className="w-4 h-4"
+                    priority
+                  />
+                  <span>{pharmacy.address}</span>
+                </div>
               </div>
             )}
           </div>
@@ -81,8 +112,23 @@ export default function PharmacyDetail() {
                   label: "약국 정보",
                   component: (
                     <div className="p-4">
-                      <h3 className="text-lg font-semibold mb-2">약국 정보</h3>
-                      <p>약국 소개 내용이 들어갑니다.</p>
+                      <h3 className="T3_SB_18">약국 위치</h3>
+                      {pharmacy ? (
+                        <>
+                          <span className="B1_RG_15 text-subText">{pharmacy.address}</span>
+                          <div className="mt-3">
+                            {Number.isFinite(derivedLat) && Number.isFinite(derivedLng) ? (
+                              <StaticLocationMap lat={derivedLat as number} lng={derivedLng as number} className="h-48 rounded-lg" />
+                            ) : (
+                              <div className="h-48 rounded-lg bg-gray-100 flex items-center justify-center text-subText">
+                                위치 좌표를 불러오는 중입니다.
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <p className="B1_RG_15 text-subText">주소 정보를 불러오는 중입니다.</p>
+                      )}
                     </div>
                   ),
                 },
@@ -127,10 +173,10 @@ export default function PharmacyDetail() {
             />
           </div>
 
-          <div className="mt-8 pt-4">
+          <div className="mt-3 px-5">
             <button
               onClick={openReservation}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
+              className="w-full bg-main hover:bg-main/80 text-white py-3 px-5 rounded-lg font-medium transition-colors"
             >
               예약하기
             </button>
@@ -162,6 +208,6 @@ export default function PharmacyDetail() {
           )}
         </div>
       </div>
-    </div>
+    // </div>
   );
 }

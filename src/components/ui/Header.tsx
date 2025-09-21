@@ -77,7 +77,7 @@ export default function Header() {
         <div className="absolute left-4">
           <BackButton />
         </div>
-        <div className="absolute right-4">
+        <div className="absolute right-5 top-4">
           <button
             onClick={() => {
               if (userId !== null && p_id !== null) {
@@ -85,7 +85,7 @@ export default function Header() {
               }
             }}
             disabled={isToggling}
-            className={`p-2 -m-2 ${iconColor}`}
+            className={` ${iconColor}`}
             aria-label={isFavorite ? "찜 취소" : "찜하기"}
           >
             <Icon className="h-6 w-6" />
