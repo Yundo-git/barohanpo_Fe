@@ -22,13 +22,21 @@ const ReservationSheetContent = dynamic(
 // Dynamic import for a lightweight static location map
 const StaticLocationMap = dynamic(
   () => import("@/components/map/StaticLocationMap"),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-48 rounded-lg border border-gray-200 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-main"></div>
+      </div>
+    ),
+  }
 );
 
 export default function PharmacyDetail() {
   const params = useParams();
   const pharmacyId = Number(params.id);
   const [isReservationOpen, setIsReservationOpen] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(true);
   const [initialDate, setInitialDate] = useState<Date>(new Date());
 
   const pharmacies = useSelector(
@@ -61,6 +69,16 @@ export default function PharmacyDetail() {
     void fetchReviews();
   }, [fetchReviews]);
 
+  // Initial page loading UX (like MapLoader)
+  useEffect(() => {
+    // End loading when pharmacy data is available or after a short delay as a fallback
+    const timer = setTimeout(() => setIsDetailLoading(false), 600);
+    if (pharmacy) {
+      setIsDetailLoading(false);
+    }
+    return () => clearTimeout(timer);
+  }, [pharmacy]);
+
   const openReservation = () => {
     setInitialDate(new Date());
     setIsReservationOpen(true);
@@ -70,6 +88,17 @@ export default function PharmacyDetail() {
     setIsReservationOpen(false);
     void fetchReviews();
   };
+
+  if (isDetailLoading) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-main mb-3"></div>
+          <p className="text-subText">페이지를 로드하는 중입니다...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] pb-16">
@@ -139,7 +168,7 @@ export default function PharmacyDetail() {
                     <div className="p-4">
                       {isLoading ? (
                         <div className="flex justify-center items-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
                         </div>
                       ) : error ? (
                         <div className="text-red-500 text-center py-4">
