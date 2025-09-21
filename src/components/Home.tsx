@@ -18,7 +18,7 @@ const DynamicAllReview = dynamic(
 
 export default function Home() {
   return (
-    <div className="flex flex-col pb-14 px-5 pt-8">
+    <div className="flex flex-col pb-14  pt-8">
       <Suspense
         fallback={
           <div className="flex items-center justify-center min-h-[200px]">

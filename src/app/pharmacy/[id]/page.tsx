@@ -212,9 +212,9 @@ export default function PharmacyDetail() {
           <div className="mt-3 px-5">
             <button
               onClick={openReservation}
-              className="w-full bg-main hover:bg-main/80 text-white py-3 px-5 rounded-lg font-medium transition-colors"
+              className="w-full bg-main hover:bg-main/80 text-white py-3 px-5 rounded-lg B1_SB_15 transition-colors"
             >
-              예약하기
+              방문 예약하기
             </button>
           </div>
 
