@@ -10,7 +10,7 @@ type StaticLocationMapProps = {
   level?: number;
 };
 
-// Augment map type with runtime-available methods missing in some typings
+// 지도 컨트롤 인터페이스
 type MapWithControls = kakao.maps.Map & {
   setDraggable(flag: boolean): void;
   setZoomable(flag: boolean): void;
@@ -18,7 +18,7 @@ type MapWithControls = kakao.maps.Map & {
 };
 
 export default function StaticLocationMap({ lat, lng, className = "h-48", level = 3 }: StaticLocationMapProps) {
-  // Use a stable, simple DOM-safe id (avoid characters like ':')
+  // 지도 컨테이너 ID 생성
   const idRef = useRef<string>(`static-map-${Math.random().toString(36).slice(2, 9)}`);
   const containerId = idRef.current;
 
@@ -38,13 +38,11 @@ export default function StaticLocationMap({ lat, lng, className = "h-48", level 
         map.setCenter(position);
         map.setLevel(level);
 
-        // Place marker (no binding to variable to avoid unused-var)
         new kakao.maps.Marker({
           position: position,
           map: map,
         });
-
-        // Disable interactions using a narrowed type with known methods
+        // 지도 인터랙션 비활성화
         (map as MapWithControls).setDraggable(false);
         (map as MapWithControls).setZoomable(false);
         
@@ -56,7 +54,7 @@ export default function StaticLocationMap({ lat, lng, className = "h-48", level 
             try { (map as MapWithControls).relayout(); } catch {}
           }, 50);
         }
-
+        // 지도 재정렬
       } catch (e) {
         console.error("StaticLocationMap: failed to initialize map:", e);
       }
@@ -78,7 +76,6 @@ export default function StaticLocationMap({ lat, lng, className = "h-48", level 
         if (typeof (map as MapWithControls).relayout === "function") {
           (map as MapWithControls).relayout();
         }
-        // re-center to keep marker centered
         map.setCenter(new kakao.maps.LatLng(lat, lng));
       } catch {}
     });

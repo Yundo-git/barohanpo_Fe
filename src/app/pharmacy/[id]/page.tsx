@@ -156,9 +156,16 @@ export default function PharmacyDetail() {
                           ))}
                         </div>
                       ) : (
-                        <div>
+                        <div className="flex flex-col items-center justify-center h-[50dvh]">
                           {/* 아이콘 넣어야함 */}
-                          <h1>아직 등록된 리뷰가 없어요.</h1>
+                          <Image
+                            src="/icon/Paper.svg"
+                            alt="리뷰 없음"
+                            width={70}
+                            height={70}
+                            priority
+                          />
+                          <h1 className="T3_MD_18 text-subText2">아직 등록된 리뷰가 없어요.</h1>
                         </div>
                       )}
                     </div>
