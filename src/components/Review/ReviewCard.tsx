@@ -3,8 +3,6 @@ import Image from "next/image";
 import { Review, ReviewPhoto } from "@/types/review";
 import { Star } from "lucide-react";
 import Profile from "../auth/Profile";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store/store";
 
 interface ReviewCardProps {
   review: Review & {
@@ -61,8 +59,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     return `${diffDays}일 전`;
   };
 
-  const { user } = useSelector((state: RootState) => state.user);
-  const isCurrentUser = user?.user_id === review.user_id;
+  // const { user } = useSelector((state: RootState) => state.user);
+  // const isCurrentUser = user?.user_id === review.user_id;
 
   const renderRating = (score: number) => {
     return (

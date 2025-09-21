@@ -10,6 +10,7 @@ export default function UserSignupPage() {
     formData,
     isLoading,
     error,
+    isFormValid,
     handleInputChange,
     handleAllAgreements,
     submitSignup,
@@ -45,7 +46,7 @@ export default function UserSignupPage() {
   ];
 
   return (
-    <div className="p-4 mt-12">
+    <div className="p-4 pt-12 pb-24 min-h-screen">
       <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
         {/* 이름 */}
         <input
@@ -156,8 +157,10 @@ export default function UserSignupPage() {
         {/* 회원가입 버튼 */}
         <button
           type="submit"
-          className="w-full py-3 rounded-lg font-medium bg-gray-200 text-gray-600 disabled:opacity-50"
-          disabled={isLoading}
+          className={`w-full py-3 rounded-lg font-medium ${
+            isFormValid ? 'bg-main text-white' : 'bg-gray-200 text-gray-400'
+          } disabled:opacity-50`}
+          disabled={!isFormValid || isLoading}
         >
           {isLoading ? "처리 중..." : "회원가입"}
         </button>

@@ -130,10 +130,23 @@ export const useSignupForm = () => {
     }
   }, [formData, router, login]);
 
+  // 폼 유효성 검사
+  const isFormValid = 
+    formData.email && 
+    formData.password && 
+    formData.confirmPassword && 
+    formData.name && 
+    formData.phone && 
+    formData.verificationCode &&
+    formData.agreements.terms && 
+    formData.agreements.privacy &&
+    formData.password === formData.confirmPassword;
+
   return {
     formData,
     isLoading,
     error,
+    isFormValid: !!isFormValid && !isLoading,
     handleInputChange,
     handleAllAgreements,
     submitSignup,
