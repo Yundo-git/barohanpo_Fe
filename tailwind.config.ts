@@ -11,6 +11,7 @@ const config: Config = {
         subText: "#505050",
         subText2: "#767676",
         disabled: "#999999",
+        border: "#E5E5EC"
       },
       fontFamily: {
         sans: ["Pretendard"],

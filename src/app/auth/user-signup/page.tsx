@@ -12,27 +12,17 @@ export default function UserSignupPage() {
     error,
     handleInputChange,
     handleAllAgreements,
-    // sendVerificationCode,
     submitSignup,
   } = useSignupForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // 폼 제출 방지
-    const success = await submitSignup(); // 회원가입 제출
+    e.preventDefault();
+    const success = await submitSignup();
     if (success) {
       router.push("/");
     }
   };
 
-  //   const handleSendVerificationCode = async () => {
-  //     if (!formData.phone) {
-  //       alert("휴대폰 번호를 입력해주세요.");
-  //       return;
-  //     } else {
-  //       alert("인증번호 기능 개발 중 입니다.");
-  //     }
-  //     await sendVerificationCode(formData.phone); // 인증번호 전송
-  //   };
   const agreementItems = [
     {
       id: "terms",
@@ -55,91 +45,99 @@ export default function UserSignupPage() {
   ];
 
   return (
-    <div className="p-4 pb-16">
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-2">
-        <h2>이메일</h2>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleInputChange}
-          placeholder="이메일"
-          className="border border-gray-300 rounded-lg p-2 mb-4"
-          required
-        />
-        <h2>비밀번호</h2>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleInputChange}
-          placeholder="비밀번호 (8자 이상)"
-          className="border border-gray-300 rounded-lg p-2 mb-4"
-          minLength={8}
-          required
-        />
-        <h2>비밀번호 확인</h2>
-        <input
-          type="password"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleInputChange}
-          placeholder="비밀번호 확인"
-          className="border border-gray-300 rounded-lg p-2 mb-4"
-          minLength={8}
-          required
-        />
-        <h2>이름</h2>
+    <div className="p-4 mt-12">
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
+        {/* 이름 */}
         <input
           type="text"
           name="name"
           value={formData.name}
           onChange={handleInputChange}
           placeholder="이름"
-          className="border border-gray-300 rounded-lg p-2 mb-4"
+          className="w-full border-b border-gray-300 p-2 focus:outline-none B1_RG_15"
           required
         />
-        <h2>휴대폰 번호</h2>
-        <div className="flex border border-gray-300 rounded-lg p-2 justify-between">
+
+        {/* 이메일 */}
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          placeholder="이메일"
+          className="w-full border-b border-gray-300 p-2 focus:outline-none"
+          required
+        />
+
+        {/* 비밀번호 */}
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleInputChange}
+          placeholder="비밀번호"
+          className="w-full border-b border-gray-300 p-2 focus:outline-none"
+          minLength={8}
+          required
+        />
+
+        {/* 비밀번호 확인 */}
+        <input
+          type="password"
+          name="confirmPassword"
+          value={formData.confirmPassword}
+          onChange={handleInputChange}
+          placeholder="비밀번호 재입력"
+          className="w-full border-b border-gray-300 p-2 focus:outline-none"
+          minLength={8}
+          required
+        />
+
+        {/* 휴대폰 번호 */}
+        <div className="flex items-center border-b border-gray-300">
           <input
             type="tel"
             name="phone"
             value={formData.phone}
             onChange={handleInputChange}
-            placeholder="휴대폰 번호 ('-' 제외)"
+            placeholder="휴대폰 번호"
+            className="flex-1 p-2 focus:outline-none"
             required
           />
           <button
             type="button"
-            // onClick={handleSendVerificationCode}
             disabled={isLoading}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+            className="text-sm bg-gray-800 text-white px-3 py-1 rounded ml-2 disabled:opacity-50"
           >
-            {isLoading ? "전송 중..." : "인증하기"}
+            인증하기
           </button>
         </div>
-        <h2>인증번호</h2>
-        <div className="flex border border-gray-300 rounded-lg p-2 justify-between">
+
+        {/* 인증번호 */}
+        <div className="flex items-center border-b border-gray-300">
           <input
             type="text"
             name="verificationCode"
             value={formData.verificationCode}
             onChange={handleInputChange}
-            placeholder="인증번호 6자리"
+            placeholder="인증번호"
+            className="flex-1 p-2 focus:outline-none"
             maxLength={6}
             required
           />
           <button
             type="button"
-            // onClick={handleSendVerificationCode}
             disabled={isLoading}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+            className="text-sm bg-gray-800 text-white px-3 py-1 rounded ml-2 disabled:opacity-50"
           >
-            {isLoading ? "전송 중..." : "확인"}
+            확인
           </button>
         </div>
-        {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
 
+        {/* 에러 메시지 */}
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+
+        {/* 약관 동의 */}
         <TermsAgreement
           agreements={agreementItems}
           onAgreementChange={(id, checked) =>
@@ -155,9 +153,10 @@ export default function UserSignupPage() {
           onViewAgreement={(id) => console.log(`Viewing agreement: ${id}`)}
         />
 
+        {/* 회원가입 버튼 */}
         <button
           type="submit"
-          className="bg-blue-500 text-white py-3 rounded-lg font-medium mt-4"
+          className="w-full py-3 rounded-lg font-medium bg-gray-200 text-gray-600 disabled:opacity-50"
           disabled={isLoading}
         >
           {isLoading ? "처리 중..." : "회원가입"}

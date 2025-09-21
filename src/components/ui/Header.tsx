@@ -65,6 +65,9 @@ export default function Header() {
     if (pathname === "/map") return "약국";
     if (pathname.startsWith("/mybook")) return "예약내역";
     if (pathname === "/mypage") return "마이페이지";
+    if(pathname === "/auth/user-signup") return "회원가입"
+    if(pathname === "/auth/user-signin") return "로그인"
+    if (pathname === "/auth") return "로그인"; 
     return "바로한포";
   };
 
@@ -98,8 +101,11 @@ export default function Header() {
   return (
     <header className="flex fixed top-0 left-0 right-0 z-50 h-14 border-b items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg shadow-[0_-1px_4px_rgba(0,0,0,0.08)] md:hidden">
       {showBackButton ? (
+        <div className="flex items-center justify-center w-full"  >
         <div className="absolute left-4">
           <BackButton />
+        </div >
+        <h1 className="H3_SB_20 text-mainText">{getPageTitle()}</h1>
         </div>
       ) : (
         <div className="flex items-center gap-2">

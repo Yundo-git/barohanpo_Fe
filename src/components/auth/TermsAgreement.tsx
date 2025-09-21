@@ -66,16 +66,16 @@ const TermsAgreement: React.FC<TermsAgreementProps> = ({
   };
 
   return (
-    <div className="mt-8 border-t pt-4">
+    <div className="mt-8 pt-4">
       <div className="mb-4">
-        <label className="flex items-center">
+        <label className="flex items-center border-b pb-4">
           <input
             type="checkbox"
             className="form-checkbox h-5 w-5 text-blue-600 rounded"
             checked={allChecked}
             onChange={(e) => handleAllAgree(e.target.checked)}
           />
-          <span className="ml-2 text-gray-700 font-medium">약관 전체 동의</span>
+          <span className="ml-2 text-gray-700 font-medium ">약관 전체 동의</span>
         </label>
       </div>
 

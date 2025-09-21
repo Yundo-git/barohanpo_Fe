@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 // import { useAppDispatch } from "@/store/store";
 import useLogin from "@/hooks/useLogin";
+import Link from "node_modules/next/link";
 
 const UserSignInPage = () => {
   const router = useRouter();
@@ -82,11 +83,15 @@ const UserSignInPage = () => {
           <div className="text-red-500 text-sm text-center">{error}</div>
         )}
 
+<div className="flex justify-end text-disabled pt-4">
+              <Link href="">아이디 / 비밀번호 찾기</Link>
+            </div>
+
         <div className="mt-6">
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative w-full flex justify-center py-2 px-4 border  text-sm  border-gray-300 rounded-md disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-lg font-medium bg-gray-200 text-gray-600 disabled:opacity-50"
           >
             {isLoading ? "로그인 중..." : "로그인"}
           </button>
