@@ -27,10 +27,13 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
     return (
       <div className="space-y-2 max-h-full overflow-y-auto px-2">
         <div>
-          <div className="flex gap-2">
+          <div className="flex gap-2" onClick={(e) => {
+                e.stopPropagation();
+                (window.location.href = `/pharmacy/${selectedPharmacy?.p_id}`)
+              }}>
             <div className="w-[60vw]">
               <p className="text-base font-medium">
-                {selectedPharmacy.name || "이름 없음"} &gt;
+                {selectedPharmacy.name || "이름 없음"}
               </p>
               <p className="text-sm text-gray-600 mt-1">
                 {selectedPharmacy.address || "주소 정보 없음"}
@@ -43,10 +46,7 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
             </div>
             <div
               className="w-[5rem] h-[5rem] rounded-md bg-gray-200 flex justify-center items-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Add any image click handler here if needed
-              }}
+              
             >
               이미지 영역
             </div>

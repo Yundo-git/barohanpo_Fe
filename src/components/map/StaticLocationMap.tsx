@@ -38,9 +38,16 @@ export default function StaticLocationMap({ lat, lng, className = "h-48", level 
         map.setCenter(position);
         map.setLevel(level);
 
+        // Custom marker image
+        const imageSrc = "/mapmarker.svg"; // public/icon/mapmarker.svg
+        const imageSize = new kakao.maps.Size(28, 36); // width, height
+        const imageOption = { offset: new kakao.maps.Point(14, 36) }; // anchor at bottom center
+        const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+
         new kakao.maps.Marker({
           position: position,
           map: map,
+          image: markerImage,
         });
         // 지도 인터랙션 비활성화
         (map as MapWithControls).setDraggable(false);
