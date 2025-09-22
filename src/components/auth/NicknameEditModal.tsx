@@ -33,7 +33,9 @@ export default function NicknameEditModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative">
         <h2 className="text-xl font-bold mb-2 text-center">닉네임 수정</h2>
-        <p className="text-gray-500 text-sm text-center mb-6">변경할 닉네임을 입력해주세요</p>
+        <p className="text-gray-500 text-sm text-center mb-6">
+          변경할 닉네임을 입력해주세요
+        </p>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
@@ -47,20 +49,22 @@ export default function NicknameEditModal({
               maxLength={MAX_LEN}
               autoFocus
             />
-            <div className="mt-2 text-xs text-gray-500 text-center">최대 {MAX_LEN}자 (현재 {nickname.length}/{MAX_LEN})</div>
+            <div className="mt-2 text-xs text-gray-500 text-center">
+              최대 {MAX_LEN}자 (현재 {nickname.length}/{MAX_LEN})
+            </div>
           </div>
 
           <div className="flex justify-center">
             <button
               type="submit"
               disabled={!nickname.trim()}
-              className="w-full py-4 bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl text-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full py-4 bg-main disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               확인
             </button>
           </div>
         </form>
-        
+
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
