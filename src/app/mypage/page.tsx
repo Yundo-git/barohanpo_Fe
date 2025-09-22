@@ -35,7 +35,7 @@ export default function MyPage() {
     }
   };
   const editProfile = () => {
-    router.push("/auth/" + user?.user_id);
+    router.push("/auth/edit");
   };
 
   const handleMyReview = () => {
