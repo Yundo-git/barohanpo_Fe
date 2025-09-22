@@ -71,7 +71,11 @@ export default function AuthPage() {
     try {
       // 닉네임 변경 로직
       if (editedNickname !== user.nickname) {
-        await usenickname(editedNickname);
+        if (!accessToken) {
+          toast.error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+          return;
+        }
+        await usenickname(editedNickname, accessToken);
         dispatch(
           updateUser({
             user_id: user.user_id,

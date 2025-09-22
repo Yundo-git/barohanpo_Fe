@@ -5,14 +5,14 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 
 interface UseChangeNickReturn {
-  usenickname: (nickname: string) => Promise<{ nickname: string } | null>;
+  usenickname: (nickname: string, accessToken: string) => Promise<{ nickname: string } | null>;
 }
 
 const useChangeNick = (): UseChangeNickReturn => {
   const userId = useSelector((state: RootState) => state.user.user?.user_id);
 
   const usenickname = useCallback(
-    async (nickname: string) => {
+    async (nickname: string, accessToken: string) => {
       if (!userId) return null;
 
       try {
@@ -22,6 +22,7 @@ const useChangeNick = (): UseChangeNickReturn => {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
               nickname,
@@ -30,7 +31,10 @@ const useChangeNick = (): UseChangeNickReturn => {
           }
         );
 
-        if (!res.ok) throw new Error("Failed to update nickname");
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP ${res.status}: ${res.statusText}`);
+        }
 
         const data = await res.json();
         return data;
