@@ -43,21 +43,21 @@ export default function AllReview() {
       ) : (
         <div className="relative">
           <h1 className="H3_SB_20 text-mainText px-5">사용자 후기</h1>
-          <div 
-            className="flex overflow-x-auto pb-6 scrollbar-hide"
+          <div
+            className="flex overflow-x-auto pb-6 scrollbar-hide px-5"
             style={{
-              scrollSnapType: 'x mandatory',
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
+              scrollSnapType: "x mandatory",
+              WebkitOverflowScrolling: "touch",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
             <div className="flex space-x-4 w-full">
               {reviews.map((review) => (
-                <div 
-                  key={review.review_id} 
+                <div
+                  key={review.review_id}
                   className="flex-shrink-0 w-80 "
-                  style={{ scrollSnapAlign: 'center' }}
+                  style={{ scrollSnapAlign: "center" }}
                 >
                   <ReviewCard
                     review={review}

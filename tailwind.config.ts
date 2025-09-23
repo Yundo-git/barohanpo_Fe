@@ -5,13 +5,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "var(--primary-color)",
+        // primary: "var(--primary-color)",
+        //메인색깔 >> 녹색계열
         main: "#00bfa5",
+
+        //배경색깔
+        Light_color: "f7f7fb", // 적용된대가 없는듯...?
+        Regular_color: "f1f1f5",
+
+        //텍스트 색깔들
         mainText: "#111111",
         subText: "#505050",
         subText2: "#767676",
         disabled: "#999999",
-        border: "#E5E5EC"
+        border: "#E5E5EC",
       },
       fontFamily: {
         sans: ["Pretendard"],

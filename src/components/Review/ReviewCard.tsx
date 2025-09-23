@@ -95,7 +95,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
 
     return (
       // 'space-x-2'는 사진 사이에 여백 주기
-      <div className="mt-2 flex space-x-2">
+      <div className=" flex space-x-2">
         {review.photos.map((photo, index) => {
           if (!photo.review_photo_url) return null;
 
@@ -119,24 +119,30 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     );
   };
   return (
-    <div className={`bg-white p-4 rounded-lg shadow ${className}`}>
+    <div className={`rounded-lg shadow ${className}`}>
       <div className="flex justify-between items-start">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center p-4 bg-Light_color ">
           <Profile
-            size={40}
+            size={34}
             imageUrl={review.user_profile_photo_url || "/sample_profile.svg"}
             alt={review.nickname || "User"}
             rounded="full"
           />
           <div>
-            <div className="font-medium">{review.nickname || "익명"}</div>
-            <div className="text-sm text-gray-500">
-              {formatRelativeTime(
-                review.created_at ||
-                  review.updated_at ||
-                  new Date().toISOString()
-              )}
-            </div>
+            <section className="flex space-x-2 items-center">
+              <p className="B1_MD_15 text-mainText pl-[0.625rem]">
+                {review.nickname || "익명"}
+              </p>
+              {/* 구분 점 */}
+              <div className="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></div>
+              <p className="B1_RG_14 text-subText2">
+                {formatRelativeTime(
+                  review.created_at ||
+                    review.updated_at ||
+                    new Date().toISOString()
+                )}
+              </p>
+            </section>
           </div>
         </div>
         {/* {isCurrentUser && (
@@ -145,23 +151,22 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           </span>
         )} */}
       </div>
+      <section className="p-4 space-y-3">
+        {renderImages()}
+        <div>{renderRating(review.score)}</div>
 
-      <div className="mt-2">{renderRating(review.score)}</div>
-
-      {review.comment && (
-        <p className="mt-2 text-gray-700 whitespace-pre-line">
-          {review.comment}
-        </p>
-      )}
-
-      {renderImages()}
-
-      {showPharmacyName && review.name && (
-        <div>
-          <h1 className="mt-2 text-sm font-medium">{review.name}</h1>
-          <h2>{review.address}</h2>
-        </div>
-      )}
+        {review.comment && (
+          <p className="B1_RG_15 text-mainText">{review.comment}</p>
+        )}
+      </section>
+      <section className="p-4">
+        {showPharmacyName && review.name && (
+          <div>
+            <h1 className="B1_SB_15 text-mainText">{review.name}</h1>
+            <h2 className="B1_RG_15 text-subText">{review.address}</h2>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

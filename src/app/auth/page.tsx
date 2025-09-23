@@ -40,8 +40,13 @@ export default function SignupChoice() {
             >
               네이버로 로그인
             </button> */}
-            
-    <Link href="/auth/user-signin" className="w-full rounded-xl py-3 font-medium border flex items-center justify-center">이메일 로그인</Link>
+
+            <Link
+              href="/auth/user-signin"
+              className="w-full rounded-xl py-3 font-medium border flex items-center justify-center"
+            >
+              이메일 로그인
+            </Link>
             <div className="flex justify-around text-disabled">
               {/* <Link href="/auth/user-signin">이메일 로그인</Link> */}
               <Link href="/auth/user-signup">이메일 회원가입</Link>
