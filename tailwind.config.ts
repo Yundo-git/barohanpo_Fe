@@ -10,8 +10,12 @@ const config: Config = {
         main: "#00bfa5",
 
         //배경색깔
-        Light_color: "f7f7fb", // 적용된대가 없는듯...?
+        Light_color: "f7f7fb", //
         Regular_color: "f1f1f5",
+
+        // 그라데이션 색상
+        gradient_start: "#A1FF8B", // 밝은 녹색
+        gradient_end: "#3F93FF", // 밝은 파란색
 
         //텍스트 색깔들
         mainText: "#111111",
