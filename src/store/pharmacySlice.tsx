@@ -12,7 +12,8 @@ export const fetchNearbyPharmacies = createAsyncThunk<
   async ({ lat, lng, radius = 8000 }, { rejectWithValue }) => {
     try {
       console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
+      // Send both 'lng' and 'lon' to be compatible with different backend expectations
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&lon=${lng}&radius=${radius}`;
       console.log("API URL:", apiUrl);
 
       let response;

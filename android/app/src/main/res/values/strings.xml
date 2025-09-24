@@ -4,4 +4,6 @@
     <string name="title_activity_main">barohanpo</string>
     <string name="package_name">com.barohanpo.app</string>
     <string name="custom_url_scheme">com.barohanpo.app</string>
+    <string name="kakao_native_app_key">e54ece9f6c5df4251851193e0c48535b</string>
+
 </resources>
