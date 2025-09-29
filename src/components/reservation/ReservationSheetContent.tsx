@@ -59,10 +59,15 @@ export default function ReservationSheetContent({
     []
   );
 
-  // 로그인 유저 (user_id는 number 형태라 가정)
-  const userId = useSelector((state: RootState) => state.user.user?.user_id);
+  //로그인된 유저
+  const { userId, username } = useSelector((state: RootState) => ({
+    userId: state.user.user?.user_id,
+    username: state.user.user?.name,
+  }));
 
   const { handleReservation } = useReservation(String(pharmacyId), {
+    pharmacyName: pharmacyName, // prop으로 받은 약국 이름 전달
+    username: username, // Redux에서 가져온 닉네임 전달
     onSuccess: () => {
       setIsReservationComplete(true);
     },
@@ -71,7 +76,11 @@ export default function ReservationSheetContent({
   // 오늘 날짜와 시간 계산을 한 번에 메모이제이션
   const { todayStart, maxSelectableDate, nowHM, todayStr } = useMemo(() => {
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
     const endDate = new Date(startOfDay);
     endDate.setDate(endDate.getDate() + 6); // 오늘 포함 7일 간
 
@@ -193,7 +202,13 @@ export default function ReservationSheetContent({
       const future = isFutureSlot(dateStr, t);
       return { time: t, isAvailable: ok && future };
     });
-  }, [selectedDate, availableSlots, enabledDateSet, isFutureSlot, fixedTimeSlots]);
+  }, [
+    selectedDate,
+    availableSlots,
+    enabledDateSet,
+    isFutureSlot,
+    fixedTimeSlots,
+  ]);
 
   // 예약 가능한 가장 빠른 날짜를 초기값으로 설정
   useEffect(() => {
@@ -225,7 +240,9 @@ export default function ReservationSheetContent({
   }, [selectedDate, selectedTime, isFutureSlot]);
 
   if (isLoading) {
-    return <div className="p-4 text-center">예약 가능한 날짜를 불러오는 중...</div>;
+    return (
+      <div className="p-4 text-center">예약 가능한 날짜를 불러오는 중...</div>
+    );
   }
 
   if (isReservationComplete && selectedDate && selectedTime) {
@@ -242,7 +259,9 @@ export default function ReservationSheetContent({
     return (
       <div className="p-4">
         <header className="mb-3">
-          <h2 className="text-base font-semibold">{pharmacyName ?? "약국"} 예약</h2>
+          <h2 className="text-base font-semibold">
+            {pharmacyName ?? "약국"} 예약
+          </h2>
         </header>
         <p>예약 가능한 날짜가 없습니다.</p>
         <div className="mt-4 flex justify-end">
@@ -334,7 +353,9 @@ export default function ReservationSheetContent({
 
                     const dateStr = format(selectedDate, "yyyy-MM-dd");
                     if (!isFutureSlot(dateStr, selectedTime)) {
-                      alert("이미 지난 시간대입니다. 다른 시간을 선택해주세요.");
+                      alert(
+                        "이미 지난 시간대입니다. 다른 시간을 선택해주세요."
+                      );
                       setSelectedTime(null);
                       return;
                     }
@@ -351,7 +372,10 @@ export default function ReservationSheetContent({
                   ].join(" ")}
                 >
                   {selectedTime
-                    ? `${format(selectedDate, "yyyy년 MM월 dd일")} ${selectedTime} 예약하기`
+                    ? `${format(
+                        selectedDate,
+                        "yyyy년 MM월 dd일"
+                      )} ${selectedTime} 예약하기`
                     : "시간을 선택해주세요"}
                 </button>
               </div>
