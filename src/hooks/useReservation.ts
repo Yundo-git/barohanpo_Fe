@@ -1,4 +1,8 @@
+// useReservation.ts
+
 import { format } from "date-fns";
+import { fetchReservations } from "@/store/bookingSlice";
+import { useAppDispatch } from "@/store/store"; // 🚨 타입 에러 해결을 위해 useAppDispatch 사용
 
 interface UseReservationOptions {
   onSuccess?: (date: string, time: string) => void;
@@ -9,6 +13,8 @@ export const useReservation = (
   options: UseReservationOptions = {}
 ) => {
   const { onSuccess } = options;
+  const dispatch = useAppDispatch(); // 🚨 useAppDispatch 초기화
+
   const handleReservation = async (
     userId: number,
     selectedDate: Date | null,
@@ -17,8 +23,8 @@ export const useReservation = (
   ) => {
     if (!selectedDate || !selectedTime) return;
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
-    const formattedTime = selectedTime; // already 'HH:mm' 형식이라고 가정
-    console.log(userId, formattedDate, formattedTime, p_id);
+    const formattedTime = selectedTime;
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reservation`,
@@ -41,8 +47,13 @@ export const useReservation = (
         throw new Error("예약에 실패했습니다.");
       }
 
+      // 예약 성공 처리
       const result = await response.json();
       alert("예약이 완료되었습니다!");
+
+      // 🚨 [핵심 수정] 예약 성공 후, 예약 목록을 다시 불러와 Redux 상태를 최신화합니다.
+      await dispatch(fetchReservations({ userId }));
+
       if (onSuccess) {
         onSuccess(formattedDate, formattedTime);
       }
