@@ -4,17 +4,18 @@ import { PharmacyWithUser } from "@/types/pharmacy";
 
 // 비동기 Thunk 정의
 export const fetchNearbyPharmacies = createAsyncThunk<
-  PharmacyWithUser[], // 성공 시 반환될 타입
-  { lat: number; lng: number; radius?: number }, // thunk에 전달될 인자 타입 (lng으로 수정, radius 추가)
-  { rejectValue: string } // 실패 시 반환될 타입
+  PharmacyWithUser[],
+  { lat: number; lng: number; radius?: number },
+  { rejectValue: string }
 >(
   "pharmacy/fetchNearby",
-  async ({ lat, lng, radius = 8000 }, { rejectWithValue }) => {
+  async ({ lat, lng, radius = 5000 }, { rejectWithValue }) => {
     try {
-      console.log(`Searching for pharmacies near lat: ${lat}, lng: ${lng}`);
-      // Send both 'lng' and 'lon' to be compatible with different backend expectations
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&lon=${lng}&radius=${radius}`;
-      console.log("API URL:", apiUrl);
+      console.log(`🔍 [API Request] Searching for pharmacies near lat: ${lat}, lng: ${lng}, radius: ${radius}m`);
+      
+      // API 엔드포인트 수정
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pharmacy/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
+      console.log("🌐 [API Request] URL:", apiUrl);
 
       let response;
       try {
@@ -28,26 +29,41 @@ export const fetchNearbyPharmacies = createAsyncThunk<
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error Response:", {
+        const errorDetails = {
           status: response.status,
           statusText: response.statusText,
           url: response.url,
           errorText,
-        });
-        throw new Error(
-          `API request failed with status ${response.status}: ${response.statusText}`
+        };
+        console.error("❌ [API Error] Response:", errorDetails);
+        return rejectWithValue(
+          `약국 정보를 불러오는 중 오류가 발생했습니다. (${response.status} ${response.statusText})`
         );
       }
 
       let data;
       try {
         data = await response.json();
+        console.log("📦 [API Response] Raw data:", data);
       } catch (jsonError) {
-        console.error("Error parsing JSON response:", jsonError);
-        throw new Error("Invalid JSON response from server");
+        console.error("❌ [API Error] JSON 파싱 오류:", jsonError);
+        return rejectWithValue("서버 응답을 처리하는 중 오류가 발생했습니다.");
       }
 
-      const pharmacyList = Array.isArray(data) ? data : data?.data || [];
+      // 응답 데이터 처리
+      let pharmacyList = [];
+      if (Array.isArray(data)) {
+        pharmacyList = data;
+      } else if (data && Array.isArray(data.data)) {
+        pharmacyList = data.data;
+      } else if (data && data.pharmacies && Array.isArray(data.pharmacies)) {
+        pharmacyList = data.pharmacies;
+      } else if (data) {
+        // 단일 약국 객체인 경우 배열로 감싸기
+        pharmacyList = [data];
+      }
+
+      console.log(`✅ [API Success] Found ${pharmacyList.length} pharmacies`);
 
       // API 응답 로깅
       console.log("🔍 [API Response] Full Response:", {

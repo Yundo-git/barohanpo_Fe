@@ -1,38 +1,65 @@
-import { Geolocation } from "@capacitor/geolocation";
+import { Geolocation, PermissionStatus } from "@capacitor/geolocation";
 import { Capacitor } from "@capacitor/core";
+import { useState, useCallback, useEffect } from "react";
+
+type PermissionState = 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale';
 
 export const useLocationPermission = () => {
-  const requestLocationPermission = async () => {
+  const [permissionStatus, setPermissionStatus] = useState<PermissionState>('prompt');
+
+  const checkPermission = useCallback(async () => {
     try {
-      // Capacitor 환경(모바일 앱)과 웹을 구분
-      const isCapacitor = Capacitor?.isNativePlatform?.() ?? false;
-
-      if (isCapacitor) {
-        // 네이티브: Capacitor 권한 API 사용
+      if (Capacitor?.isNativePlatform?.()) {
         const permission = await Geolocation.checkPermissions();
-        if (permission.location === "granted") return true;
-        const result = await Geolocation.requestPermissions();
-        return result.location === "granted";
+        const locationPermission = permission.location as PermissionState;
+        setPermissionStatus(locationPermission || 'prompt');
+        return locationPermission === 'granted';
       }
-
-      // 웹: 기존 동작과 동일하게, 실제 위치 요청으로 프롬프트를 트리거하고 결과를 반환
-      return new Promise<boolean>((resolve) => {
-        if (!navigator.geolocation) return resolve(false);
-        navigator.geolocation.getCurrentPosition(
-          () => resolve(true),
-          () => resolve(false),
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      });
-
-      // 권한 거부됨
-      console.log("위치 권한이 거부되었습니다.");
-      return false;
+      return true; // 웹에서는 항상 true 반환 (브라우저에서 처리)
     } catch (error) {
-      console.error("위치 권한 요청 중 오류 발생:", error);
+      console.error('권한 확인 중 오류 발생:', error);
       return false;
     }
-  };
+  }, []);
 
-  return { requestLocationPermission };
+  const requestLocationPermission = useCallback(async () => {
+    console.log('[useLocationPermission] 위치 권한 요청 시작');
+    try {
+      // 앱 시작 시 권한 상태 확인
+      const hasPermission = await checkPermission();
+      if (hasPermission) {
+        console.log('[useLocationPermission] 이미 위치 권한이 허용됨');
+        return true;
+      }
+
+      // 권한 요청
+      console.log('[useLocationPermission] 위치 권한 요청 중...');
+      const result = await Geolocation.requestPermissions();
+      console.log('[useLocationPermission] 위치 권한 요청 결과:', result);
+      
+      const granted = result.location === "granted";
+      setPermissionStatus(granted ? 'granted' : 'denied');
+      
+      if (!granted) {
+        console.warn('[useLocationPermission] 위치 권한이 거부됨');
+      }
+      
+      return granted;
+    } catch (error) {
+      console.error('[useLocationPermission] 위치 권한 요청 중 오류 발생:', error);
+      setPermissionStatus('denied');
+      return false;
+    }
+  }, [checkPermission]);
+
+  // 앱 시작 시 권한 상태 확인
+  useEffect(() => {
+    checkPermission();
+  }, [checkPermission]);
+
+  return { 
+    requestLocationPermission, 
+    permissionStatus,
+    checkPermission
+  };
 };
