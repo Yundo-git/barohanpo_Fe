@@ -13,7 +13,6 @@ interface BookListProps {
 }
 
 type ReservationItem = Reservation;
-
 const BookList: React.FC<BookListProps> = ({
   reservation,
   onCancelSuccess,
@@ -22,6 +21,7 @@ const BookList: React.FC<BookListProps> = ({
   const completedReviews = useAppSelector(
     (s) => s.reviewCompletion.completedIds
   );
+  console.log("reservation", reservation);
 
   const [cencelModal, setCencelModal] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -137,13 +137,19 @@ const BookList: React.FC<BookListProps> = ({
     <div className="h-full">
       <ul className="divide-y divide-gray-200">
         {/* 정렬된 목록을 렌더링해서 출력. */}
-        {sortedReservationList.map((list) => (
-          <li key={list.book_id} className="p-4 hover:bg-gray-50">
-            <p>날짜 : {list.book_date}</p>
-            <p>시간 : {list.book_time}</p>
-            <div className="mt-2">{renderActionButton(list)}</div>
-          </li>
-        ))}
+        {sortedReservationList.map(
+          (list) => (
+            console.log(list),
+            (
+              <li key={list.book_id} className="p-4 hover:bg-gray-50">
+                <p>약국 : {list.pharmacy_name}</p>
+                <p>날짜 : {list.book_date}</p>
+                <p>시간 : {list.book_time}</p>
+                <div className="mt-2">{renderActionButton(list)}</div>
+              </li>
+            )
+          )
+        )}
       </ul>
 
       {selectedReservation && (

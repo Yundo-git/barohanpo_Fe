@@ -13,6 +13,7 @@ export const fetchReservations = createAsyncThunk<
     );
     if (!res.ok) return rejectWithValue("Failed to fetch reservations");
     const data = await res.json();
+    console.log("data", data);
     return Array.isArray(data) ? data : [];
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -113,4 +114,3 @@ const bookingSlice = createSlice({
 export const { clearBookingState, setReservations, setCancelList } =
   bookingSlice.actions;
 export default bookingSlice.reducer;
-

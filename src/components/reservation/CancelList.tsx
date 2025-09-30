@@ -40,6 +40,7 @@ const CancelList = ({ cancelList }: CancelListProps) => {
         {/* 정렬된 목록을 렌더링해서 출력. */}
         {sortedCancelList.map((item: CancelItem) => (
           <li key={item.book_id} className="border-b border-gray-200 p-4">
+            <p>약국 : {item.pharmacy_name}</p>
             <p>날짜 : {item.book_date}</p>
             <p>시간 : {item.book_time}</p>
             <div className="flex justify-center w-full gap-2"></div>
