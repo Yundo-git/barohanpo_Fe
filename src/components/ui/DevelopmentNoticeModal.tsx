@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 interface DevelopmentNoticeModalProps {
   isOpen: boolean;
@@ -11,9 +11,9 @@ interface DevelopmentNoticeModalProps {
 export default function DevelopmentNoticeModal({
   isOpen,
   onClose,
-  title = '알림',
-  message = '해당 기능 개발 중입니다',
-  confirmText = '확인'
+  title = "알림",
+  message = "해당 기능 개발 중입니다",
+  confirmText = "확인",
 }: DevelopmentNoticeModalProps) {
   if (!isOpen) return null;
 
@@ -25,7 +25,7 @@ export default function DevelopmentNoticeModal({
           <p className="mb-6">{message}</p>
           <button
             onClick={onClose}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+            className="w-full bg-main text-white py-2 px-4 rounded-md "
           >
             {confirmText}
           </button>

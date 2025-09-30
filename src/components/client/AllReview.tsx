@@ -62,7 +62,7 @@ export default function AllReview() {
                   <ReviewCard
                     review={review}
                     showPharmacyName={true}
-                    className="h-full w-full"
+                    className=" w-full"
                   />
                 </div>
               ))}
