@@ -120,16 +120,35 @@ export default function PharmacyDetail() {
           {pharmacy && (
             <div className="py-6 px-5">
               <h1 className="T2_SB_20">{pharmacy.name}</h1>
-              <div className="flex gap-1.5 B2_RG_14 text-subText2 mt-4 items-center">
-                <Image
-                  src="/icon/Environment.svg"
-                  alt="주소"
-                  width={16}
-                  height={16}
-                  className="w-4 h-4"
-                  priority
-                />
-                <span>{pharmacy.address}</span>
+              <div className="space-y-2 mt-4">
+                <div className="flex gap-1.5 B2_RG_14 text-subText2 items-center">
+                  <Image
+                    src="/icon/Environment.svg"
+                    alt="주소"
+                    width={16}
+                    height={16}
+                    className="w-4 h-4"
+                    priority
+                  />
+                  <span>{pharmacy.address}</span>
+                </div>
+                {typeof pharmacy.distance === 'number' && (
+                  <div className="flex gap-1.5 B2_RG_14 text-subText2 items-center">
+                    <Image
+                      src="/icon/Environment.svg"
+                      alt="거리"
+                      width={16}
+                      height={16}
+                      className="w-4 h-4"
+                      priority
+                    />
+                    <span>
+                      {pharmacy.distance < 1
+                        ? `${Math.round(pharmacy.distance * 1000)}m`
+                        : `${pharmacy.distance.toFixed(1)}km`} 거리
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

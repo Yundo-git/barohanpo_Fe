@@ -83,14 +83,44 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
             }
           >
             <div className="w-full">
-              <p>{pharmacy.name ? `${pharmacy.name}` : "이름 없음"}</p>
-              <p className="text-xs text-gray-600">
+              <p className="T2_SB_20 text-mainText">
+                {pharmacy.name ? `${pharmacy.name}` : "이름 없음"}
+              </p>
+              <p className="B1_RG_15 text-subText2">
                 {pharmacy.address || "주소 정보 없음"}
               </p>
               {(pharmacy.user as PharmacyUser)?.number && (
-                <p className="text-xs">
+                <p className="B1_RG_15 text-subText">
                   {(pharmacy.user as PharmacyUser)?.number}
                 </p>
+              )}
+              {typeof pharmacy.distance === "number" && (
+                <div className="mt-1">
+                  <span className="inline-flex items-center text-xs text-gray-500">
+                    <svg
+                      className="w-3 h-3 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    {pharmacy.distance < 1
+                      ? `${Math.round(pharmacy.distance * 1000)}m`
+                      : `${pharmacy.distance.toFixed(1)}km`}
+                  </span>
+                </div>
               )}
             </div>
             <div
