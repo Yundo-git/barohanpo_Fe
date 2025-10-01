@@ -23,7 +23,6 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
     return <div className="max-h-[75vh] px-2">{children}</div>;
   }
 
-  // When a pharmacy is selected, show only that pharmacy
   if (selectedPharmacy && sheetView === "detail") {
     return (
       <div className="space-y-2 max-h-full overflow-y-auto px-2">

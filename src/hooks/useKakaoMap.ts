@@ -86,24 +86,35 @@ export const useKakaoMap = (
         // 사용자 위치 가져오기 시도
         if (navigator.geolocation) {
           try {
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0,
-              });
-            });
+            const position = await new Promise<GeolocationPosition>(
+              (resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  enableHighAccuracy: true,
+                  timeout: 5000,
+                  maximumAge: 0,
+                });
+              }
+            );
 
             // 사용자 위치로 기본 위치 업데이트
             defaultLat = position.coords.latitude;
             defaultLng = position.coords.longitude;
-            console.log("useKakaoMap: 사용자 위치를 가져왔습니다.", { lat: defaultLat, lng: defaultLng });
+            console.log("useKakaoMap: 사용자 위치를 가져왔습니다.", {
+              lat: defaultLat,
+              lng: defaultLng,
+            });
           } catch (error) {
-            console.warn("useKakaoMap: 사용자 위치를 가져오는데 실패했습니다.", error);
+            console.warn(
+              "useKakaoMap: 사용자 위치를 가져오는데 실패했습니다.",
+              error
+            );
           }
         }
 
-        const defaultCenter = new window.kakao.maps.LatLng(defaultLat, defaultLng);
+        const defaultCenter = new window.kakao.maps.LatLng(
+          defaultLat,
+          defaultLng
+        );
         const defaultOptions = {
           center: defaultCenter,
           level: 3, // 더 가까운 레벨로 조정
@@ -127,11 +138,15 @@ export const useKakaoMap = (
         attempts += 1;
         if (attempts <= maxAttempts) {
           if (attempts === 1) {
-            console.warn(`useKakaoMap: container #${containerId} not found. Retrying...`);
+            console.warn(
+              `useKakaoMap: container #${containerId} not found. Retrying...`
+            );
           }
           setTimeout(tryInit, intervalMs);
         } else {
-          console.error(`useKakaoMap: Failed to find container #${containerId} after ${maxAttempts} attempts.`);
+          console.error(
+            `useKakaoMap: Failed to find container #${containerId} after ${maxAttempts} attempts.`
+          );
         }
         return;
       }
@@ -140,7 +155,10 @@ export const useKakaoMap = (
       if ((rect.width === 0 || rect.height === 0) && attempts <= maxAttempts) {
         attempts += 1;
         if (attempts % 5 === 1) {
-          console.warn(`useKakaoMap: container #${containerId} size is 0. Retrying...`, rect);
+          console.warn(
+            `useKakaoMap: container #${containerId} size is 0. Retrying...`,
+            rect
+          );
         }
         setTimeout(tryInit, intervalMs);
         return;
