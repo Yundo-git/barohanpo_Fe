@@ -136,7 +136,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                 rows={4}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-3"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-main focus:border-main mb-3"
                 placeholder="리뷰를 작성해주세요."
                 required
               />
@@ -209,7 +209,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
 
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-main text-white rounded-md  disabled:opacity-50"
               disabled={!comment.trim() || isSubmitting}
             >
               {isSubmitting || isImageUploading ? "제출 중..." : "리뷰 등록"}

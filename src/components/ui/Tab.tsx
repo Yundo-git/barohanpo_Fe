@@ -36,8 +36,12 @@ export default function Tabs({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      <div className="sticky top-0 z-10 bg-white">
-        <div role="tablist" aria-label="탭 메뉴" className="flex border-b w-full">
+      <div className="sticky top-0 z-10 bg-white h-[3.5rem]">
+        <div
+          role="tablist"
+          aria-label="탭 메뉴"
+          className="flex border-b w-full h-full"
+        >
           {items.map((item) => {
             const isActive = item.key === activeKey;
             return (

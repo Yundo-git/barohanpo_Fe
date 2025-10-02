@@ -1,5 +1,5 @@
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React from "react";
+import { useRouter } from "next/navigation";
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -11,10 +11,10 @@ interface SuccessModalProps {
 
 const SuccessModal: React.FC<SuccessModalProps> = ({
   isOpen,
-  message = '수정사항을 저장하였습니다.',
+  message = "수정사항을 저장하였습니다.",
   onClose,
   redirectPath,
-  buttonText = '확인'
+  buttonText = "확인",
 }) => {
   const router = useRouter();
 
@@ -35,7 +35,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
         <div className="flex justify-end">
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-main text-white rounded-md  transition-colors"
           >
             {buttonText}
           </button>

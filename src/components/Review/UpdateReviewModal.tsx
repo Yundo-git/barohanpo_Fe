@@ -150,7 +150,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="리뷰를 작성해주세요."
-                className="w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-gray-300 rounded-lg h-32 focus:ring-2 focus:ring-main focus:border-transparent"
                 disabled={isSubmitting}
               />
             </div>
@@ -214,7 +214,7 @@ const UpdateReviewModal: React.FC<UpdateReviewModalProps> = ({
               className={`w-full py-3 px-4 rounded-lg font-medium ${
                 isSubmitting || isImageUploading
                   ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-main text-white "
               }`}
             >
               {isSubmitting ? "처리 중..." : "리뷰 수정하기"}

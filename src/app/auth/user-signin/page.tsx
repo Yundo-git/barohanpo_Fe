@@ -28,7 +28,7 @@ const UserSignInPage = () => {
       if (result.success) {
         console.log("로그인 성공, 홈으로 리다이렉트 중...");
         router.push("/");
-        router.refresh(); 
+        router.refresh();
       } else {
         setError(result.error || "로그인에 실패했습니다.");
       }
@@ -38,7 +38,6 @@ const UserSignInPage = () => {
     } finally {
       setIsLoading(false);
     }
-    
   };
 
   return (
@@ -55,7 +54,7 @@ const UserSignInPage = () => {
               type="email"
               autoComplete="email"
               required
-              className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-main focus:border-main focus:z-10 sm:text-sm"
               placeholder="이메일 주소"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -71,7 +70,7 @@ const UserSignInPage = () => {
               type="password"
               autoComplete="current-password"
               required
-              className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border-b border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-main focus:border-main focus:z-10 sm:text-sm"
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -83,15 +82,19 @@ const UserSignInPage = () => {
           <div className="text-red-500 text-sm text-center">{error}</div>
         )}
 
-<div className="flex justify-end text-disabled pt-4">
-              <Link href="">아이디 / 비밀번호 찾기</Link>
-            </div>
+        <div className="flex justify-end text-disabled pt-4">
+          <Link href="">아이디 / 비밀번호 찾기</Link>
+        </div>
 
         <div className="mt-6">
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full py-3 rounded-lg font-medium bg-gray-200 text-gray-600 disabled:opacity-50"
+            disabled={isLoading || !email || !password}
+            className={`w-full py-3 rounded-lg font-medium ${
+              !isLoading && email && password
+                ? "bg-main text-white"
+                : "bg-gray-200 text-subText2"
+            } transition-colors`}
           >
             {isLoading ? "로그인 중..." : "로그인"}
           </button>

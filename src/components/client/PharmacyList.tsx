@@ -52,7 +52,7 @@ const PermissionModal = ({
         </button>
         <button
           onClick={onConfirm}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 bg-main text-white rounded hover:bg-main/80"
         >
           권한 허용
         </button>
@@ -64,7 +64,7 @@ const PermissionModal = ({
 // Loading Spinner Component
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-64">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-main"></div>
   </div>
 );
 
@@ -80,7 +80,7 @@ const ErrorMessage = ({
     <p className="text-red-500 mb-4">{message}</p>
     <button
       onClick={onRetry}
-      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      className="px-4 py-2 bg-main text-white rounded hover:bg-main/80"
     >
       다시 시도
     </button>
@@ -372,7 +372,7 @@ export default function PharmacyList({ onLocationLoaded }: PharmacyListProps) {
                   {tel && (
                     <a
                       href={`tel:${tel}`}
-                      className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800"
+                      className="inline-flex items-center text-xs text-main hover:text-main/80"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <svg

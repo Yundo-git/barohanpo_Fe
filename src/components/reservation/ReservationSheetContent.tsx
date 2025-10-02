@@ -367,7 +367,7 @@ export default function ReservationSheetContent({
                   className={[
                     "rounded-md px-4 py-2 text-sm font-medium",
                     selectedTime
-                      ? "bg-main text-white hover:bg-blue-700"
+                      ? "bg-main text-white "
                       : "bg-gray-300 text-gray-500 cursor-not-allowed",
                   ].join(" ")}
                 >

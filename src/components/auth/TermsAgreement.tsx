@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface AgreementItemProps {
   id: string;
@@ -21,7 +21,7 @@ const AgreementItem: React.FC<AgreementItemProps> = ({
     <input
       id={id}
       type="checkbox"
-      className="form-checkbox h-4 w-4 text-blue-600 rounded"
+      className="form-checkbox h-4 w-4 text-main rounded"
       required={required}
       checked={checked}
       onChange={(e) => onChange(id, e.target.checked)}
@@ -31,7 +31,7 @@ const AgreementItem: React.FC<AgreementItemProps> = ({
     </label>
     <button
       type="button"
-      className="ml-2 text-xs text-blue-600 hover:underline"
+      className="ml-2 text-xs text-main hover:underline"
       onClick={() => onView(id)}
     >
       보기
@@ -60,7 +60,7 @@ const TermsAgreement: React.FC<TermsAgreementProps> = ({
   onAllAgree,
 }) => {
   const allChecked = agreements.every((item) => item.checked);
-  
+
   const handleAllAgree = (checked: boolean) => {
     onAllAgree(checked);
   };
@@ -71,11 +71,13 @@ const TermsAgreement: React.FC<TermsAgreementProps> = ({
         <label className="flex items-center border-b pb-4">
           <input
             type="checkbox"
-            className="form-checkbox h-5 w-5 text-blue-600 rounded"
+            className="form-checkbox h-5 w-5 text-main rounded"
             checked={allChecked}
             onChange={(e) => handleAllAgree(e.target.checked)}
           />
-          <span className="ml-2 text-gray-700 font-medium ">약관 전체 동의</span>
+          <span className="ml-2 text-gray-700 font-medium ">
+            약관 전체 동의
+          </span>
         </label>
       </div>
 

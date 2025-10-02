@@ -44,7 +44,7 @@ export default function NicknameEditModal({
               id="nickname"
               value={nickname}
               onChange={(e) => setNickname(e.target.value.slice(0, MAX_LEN))}
-              className="w-full p-4 border border-gray-200 rounded-xl text-center text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-4 border border-gray-200 rounded-xl text-center text-lg focus:ring-2 focus:ring-main focus:border-transparent"
               placeholder="닉네임을 입력해주세요"
               maxLength={MAX_LEN}
               autoFocus
@@ -58,7 +58,7 @@ export default function NicknameEditModal({
             <button
               type="submit"
               disabled={!nickname.trim()}
-              className="w-full py-4 bg-main disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full py-4 bg-main disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-main focus:ring-offset-2"
             >
               확인
             </button>
