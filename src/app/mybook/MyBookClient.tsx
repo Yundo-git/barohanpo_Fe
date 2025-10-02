@@ -31,7 +31,7 @@ function MyBookContent({ userId }: { userId: number }) {
     isLoading: isBookingLoading,
   } = useAppSelector((s) => s.booking);
 
-  const dispatch = useAppDispatch(); // 🚨 useAppDispatch 초기화
+  const dispatch = useAppDispatch(); //useAppDispatch 초기화
 
   const [activeTab, setActiveTab] = useState<"reservations" | "canceled">(
     "reservations"
@@ -40,7 +40,7 @@ function MyBookContent({ userId }: { userId: number }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [cancelListState, setCancelListState] = useState<CancelItem[]>([]);
 
-  // 🚨 [수정 1] 컴포넌트 마운트 시 초기 데이터 로드 (Thunk 디스패치)
+  //  컴포넌트 마운트 시 초기 데이터 로드 (Thunk 디스패치)
   useEffect(() => {
     if (userId) {
       void dispatch(fetchReservations({ userId }));
@@ -48,13 +48,13 @@ function MyBookContent({ userId }: { userId: number }) {
     }
   }, [dispatch, userId]);
 
-  // 🚨 [수정 2] Redux 데이터가 변경될 때마다 로컬 state 갱신 (자동 갱신)
+  // Redux 데이터가 변경될 때마다 로컬 state 갱신 (자동 갱신)
   useEffect(() => {
     setReservations(bookingReservations);
     setCancelListState(bookingCancelList);
   }, [bookingReservations, bookingCancelList]);
 
-  // 🚨 [수정 3] 취소 성공 시 목록 갱신 (Thunk 재실행)
+  // 취소 성공 시 목록 갱신 (Thunk 재실행)
   const handleRefresh = useCallback(() => {
     if (userId) {
       // 예약 취소 후 예약 목록과 취소 목록을 모두 새로고침
@@ -65,7 +65,7 @@ function MyBookContent({ userId }: { userId: number }) {
 
   const loading = isBookingLoading;
 
-  // 4. Tab 컴포넌트에 전달할 최종 아이템 목록을 useMemo로 정의합니다. (Tab 에러 해결)
+  // Tab 컴포넌트에 전달할 최종 아이템 목록을 useMemo로 정의. (Tab 에러 해결)
   const tabItems = useMemo(() => {
     const loadingComponent = (
       <div className="py-4 text-center h-full text-gray-500">로딩 중...</div>

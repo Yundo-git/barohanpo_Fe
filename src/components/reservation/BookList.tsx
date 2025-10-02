@@ -138,10 +138,17 @@ const BookList: React.FC<BookListProps> = ({
       <ul className="divide-y divide-gray-200">
         {/* 정렬된 목록을 렌더링해서 출력. */}
         {sortedReservationList.map((list) => (
-          <li key={list.book_id} className="p-4 hover:bg-gray-50">
-            <p>약국 : {list.pharmacy_name}</p>
-            <p>날짜 : {list.book_date}</p>
-            <p>시간 : {list.book_time}</p>
+          <li key={list.book_id} className="px-5 py-6 hover:bg-gray-50">
+            <p className="T3_SB_18 text-mainText">{list.pharmacy_name}</p>
+            <span className="pt-6 flex gap-4 ">
+              <p className="B2_RG_14 text_subText2">날짜</p>
+              <p className="B1_MD_15 text_mainText">{list.book_date}</p>
+            </span>
+            <span className="pt-2 pb-6 flex gap-4">
+              <p className="B2_RG_14 text_subText2">시간</p>
+              <p className="B1_MD_15 text_mainText">{list.book_time}</p>
+            </span>
+
             <div className="mt-2">{renderActionButton(list)}</div>
           </li>
         ))}
