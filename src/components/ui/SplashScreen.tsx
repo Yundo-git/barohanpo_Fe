@@ -87,6 +87,8 @@ export default function SplashScreen({
 
       if (hasReviews && hasPharmacies) {
         console.log("Data loaded in Redux, finishing splash");
+        // NOTE: loadData에서 이미 위치 비교 후 판단하므로,
+        // 여기서는 데이터가 채워지기만 하면 바로 종료해도 무방합니다.
         void finishSplash();
       }
     };
@@ -124,11 +126,8 @@ export default function SplashScreen({
       const hasReviews = (currentState.review.reviews?.length ?? 0) > 0;
       const hasPharmacies = (currentState.pharmacy.pharmacies?.length ?? 0) > 0;
 
-      // 이미 데이터가 있는 경우 즉시 종료
-      if (hasReviews && hasPharmacies) {
-        await finishSplash();
-        return;
-      }
+      // Redux에서 마지막 검색 위치를 가져옵니다.
+      const lastLocation = currentState.pharmacy.lastLocation;
 
       // 로딩 상태 설정
       setError(null);
@@ -160,6 +159,46 @@ export default function SplashScreen({
         );
       });
 
+      const currentLat = position.coords.latitude;
+      const currentLng = position.coords.longitude;
+
+      // 약국 재호출 필요성 판단 로직
+      let shouldRefetchPharmacies = true;
+      const tolerance = 0.00005; // 위치 오차 허용 범위 (약 5m)
+
+      if (hasPharmacies && lastLocation) {
+        const latDiff = Math.abs(currentLat - lastLocation.lat);
+        const lngDiff = Math.abs(currentLng - lastLocation.lng);
+
+        if (latDiff < tolerance && lngDiff < tolerance) {
+          console.log(
+            "✅ Current location is same as last fetched. Skipping pharmacy refetch."
+          );
+          shouldRefetchPharmacies = false;
+        } else {
+          console.log(
+            "⚠️ Location changed or outside tolerance. Refetching pharmacies."
+          );
+        }
+      } else if (hasPharmacies && !lastLocation) {
+        // 데이터는 있지만, 위치 기록이 없으면 재호출 (안전 장치)
+        console.log("⚠️ Has data but no last location. Refetching for safety.");
+        shouldRefetchPharmacies = true;
+      } else if (!hasPharmacies) {
+        // 데이터가 아예 없는 경우는 무조건 호출
+        console.log("⚠️ No pharmacy data available. Fetching.");
+        shouldRefetchPharmacies = true;
+      }
+
+      // 모든 데이터가 있고, 위치도 같다면 바로 종료
+      if (hasReviews && hasPharmacies && !shouldRefetchPharmacies) {
+        console.log(
+          "Data is fresh and location is same, finishing splash early."
+        );
+        await finishSplash();
+        return;
+      }
+
       // 데이터 병렬로 가져오기
       const fetches: Array<Promise<unknown>> = [];
 
@@ -167,12 +206,13 @@ export default function SplashScreen({
         fetches.push(dispatch(fetchFiveStarReviews()).unwrap());
       }
 
-      if (!hasPharmacies) {
+      // 재호출 필요시 약국 리스트 호출
+      if (shouldRefetchPharmacies) {
         fetches.push(
           dispatch(
             fetchNearbyPharmacies({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
+              lat: currentLat,
+              lng: currentLng,
             })
           ).unwrap()
         );
@@ -192,7 +232,7 @@ export default function SplashScreen({
           await Promise.all(fetches);
         }
 
-        // 데이터 로드 확인
+        // 데이터 로드 확인 (Redux 구독이 처리할 것이지만, 안전을 위해 다시 확인)
         const updated = store.getState();
         const allLoaded =
           (updated.review.reviews?.length ?? 0) > 0 &&
