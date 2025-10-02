@@ -7,6 +7,22 @@ import { useAppDispatch } from "@/store/store";
 import { fetchFiveStarReviews } from "@/store/reviewSlice";
 import { fetchNearbyPharmacies } from "@/store/pharmacySlice";
 import { store } from "@/store/store";
+import { Geolocation } from "@capacitor/geolocation";
+
+// Helper function to get current position with TypeScript types
+const getCurrentPosition = (): Promise<GeolocationPosition> => {
+  return new Promise((resolve, reject) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      });
+    } else {
+      reject(new Error("Geolocation is not supported by this browser"));
+    }
+  });
+};
 
 type SplashScreenProps = {
   onLoaded: () => void;
@@ -80,133 +96,73 @@ export default function SplashScreen({
   useEffect(() => {
     if (!mounted) return;
 
-    const checkDataLoaded = () => {
+    const state = store.getState();
+    const hasReviews = (state.review.reviews?.length ?? 0) > 0;
+    const hasPharmacies = (state.pharmacy.pharmacies?.length ?? 0) > 0;
+
+    if (hasReviews && hasPharmacies) {
+      console.log("기존 데이터 확인 중...");
+      // NOTE: loadData에서 이미 위치 비교,
+      // 여기서는 데이터가 채워지기만 하면 바로 종료!!
+      void finishSplash();
+    }
+  }, [mounted, finishSplash]);
+
+  // 위치 기반 데이터 로드
+  const loadData = useCallback(async () => {
+    if (!mounted || hasInitialized.current) return;
+    hasInitialized.current = true;
+    
+    try {
+      console.log("데이터 가져오는 중...");
+      setIsLoading(true);
+      setError(null);
+
+      // 현재 위치 가져오기
+      const position = await getCurrentPosition();
+      const currentLat = position.coords.latitude;
+      const currentLng = position.coords.longitude;
+      const tolerance = 0.00005; // 위치 오차 허용 범위 (약 5m)
+
+      // Redux 상태 확인
       const state = store.getState();
       const hasReviews = (state.review.reviews?.length ?? 0) > 0;
       const hasPharmacies = (state.pharmacy.pharmacies?.length ?? 0) > 0;
+      const lastLocation = state.pharmacy.lastLocation;
+      let shouldRefetchPharmacies = false;
 
-      if (hasReviews && hasPharmacies) {
-        console.log("Data loaded in Redux, finishing splash");
-        // NOTE: loadData에서 이미 위치 비교 후 판단하므로,
-        // 여기서는 데이터가 채워지기만 하면 바로 종료해도 무방합니다.
-        void finishSplash();
-      }
-    };
-
-    // 이미 데이터가 로드된 경우 즉시 확인
-    checkDataLoaded();
-
-    // 스토어 변경 사항 구독
-    // 구독 해제 함수를 ref에 저장
-    unsubscribeRef.current = store.subscribe(checkDataLoaded);
-
-    // 최대 대기 시간 후 강제로 닫기 위한 타임아웃 설정
-    const timeoutId = setTimeout(() => {
-      console.warn("Forcing splash screen to close after timeout");
-      void finishSplash();
-    }, maxWaitMs);
-
-    // Store the timeout ID in the ref for cleanup
-    maxWaitTimerRef.current = timeoutId;
-
-    return () => {
-      clearTimeout(timeoutId);
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-      }
-    };
-  }, [mounted, finishSplash, maxWaitMs]);
-
-  const loadData = useCallback(async () => {
-    if (hasInitialized.current || !mounted) return;
-    hasInitialized.current = true;
-
-    try {
-      const currentState = store.getState();
-      const hasReviews = (currentState.review.reviews?.length ?? 0) > 0;
-      const hasPharmacies = (currentState.pharmacy.pharmacies?.length ?? 0) > 0;
-
-      // Redux에서 마지막 검색 위치를 가져옵니다.
-      const lastLocation = currentState.pharmacy.lastLocation;
-
-      // 로딩 상태 설정
-      setError(null);
-      setIsLoading(true);
-
-      // 사용자 위치 정보 가져오기
-      const position = await new Promise<GeolocationPosition>((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve(pos),
-          () => {
-            // 위치 정보를 가져오지 못한 경우 서울 좌표로 기본값 설정
-            const mock: GeolocationPosition = {
-              coords: {
-                latitude: 37.5665,
-                longitude: 126.978,
-                accuracy: 1,
-                altitude: null,
-                altitudeAccuracy: null,
-                heading: null,
-                speed: null,
-                toJSON: () => ({}),
-              },
-              timestamp: Date.now(),
-              toJSON: () => ({}),
-            };
-            resolve(mock);
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      });
-
-      const currentLat = position.coords.latitude;
-      const currentLng = position.coords.longitude;
-
-      // 약국 재호출 필요성 판단 로직
-      let shouldRefetchPharmacies = true;
-      const tolerance = 0.00005; // 위치 오차 허용 범위 (약 5m)
-
+      // 위치 비교 로직
       if (hasPharmacies && lastLocation) {
         const latDiff = Math.abs(currentLat - lastLocation.lat);
         const lngDiff = Math.abs(currentLng - lastLocation.lng);
 
         if (latDiff < tolerance && lngDiff < tolerance) {
-          console.log(
-            "✅ Current location is same as last fetched. Skipping pharmacy refetch."
-          );
+          console.log("이전에 조회한 위치와 동일합니다. 약국 데이터 재요청을 건너뜁니다.");
           shouldRefetchPharmacies = false;
         } else {
-          console.log(
-            "⚠️ Location changed or outside tolerance. Refetching pharmacies."
-          );
+          console.log("위치가 변경되었거나 허용 범위를 벗어났습니다. 약국 데이터를 다시 가져옵니다.");
+          shouldRefetchPharmacies = true;
         }
       } else if (hasPharmacies && !lastLocation) {
-        // 데이터는 있지만, 위치 기록이 없으면 재호출 (안전 장치)
-        console.log("⚠️ Has data but no last location. Refetching for safety.");
+        console.log("데이터는 있지만 이전 위치 정보가 없습니다. 안전을 위해 다시 가져옵니다.");
         shouldRefetchPharmacies = true;
       } else if (!hasPharmacies) {
-        // 데이터가 아예 없는 경우는 무조건 호출
-        console.log("⚠️ No pharmacy data available. Fetching.");
+        console.log("약국 데이터가 없습니다. 데이터를 가져옵니다.");
         shouldRefetchPharmacies = true;
       }
 
       // 모든 데이터가 있고, 위치도 같다면 바로 종료
       if (hasReviews && hasPharmacies && !shouldRefetchPharmacies) {
-        console.log(
-          "Data is fresh and location is same, finishing splash early."
-        );
+        console.log("데이터가 최신 상태이고 위치가 동일하여 스플래시를 조기 종료합니다.");
         await finishSplash();
         return;
       }
 
       // 데이터 병렬로 가져오기
-      const fetches: Array<Promise<unknown>> = [];
-
+      const fetches = [];
       if (!hasReviews) {
-        fetches.push(dispatch(fetchFiveStarReviews()).unwrap());
+        fetches.push(dispatch(fetchFiveStarReviews()));
       }
-
-      // 재호출 필요시 약국 리스트 호출
       if (shouldRefetchPharmacies) {
         fetches.push(
           dispatch(
@@ -214,67 +170,42 @@ export default function SplashScreen({
               lat: currentLat,
               lng: currentLng,
             })
-          ).unwrap()
+          )
         );
       }
 
-      // 데이터 로딩이 너무 오래 걸리는 경우 강제 종료를 위한 타임아웃 설정
-      const timeoutId = setTimeout(() => {
-        console.warn("Data loading timeout - forcing splash to close");
-        void finishSplash();
-      }, maxWaitMs);
-
-      // Store the timeout ID in the ref for cleanup
-      maxWaitTimerRef.current = timeoutId;
-
-      try {
-        if (fetches.length > 0) {
-          await Promise.all(fetches);
-        }
-
-        // 데이터 로드 확인 (Redux 구독이 처리할 것이지만, 안전을 위해 다시 확인)
-        const updated = store.getState();
-        const allLoaded =
-          (updated.review.reviews?.length ?? 0) > 0 &&
-          (updated.pharmacy.pharmacies?.length ?? 0) > 0;
-
-        if (allLoaded) {
-          clearTimeout(timeoutId);
-          await finishSplash();
-        } else {
-          setError("일부 데이터를 불러오지 못했습니다.");
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error loading data:", error);
-        setError("데이터를 불러오는 중 오류가 발생했습니다.");
-        setIsLoading(false);
-        clearTimeout(timeoutId);
+      if (fetches.length > 0) {
+        await Promise.all(fetches);
       }
+
+      console.log("모든 데이터 로드 완료");
+      await finishSplash();
     } catch (error) {
-      console.error("Error in loadData:", error);
-      setError("초기화 중 오류가 발생했습니다.");
+      console.error("데이터 로딩 중 오류 발생:", error);
+      setError("데이터를 불러오는 중 오류가 발생했습니다.");
       setIsLoading(false);
     }
-  }, [dispatch, finishSplash, maxWaitMs, mounted]);
+  }, [dispatch, finishSplash, mounted]);
 
-  // Call loadData in useEffect with proper cleanup
+  // 초기 데이터 로드
   useEffect(() => {
     if (!mounted) return;
 
-    // Start loading data
-    void loadData();
-
-    // Set a safety timeout to close splash screen if something goes wrong
-    const safetyTimeout = setTimeout(() => {
-      if (mounted) {
-        console.warn("Safety timeout - forcing splash to close");
-        void finishSplash();
-      }
+    // 최대 대기 시간 설정
+    const timeoutId = setTimeout(() => {
+      console.log("최대 대기 시간 도달, 스플래시 종료");
+      void finishSplash();
     }, maxWaitMs);
 
+    maxWaitTimerRef.current = timeoutId;
+
+    // 초기 데이터 로드
+    void loadData();
+
     return () => {
-      clearTimeout(safetyTimeout);
+      if (maxWaitTimerRef.current) {
+        clearTimeout(maxWaitTimerRef.current);
+      }
     };
   }, [loadData, maxWaitMs, mounted, finishSplash]);
 

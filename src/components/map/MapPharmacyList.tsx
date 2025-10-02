@@ -35,12 +35,28 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
             }}
           >
             <div className="w-full">
-              <p className="text-base font-medium">
+              <p className="T2_SB_20 text-mainText">
                 {selectedPharmacy.name || "이름 없음"}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="B1_RG_15 text-subText2 mt-1">
                 {selectedPharmacy.address || "주소 정보 없음"}
               </p>
+              {typeof selectedPharmacy.distance === 'number' && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Image
+                    src="/icon/Environment.svg"
+                    alt="거리"
+                    width={16}
+                    height={16}
+                    className="w-4 h-4"
+                  />
+                  <span className="B2_RG_14 text-subText2">
+                    {selectedPharmacy.distance < 1
+                      ? `${Math.round(selectedPharmacy.distance * 1000)}m`
+                      : `${selectedPharmacy.distance.toFixed(1)}km`} 거리
+                  </span>
+                </div>
+              )}
               {(selectedPharmacy.user as PharmacyUser)?.number && (
                 <p className="text-sm text-gray-700 mt-1">
                   {(selectedPharmacy.user as PharmacyUser)?.number}
@@ -96,25 +112,14 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
               {typeof pharmacy.distance === "number" && (
                 <div className="mt-1">
                   <span className="inline-flex items-center text-xs text-gray-500">
-                    <svg
-                      className="w-3 h-3 mr-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+                    <Image
+                      src="/icon/Environment.svg"
+                      alt="거리"
+                      width={16}
+                      height={16}
+                      className="w-4 h-4"
+                      priority
+                    />
                     {pharmacy.distance < 1
                       ? `${Math.round(pharmacy.distance * 1000)}m`
                       : `${pharmacy.distance.toFixed(1)}km`}
@@ -126,7 +131,6 @@ const MapPharmacyList: React.FC<MapPharmacyListProps> = ({
               className="w-[40vw] h-[8.25rem] bg-main rounded-md flex flex-col justify-center items-center overflow-hidden"
               onClick={(e) => {
                 e.stopPropagation();
-                // Add any image click handler here if needed
               }}
             >
               <Image
