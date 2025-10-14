@@ -52,16 +52,17 @@ export default function Header() {
   const isFavorite = !!p_id && favoriteIds.includes(p_id);
   const { mutate: toggleFavorite, isPending: isToggling } = useToggleFavorite();
 
-  const showBackButton = ![
+  const showBackButton = [
+    "/auth/user-signin",
+    "/auth/user-signup"
+  ].some(path => pathname.startsWith(path)) || ![
     "/",
     "/map",
     "/mypage",
     "/mybook",
     "/pharmacy/",
-    "/auth",
-    "/auth/user-signin",
-    "/auth/user-signup"
-  ].some(path => pathname.startsWith(path));
+    "/auth"
+  ].some(path => pathname === path);
 
   const getPageTitle = () => {
     if (pathname === "/") return "바로한포";

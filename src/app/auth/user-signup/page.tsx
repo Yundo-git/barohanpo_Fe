@@ -26,24 +26,34 @@ export default function UserSignupPage() {
 
   const agreementItems = [
     {
+      id: "age",
+      label: "(필수) 본인은 만 14세 이상입니다.",
+      required: true,
+      checked: formData.agreements.age,
+    },
+    {
       id: "terms",
-      label: "(필수) 이용약관 동의",
+      label: "(필수) 서비스 이용약관에 동의합니다.",
       required: true,
       checked: formData.agreements.terms,
     },
     {
       id: "privacy",
-      label: "(필수) 개인정보 수집 및 이용 동의",
+      label: "(필수) 개인정보 수집 및 이용에 동의합니다.",
       required: true,
       checked: formData.agreements.privacy,
     },
     {
       id: "marketing",
-      label: "(선택) 마케팅 정보 수신 동의",
+      label: "(선택) 마케팅 정보 수신에 동의합니다.",
       required: false,
       checked: formData.agreements.marketing,
     },
   ];
+
+  const handleViewAgreement = (id: string) => {
+    // This is now handled by the TermsAgreement component
+  };
 
   return (
     <div className="p-4 pt-12 pb-24 min-h-screen">

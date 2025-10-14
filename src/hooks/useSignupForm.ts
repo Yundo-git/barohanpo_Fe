@@ -11,6 +11,7 @@ interface SignupFormData {
   phone: string;
   verificationCode: string;
   agreements: {
+    age: boolean;
     terms: boolean;
     privacy: boolean;
     marketing: boolean;
@@ -26,6 +27,7 @@ export const useSignupForm = () => {
     phone: "",
     verificationCode: "",
     agreements: {
+      age: false,
       terms: false,
       privacy: false,
       marketing: false,
@@ -68,6 +70,7 @@ export const useSignupForm = () => {
     setFormData((prev) => ({
       ...prev,
       agreements: {
+        age: checked,
         terms: checked,
         privacy: checked,
         marketing: checked,
@@ -78,7 +81,7 @@ export const useSignupForm = () => {
   // 회원가입 제출 함수
   const submitSignup = useCallback(async () => {
     // 필수 동의사항 체크
-    if (!formData.agreements.terms || !formData.agreements.privacy) {
+    if (!formData.agreements.age || !formData.agreements.terms || !formData.agreements.privacy) {
       setError("필수 약관에 동의해주세요.");
       return false;
     }
