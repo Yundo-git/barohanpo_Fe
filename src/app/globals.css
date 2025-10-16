@@ -10,7 +10,18 @@
 @tailwind utilities;
 
 /* global.css */
-
+.pt-safe {
+  padding-top: var(--sat, var(--sat-constant, 0));
+}
+.pb-safe {
+  padding-bottom: var(--sab, var(--sab-constant, 0));
+}
+.pl-safe {
+  padding-left: var(--sal, var(--sal-constant, 0));
+}
+.pr-safe {
+  padding-right: var(--sar, var(--sar-constant, 0));
+}
 @layer components {
   /* Headline Styles */
   .H1_SB_32 {
@@ -159,6 +170,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Safe area insets with fallbacks */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  
+  /* For older iOS versions */
+  --sat-constant: constant(safe-area-inset-top, 0px);
+  --sab-constant: constant(safe-area-inset-bottom, 0px);
+  --sal-constant: constant(safe-area-inset-left, 0px);
+  --sar-constant: constant(safe-area-inset-right, 0px);
 }
 
 @keyframes slideUp {

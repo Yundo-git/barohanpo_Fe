@@ -80,8 +80,7 @@ export default function Header() {
     const iconColor = isFavorite ? "text-red-500" : "text-gray-400";
 
     return (
-      <header className="flex fixed top-0 left-0 right-0 z-50 h-14 items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg  md:hidden">
-        <div className="absolute left-4">
+<header className="flex z-50 h-14 items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg md:hidden">        <div className="absolute left-4">
           <BackButton />
         </div>
         <div className="absolute right-5 top-4">
@@ -103,8 +102,7 @@ export default function Header() {
   }
 
   return (
-    <header className="flex fixed top-0 left-0 right-0 z-50 h-14  items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg  md:hidden">
-      {showBackButton ? (
+<header className="flex z-50 h-14 items-center px-5 py-4 bg-white/95 w-full backdrop-blur-lg md:hidden">      {showBackButton ? (
         <div className="flex items-center justify-center w-full">
           <div className="absolute left-4">
             <BackButton />

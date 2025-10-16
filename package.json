@@ -17,6 +17,7 @@
     "@capacitor/core": "^7.4.2",
     "@capacitor/geolocation": "^7.1.5",
     "@capacitor/ios": "^7.4.2",
+    "@capacitor/status-bar": "^7.0.3",
     "@heroicons/react": "^2.0.18",
     "@nestjs/swagger": "^11.2.0",
     "@reduxjs/toolkit": "^2.8.2",

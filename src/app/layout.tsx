@@ -21,26 +21,58 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className="bg-white h-screen flex flex-col overflow-hidden">
-        {/* <UserProvider> */}
+    <html lang="ko">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+      </head>
+      <body className="min-h-screen flex flex-col bg-white">
         <Providers>
           <QueryClientProvider>
             <AuthBootstrap />
-
             <LocalPermission />
-            <div className="fixed top-0 left-0 right-0 z-50">
+            
+            {/* White Status Bar Background */}
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 'var(--sat, 0px)',
+                backgroundColor: 'white',
+                zIndex: 1000
+              }} 
+            />
+            
+            {/* Header - Fixed below status bar */}
+            <div className="fixed left-0 right-0 z-50 bg-white" 
+                 style={{ top: 'var(--sat, 0px)' }}>
               <Header />
             </div>
-            <main className="flex-1 pt-14 pb-14 overflow-y-auto">
+            
+            {/* Main Content - Padded below header */}
+            <main 
+              className="flex-1 overflow-y-auto"
+              style={{ 
+                paddingTop: '56px',
+                paddingBottom: 'var(--sab, 0px)',
+                minHeight: 'calc(100vh - 56px - var(--sab, 0px))'
+              }} 
+            >
               <div className="h-full">{children}</div>
             </main>
-            <div className="fixed bottom-0 left-0 right-0 z-50">
+            
+            {/* Bottom Navigation */}
+            <div 
+              className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200"
+              style={{ 
+                paddingBottom: 'var(--sab, 0px)'
+              }}
+            >
               <MobileNavBar />
             </div>
           </QueryClientProvider>
         </Providers>
-        {/* </UserProvider> */}
       </body>
     </html>
   );
