@@ -1,8 +1,10 @@
+// src/app/page.tsx 또는 src/components/HomePage.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAppSelector } from "@/store/store";
+import { useAppSelector, useAppDispatch } from "@/store/store";
 import { shallowEqual } from "react-redux";
+import { fetchFiveStarReviews } from "@/store/reviewSlice";
 import dynamic from "next/dynamic";
 
 // Dynamically import components to ensure they're only loaded on the client side
@@ -15,20 +17,34 @@ const Home = dynamic(() => import("@/components/Home"), {
 });
 
 export default function HomePage() {
-  const [showSplash, setShowSplash] = useState(true);
+  const dispatch = useAppDispatch();
+
+  // 앱 초기화 상태 확인
+  const { isAppInitialized } = useAppSelector((state) => ({
+    isAppInitialized: state.pharmacy.isAppInitialized || false,
+  }), shallowEqual);
+
+  // 리뷰 상태 확인 및 관리
+  const { reviews, isLoading: reviewLoading } = useAppSelector((state) => ({
+    reviews: state.review.reviews,
+    isLoading: state.review.isLoading
+  }), shallowEqual);
+
+  // 스플레시 화면 상태 관리
+  const [showSplash, setShowSplash] = useState(!isAppInitialized);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const hasDataLoaded = useRef(false);
 
-  // Get the current state once when component mounts
-  const { hasData } = useAppSelector((state) => {
-    const hasReviews = state.review.reviews?.length > 0;
-    const hasPharmacies = state.pharmacy.pharmacies?.length > 0;
-    return {
-      hasData: hasReviews && hasPharmacies,
-    };
-  }, shallowEqual);
+  // 리뷰 데이터가 없거나 로딩 중이 아닐 때 자동으로 리뷰 데이터 로드
+  useEffect(() => {
+    // 앱이 초기화되었고 리뷰 데이터가 없으며 로딩 중이 아닐 때만 호출
+    if (isAppInitialized && reviews.length === 0 && !reviewLoading) {
+      console.log("[HomePage] 리뷰 데이터가 없어서 새로 가져옵니다.");
+      dispatch(fetchFiveStarReviews());
+    }
+  }, [isAppInitialized, reviews.length, reviewLoading, dispatch]);
 
-  // Handle splash screen completion
+  // 스플레시 화면 종료 처리
   const handleSplashComplete = useCallback(() => {
     if (hasDataLoaded.current) return;
     hasDataLoaded.current = true;
@@ -44,31 +60,34 @@ export default function HomePage() {
     }, 300);
   }, []);
 
-  // Auto-close splash screen if data is already loaded
+  // isAppInitialized가 true로 변경되었을 때 스플레시를 종료하는 로직
   useEffect(() => {
-    if (hasData && showSplash) {
-      console.log("Data already loaded, completing splash");
+    if (isAppInitialized && showSplash) {
+      console.log("App initialized via Redux, completing splash");
       handleSplashComplete();
     }
-  }, [hasData, showSplash, handleSplashComplete]);
+  }, [isAppInitialized, showSplash, handleSplashComplete]);
 
   return (
     <main className="min-h-screen relative">
-      {/* Splash Screen */}
-      <div
-        className={`fixed inset-0 z-50 transition-opacity duration-300 bg-white ${
-          showSplash ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <SplashScreen onLoaded={handleSplashComplete} />
-      </div>
+      {/* Splash Screen은 showSplash가 true일 때만 렌더링됩니다. */}
+      {showSplash && (
+        <div
+          className={`fixed inset-0 z-50 transition-opacity duration-300 bg-white ${
+            isTransitioning ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          {/* isAppInitialized가 false일 때만 SplashScreen 컴포넌트를 마운트하여 데이터 로딩을 시작합니다. */}
+          {!isAppInitialized && <SplashScreen onLoaded={handleSplashComplete} />}
+        </div>
+      )}
 
       {/* Main Content */}
       <div
         className={`transition-opacity duration-300 ${
           !showSplash && !isTransitioning
             ? "opacity-100"
-            : "opacity-0 h-0 overflow-hidden"
+            : "opacity-0 pointer-events-none absolute w-full h-full"
         }`}
       >
         <Home />
@@ -77,5 +96,4 @@ export default function HomePage() {
   );
 }
 
-// Add display name for debugging
 HomePage.displayName = "HomePage";
