@@ -60,14 +60,16 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Apply these headers to all routes
-        source: '/(.*)',
+        // Apply these headers to all API routes
+        source: '/api/:path*',
         headers: [
           {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
+          },
+          {
             key: 'Access-Control-Allow-Origin',
-            value: process.env.NODE_ENV === 'development' 
-              ? 'http://10.0.2.2:3000, http://192.168.0.21:3000' 
-              : '',
+            value: 'http://localhost:3000',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -75,7 +77,7 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
+            value: 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version',
           },
         ],
       },

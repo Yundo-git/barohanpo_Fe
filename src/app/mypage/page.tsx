@@ -80,12 +80,15 @@ export default function MyPage() {
           </div>
           <h1 className="T2_SB_20">{user?.nickname}</h1>
         </div>
-        <Image
-          src="/icon/Arrow_Right2.svg"
-          alt="아이콘"
-          width={25}
-          height={24}
-        />
+        <div className="w-6 h-6 relative">
+          <Image
+            src="/icon/Arrow_Right2.svg"
+            alt="아이콘"
+            fill
+            sizes="1.5rem"
+            className="object-contain"
+          />
+        </div>
       </section>
       {/* 유저 내역 */}
       <section className="py-6 flex flex-col gap-4 items-start">
@@ -99,7 +102,15 @@ export default function MyPage() {
           </button>
         </div>
         <div className="flex gap-3 justify-between items-center">
-          <Image src="/icon/Favorite.svg" alt="아이콘" width={24} height={24} />
+          <div className="w-6 h-6 relative">
+            <Image
+              src="/icon/Favorite.svg"
+              alt="아이콘"
+              fill
+              sizes="1.5rem"
+              className="object-contain"
+            />
+          </div>
           <button className="B1_MD_15 text-mainText" onClick={handleMyFavorite}>
             찜 목록
           </button>
