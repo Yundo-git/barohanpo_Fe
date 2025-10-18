@@ -35,8 +35,8 @@ export default function MobileNavBar() {
     {
       href: isLoggedIn ? "/mybook" : "/auth?from=reservation",
       label: "예약내역",
-      icon: "/icon/Calendar.svg",
-      activeIcon: "/icon/Calendar_fill.svg",
+      icon: "/icon/calendar.svg",
+      activeIcon: "/icon/calendar_fill.svg",
     },
     {
       href: isLoggedIn ? "/mypage" : "/auth?from=my",
