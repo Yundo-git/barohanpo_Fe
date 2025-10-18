@@ -121,17 +121,17 @@ export default function UserSignupPage() {
             className="flex-1 p-2 focus:outline-none"
             required
           />
-          <button
+          {/* <button
             type="button"
             disabled={isLoading}
             className="text-sm bg-gray-800 text-white px-3 py-1 rounded ml-2 disabled:opacity-50"
           >
             인증하기
-          </button>
+          </button> */}
         </div>
 
         {/* 인증번호 */}
-        <div className="flex items-center border-b border-gray-300">
+        {/* <div className="flex items-center border-b border-gray-300">
           <input
             type="text"
             name="verificationCode"
@@ -149,7 +149,7 @@ export default function UserSignupPage() {
           >
             확인
           </button>
-        </div>
+        </div> */}
 
         {/* 에러 메시지 */}
         {error && <div className="text-red-500 text-sm">{error}</div>}

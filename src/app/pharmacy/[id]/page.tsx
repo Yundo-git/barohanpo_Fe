@@ -46,6 +46,7 @@ export default function PharmacyDetail() {
     (p: Pharmacy) => Number(p.p_id) === pharmacyId
   );
 
+  console.log("pharmacy in detail",pharmacy)
   // Derive robust numeric coordinates (handle lat/lng or latitude/longitude, string values)
   const derivedLat = pharmacy
     ? Number(
