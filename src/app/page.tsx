@@ -37,11 +37,30 @@ export default function HomePage() {
 
   // 리뷰 데이터가 없거나 로딩 중이 아닐 때 자동으로 리뷰 데이터 로드
   useEffect(() => {
-    // 앱이 초기화되었고 리뷰 데이터가 없으며 로딩 중이 아닐 때만 호출
-    if (isAppInitialized && reviews.length === 0 && !reviewLoading) {
-      console.log("[HomePage] 리뷰 데이터가 없어서 새로 가져옵니다.");
-      dispatch(fetchFiveStarReviews());
-    }
+    let retryTimer: NodeJS.Timeout;
+    const RETRY_DELAY = 5000; // 5초 후 재시도
+
+    const fetchReviews = () => {
+      // 앱이 초기화되었고 리뷰 데이터가 없으며 로딩 중이 아닐 때만 호출
+      if (isAppInitialized && reviews.length === 0 && !reviewLoading) {
+        console.log("[HomePage] 5점 리뷰를 가져오는 중...");
+        dispatch(fetchFiveStarReviews())
+          .then((result) => {
+            // 액션이 성공적으로 완료되었지만 리뷰가 없는 경우
+            if (result.meta.requestStatus === 'fulfilled' && reviews.length === 0) {
+              console.log("[HomePage] 5점 리뷰가 없어서 다시 시도합니다.");
+              retryTimer = setTimeout(fetchReviews, RETRY_DELAY);
+            }
+          });
+      }
+    };
+
+    fetchReviews();
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => {
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [isAppInitialized, reviews.length, reviewLoading, dispatch]);
 
   // 스플레시 화면 종료 처리

@@ -51,7 +51,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviewList, onDelete }) => {
 
   if (reviewList.length === 0) {
     return (
-      <div className="py-4 text-center text-gray-500">리뷰가 없습니다.</div>
+      <div className="py-4 text-center text-gray-500">등록된 리뷰가 없습니다</div>
     );
   }
 
