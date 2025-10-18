@@ -39,17 +39,29 @@ export default function HomePage() {
   useEffect(() => {
     let retryTimer: NodeJS.Timeout;
     const RETRY_DELAY = 5000; // 5초 후 재시도
+    const MAX_RETRY_ATTEMPTS = 3; // 최대 재시도 횟수
+    let retryCount = 0;
 
     const fetchReviews = () => {
       // 앱이 초기화되었고 리뷰 데이터가 없으며 로딩 중이 아닐 때만 호출
       if (isAppInitialized && reviews.length === 0 && !reviewLoading) {
-        console.log("[HomePage] 5점 리뷰를 가져오는 중...");
+        console.log(`[HomePage] 5점 리뷰를 가져오는 중... (시도 ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`);
+        
         dispatch(fetchFiveStarReviews())
           .then((result) => {
             // 액션이 성공적으로 완료되었지만 리뷰가 없는 경우
-            if (result.meta.requestStatus === 'fulfilled' && reviews.length === 0) {
-              console.log("[HomePage] 5점 리뷰가 없어서 다시 시도합니다.");
-              retryTimer = setTimeout(fetchReviews, RETRY_DELAY);
+            if (result.meta.requestStatus === 'fulfilled') {
+              if (reviews.length === 0) {
+                retryCount++;
+                if (retryCount < MAX_RETRY_ATTEMPTS) {
+                  console.log(`[HomePage] 5점 리뷰가 없어서 다시 시도합니다. (${retryCount}/${MAX_RETRY_ATTEMPTS})`);
+                  retryTimer = setTimeout(fetchReviews, RETRY_DELAY);
+                } else {
+                  console.log(`[HomePage] 최대 재시도 횟수(${MAX_RETRY_ATTEMPTS}회)에 도달하여 5점 리뷰 가져오기를 중단합니다.`);
+                }
+              } else {
+                console.log('[HomePage] 5점 리뷰를 성공적으로 가져왔습니다.');
+              }
             }
           });
       }
