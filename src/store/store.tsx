@@ -45,7 +45,7 @@ const userTransform = createTransform<UserState, Partial<UserState>>(
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["user", "pharmacy"],
+  whitelist: ["user", "pharmacy", "review"],
   transforms: [userTransform],
 };
 

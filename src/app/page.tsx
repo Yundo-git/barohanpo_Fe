@@ -2,9 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAppSelector, useAppDispatch } from "@/store/store";
+import { useAppSelector } from "@/store/store";
 import { shallowEqual } from "react-redux";
-import { fetchFiveStarReviews } from "@/store/reviewSlice";
 import dynamic from "next/dynamic";
 
 // Dynamically import components to ensure they're only loaded on the client side
