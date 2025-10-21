@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "http://10.0.2.2:3000", // ← Android 에뮬레이터에서 접근하는 주소
     "http://192.168.0.21:3000", // ← iOS 에뮬레이터에서 접근하는 주소
-    'http://192.168.75.49:3000',
+    "http://192.168.75.49:3000",
+    "https://barohanpo-fe.vercel.app/",
   ],
   images: {
     remotePatterns: [
@@ -18,13 +19,13 @@ const nextConfig: NextConfig = {
         pathname: "/api/**",
       },
       {
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com',
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
       },
     ],
     dangerouslyAllowSVG: true,
   },
-  
+
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
     // Fix for WebpackError constructor issue
@@ -62,25 +63,27 @@ const nextConfig: NextConfig = {
     return [
       {
         // Apply these headers to all API routes
-        source: '/api/:path*',
+        source: "/api/:path*",
         headers: [
           {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'true',
+            key: "Access-Control-Allow-Credentials",
+            value: "true",
           },
           {
-            key: 'Access-Control-Allow-Origin',
-            value: process.env.NODE_ENV === 'development' 
-              ? 'http://localhost:3000' 
-              : 'https://barohanpo.xyz',
+            key: "Access-Control-Allow-Origin",
+            value:
+              process.env.NODE_ENV === "development"
+                ? "http://localhost:3000"
+                : "https://barohanpo-fe.vercel.app/",
           },
           {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS',
+            key: "Access-Control-Allow-Methods",
+            value: "GET, POST, PUT, DELETE, OPTIONS",
           },
           {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version',
+            key: "Access-Control-Allow-Headers",
+            value:
+              "Content-Type, Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version",
           },
         ],
       },

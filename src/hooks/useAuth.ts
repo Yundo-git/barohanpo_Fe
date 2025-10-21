@@ -87,7 +87,6 @@ const useAuth = (): UseAuthReturn => {
 
     try {
       const isKakaoCallback = searchParams.get("login") === "success";
-      const nextPath = searchParams.get("next") || "/";
       let token = getTokenFromState();
 
       // 카카오 콜백이거나 토큰이 없는 경우에만 refresh 시도
@@ -96,29 +95,11 @@ const useAuth = (): UseAuthReturn => {
           const refreshed = await authService.refresh();
           if (refreshed.success) {
             token = refreshed.accessToken;
-            
-            // 카카오 로그인 성공 시 next 파라미터나 홈으로 리다이렉트
-            if (isKakaoCallback) {
-              // 현재 URL에서 login=success 파라미터 제거
-              const cleanUrl = nextPath.startsWith('/') ? nextPath : `/${nextPath}`;
-              
-              // URL 정리
-              if (window.history.replaceState) {
-                window.history.replaceState({}, '', cleanUrl);
-              }
-              
-              // 리다이렉트 전에 잠시 대기 (상태 업데이트를 위해)
-              await new Promise(resolve => setTimeout(resolve, 100));
-              
-              // 리다이렉트 (전체 페이지 리로드)
-              window.location.href = cleanUrl;
-              return null;
-            }
           } else if (isKakaoCallback) {
-            // 카카오 콜백인데 refresh 실패 시, 에러와 함께 로그인 페이지로 리다이렉트
-            console.error('Failed to refresh token after Kakao login');
+            // 카카오 콜백인데 refresh 실패 시, 로그인 페이지로 리다이렉트
+            console.error("Failed to refresh token after Kakao login");
             dispatch(clearAuth());
-            window.location.href = `/login?error=login_failed`;
+            router.push("/login");
             return null;
           } else {
             // 일반적인 토큰 만료의 경우
@@ -126,13 +107,9 @@ const useAuth = (): UseAuthReturn => {
             return null;
           }
         } catch (refreshError) {
-          console.error('Error during token refresh:', refreshError);
+          console.error("Error during token refresh:", refreshError);
           if (isKakaoCallback) {
-            window.location.href = '/login?error=token_refresh_failed';
-          }
-          console.error('Error during token refresh:', refreshError);
-          if (isKakaoCallback) {
-            router.push('/login?error=token_refresh_failed');
+            router.push("/login?error=token_refresh_failed");
           }
           return null;
         }
