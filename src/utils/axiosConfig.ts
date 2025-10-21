@@ -66,23 +66,54 @@ axiosInstance.interceptors.response.use(
         const response = await axios.post(
           'https://barohanpo.xyz/api/auth/refresh-token',
           {},
-          { withCredentials: true }
+          { 
+            withCredentials: true,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+            }
+          }
         );
 
-        // 새로운 토큰으로 저장 (필요한 경우)
-        // saveNewToken(response.data.accessToken);
+        if (response.status === 200 && response.data?.accessToken) {
+          // 새로운 토큰으로 저장 (필요한 경우)
+          // saveNewToken(response.data.accessToken);
+          
+          // 저장된 요청 재시도
+          onRefreshed(response.data.accessToken);
+          
+          // 원래 요청 재시도 (새로운 토큰으로 헤더 업데이트)
+          originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+          return axiosInstance(originalRequest);
+        }
         
-        // 저장된 요청 재시도
-        onRefreshed(response.data.accessToken);
+        // 토큰 갱신 실패 시
+        throw new Error('Failed to refresh token');
         
-        // 원래 요청 재시도
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        // 리프레시 토큰도 만료된 경우 로그아웃 처리
-        console.error('세션이 만료되었습니다. 다시 로그인해주세요.', refreshError);
-        // 로그아웃 로직 (예: clearAuth(), redirect to login)
-        // clearAuth();
-        // window.location.href = '/login';
+      } catch (refreshError: any) {
+        // 401 에러 처리 (리프레시 토큰 만료 등)
+        if (refreshError.response) {
+          const { status, headers } = refreshError.response;
+          
+          // Rate limit 정보 확인
+          const rateLimitRemaining = headers['ratelimit-remaining'];
+          const rateLimitReset = headers['ratelimit-reset'];
+          
+          if (status === 401) {
+            console.error('세션이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요.');
+            // 로그아웃 로직 (예: clearAuth(), redirect to login)
+            // clearAuth();
+            // window.location.href = '/login';
+          } else if (status === 429) {
+            // Rate limit 초과 시
+            const resetTime = rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000) : null;
+            console.error(`요청 한도 초과. 남은 요청: ${rateLimitRemaining || 0}개, ` +
+                         `재설정 시간: ${resetTime?.toLocaleTimeString() || '알 수 없음'}`);
+          }
+        } else {
+          console.error('토큰 갱신 중 오류가 발생했습니다:', refreshError.message);
+        }
+        
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
