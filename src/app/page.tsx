@@ -17,18 +17,24 @@ const Home = dynamic(() => import("@/components/Home"), {
 });
 
 export default function HomePage() {
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
 
   // 앱 초기화 상태 확인
-  const { isAppInitialized } = useAppSelector((state) => ({
-    isAppInitialized: state.pharmacy.isAppInitialized || false,
-  }), shallowEqual);
+  const { isAppInitialized } = useAppSelector(
+    (state) => ({
+      isAppInitialized: state.pharmacy.isAppInitialized || false,
+    }),
+    shallowEqual
+  );
 
-  // 리뷰 상태 확인 및 관리
-  const { reviews, isLoading: reviewLoading } = useAppSelector((state) => ({
-    reviews: state.review.reviews,
-    isLoading: state.review.isLoading
-  }), shallowEqual);
+  // // 리뷰 상태 확인 및 관리
+  // const { reviews, isLoading: reviewLoading } = useAppSelector(
+  //   (state) => ({
+  //     reviews: state.review.reviews,
+  //     isLoading: state.review.isLoading,
+  //   }),
+  //   shallowEqual
+  // );
 
   // 스플레시 화면 상태 관리
   const [showSplash, setShowSplash] = useState(!isAppInitialized);
@@ -36,44 +42,44 @@ export default function HomePage() {
   const hasDataLoaded = useRef(false);
 
   // 리뷰 데이터가 없거나 로딩 중이 아닐 때 자동으로 리뷰 데이터 로드
-  useEffect(() => {
-    let retryTimer: NodeJS.Timeout;
-    const RETRY_DELAY = 5000; // 5초 후 재시도
-    const MAX_RETRY_ATTEMPTS = 3; // 최대 재시도 횟수
-    let retryCount = 0;
+  // useEffect(() => {
+  // let retryTimer: NodeJS.Timeout;
+  // const RETRY_DELAY = 5000;
+  // const MAX_RETRY_ATTEMPTS = 3;
+  // let retryCount = 0;
 
-    const fetchReviews = () => {
-      // 앱이 초기화되었고 리뷰 데이터가 없으며 로딩 중이 아닐 때만 호출
-      if (isAppInitialized && reviews.length === 0 && !reviewLoading) {
-        console.log(`[HomePage] 5점 리뷰를 가져오는 중... (시도 ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`);
-        
-        dispatch(fetchFiveStarReviews())
-          .then((result) => {
-            // 액션이 성공적으로 완료되었지만 리뷰가 없는 경우
-            if (result.meta.requestStatus === 'fulfilled') {
-              if (reviews.length === 0) {
-                retryCount++;
-                if (retryCount < MAX_RETRY_ATTEMPTS) {
-                  console.log(`[HomePage] 5점 리뷰가 없어서 다시 시도합니다. (${retryCount}/${MAX_RETRY_ATTEMPTS})`);
-                  retryTimer = setTimeout(fetchReviews, RETRY_DELAY);
-                } else {
-                  console.log(`[HomePage] 최대 재시도 횟수(${MAX_RETRY_ATTEMPTS}회)에 도달하여 5점 리뷰 가져오기를 중단합니다.`);
-                }
-              } else {
-                console.log('[HomePage] 5점 리뷰를 성공적으로 가져왔습니다.');
-              }
-            }
-          });
-      }
-    };
+  // const fetchReviews = () => {
+  //   // 앱이 초기화되었고 리뷰 데이터가 없으며 로딩 중이 아닐 때만 호출
+  //   if (isAppInitialized && reviews.length === 0 && !reviewLoading) {
+  //     console.log(`[HomePage] 5점 리뷰를 가져오는 중... (시도 ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`);
 
-    fetchReviews();
+  //     dispatch(fetchFiveStarReviews())
+  //       .then((result) => {
+  //         // 액션이 성공적으로 완료되었지만 리뷰가 없는 경우
+  //         if (result.meta.requestStatus === 'fulfilled') {
+  //           if (reviews.length === 0) {
+  //             retryCount++;
+  //             if (retryCount < MAX_RETRY_ATTEMPTS) {
+  //               console.log(`[HomePage] 5점 리뷰가 없어서 다시 시도합니다. (${retryCount}/${MAX_RETRY_ATTEMPTS})`);
+  //               retryTimer = setTimeout(fetchReviews, RETRY_DELAY);
+  //             } else {
+  //               console.log(`[HomePage] 최대 재시도 횟수(${MAX_RETRY_ATTEMPTS}회)에 도달하여 5점 리뷰 가져오기를 중단합니다.`);
+  //             }
+  //           } else {
+  //             console.log('[HomePage] 5점 리뷰를 성공적으로 가져왔습니다.');
+  //           }
+  //         }
+  //       });
+  //   }
+  // };
 
-    // 컴포넌트 언마운트 시 타이머 정리
-    return () => {
-      if (retryTimer) clearTimeout(retryTimer);
-    };
-  }, [isAppInitialized, reviews.length, reviewLoading, dispatch]);
+  // fetchReviews();
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  // return () => {
+  // if (retryTimer) clearTimeout(retryTimer);
+  // };
+  // }, [isAppInitialized, reviews.length, reviewLoading, dispatch]);
 
   // 스플레시 화면 종료 처리
   const handleSplashComplete = useCallback(() => {
@@ -109,7 +115,9 @@ export default function HomePage() {
           }`}
         >
           {/* isAppInitialized가 false일 때만 SplashScreen 컴포넌트를 마운트하여 데이터 로딩을 시작합니다. */}
-          {!isAppInitialized && <SplashScreen onLoaded={handleSplashComplete} />}
+          {!isAppInitialized && (
+            <SplashScreen onLoaded={handleSplashComplete} />
+          )}
         </div>
       )}
 
