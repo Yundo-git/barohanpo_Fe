@@ -9,9 +9,11 @@ export const axiosInstance = axios.create({
   },
 });
 
-// 토큰 리프레시 중인지 확인하는 플래그
+// 토큰 리프레시 관련 상태
 let isRefreshing = false;
-// 리프레시 중인 동안 들어온 요청을 저장할 배열
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 5 * 60 * 1000; // 5분 쿨다운
+let refreshPromise: Promise<string> | null = null;
 let refreshSubscribers: ((token: string) => void)[] = [];
 
 // 리프레시 완료 후 저장된 요청 재시도
@@ -50,8 +52,11 @@ axiosInstance.interceptors.response.use(
 
     // 401 에러이고, 리프레시 토큰 요청이 아닌 경우에만 처리
     if (error.response?.status === 401 && !originalRequest._retry) {
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshTime;
+      
+      // 이미 갱신 중이면 대기
       if (isRefreshing) {
-        // 이미 토큰 갱신 중이면 요청을 저장하고 대기
         return new Promise((resolve) => {
           subscribeTokenRefresh((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -60,38 +65,49 @@ axiosInstance.interceptors.response.use(
         });
       }
 
+      // 최근에 갱신했으면 다시 시도하지 않음
+      if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
+        console.log('최근에 토큰을 갱신했으므로 다시 시도하지 않습니다.');
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
       isRefreshing = true;
 
-      try {
-        console.log("axiosconfig 파일");
-        // 토큰 갱신 요청
-        const response = await axios.post(
-          "https://barohanpo.xyz/api/auth/refresh-token",
-          {},
-          {
-            withCredentials: true,
-            headers: {
-              "X-Requested-With": "XMLHttpRequest",
-              Accept: "application/json",
-            },
+      // 단일 갱신 프로미스 생성
+      if (!refreshPromise) {
+        refreshPromise = (async () => {
+          try {
+            console.log("토큰 갱신 시도...");
+            const response = await axios.post(
+              "https://barohanpo.xyz/api/auth/refresh-token",
+              {},
+              {
+                withCredentials: true,
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest",
+                  Accept: "application/json",
+                },
+              }
+            );
+
+            if (response.status === 200 && response.data?.accessToken) {
+              lastRefreshTime = Date.now();
+              onRefreshed(response.data.accessToken);
+              return response.data.accessToken;
+            }
+            throw new Error("토큰 갱신 실패");
+          } finally {
+            isRefreshing = false;
+            refreshPromise = null;
           }
-        );
+        })();
+      }
 
-        if (response.status === 200 && response.data?.accessToken) {
-          // 새로운 토큰으로 저장 (필요한 경우)
-          // saveNewToken(response.data.accessToken);
-
-          // 저장된 요청 재시도
-          onRefreshed(response.data.accessToken);
-
-          // 원래 요청 재시도 (새로운 토큰으로 헤더 업데이트)
-          originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-          return axiosInstance(originalRequest);
-        }
-
-        // 토큰 갱신 실패 시
-        throw new Error("Failed to refresh token");
+      try {
+        const newToken = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return axiosInstance(originalRequest);
       } catch (refreshError: any) {
         // 401 에러 처리 (리프레시 토큰 만료 등)
         if (refreshError.response) {
@@ -135,10 +151,7 @@ axiosInstance.interceptors.response.use(
             refreshError.message
           );
         }
-
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
