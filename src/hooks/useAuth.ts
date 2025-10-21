@@ -96,18 +96,29 @@ const useAuth = (): UseAuthReturn => {
           const refreshed = await authService.refresh();
           if (refreshed.success) {
             token = refreshed.accessToken;
+            
             // 카카오 로그인 성공 시 next 파라미터나 홈으로 리다이렉트
             if (isKakaoCallback) {
               // 현재 URL에서 login=success 파라미터 제거
               const cleanUrl = nextPath.startsWith('/') ? nextPath : `/${nextPath}`;
-              window.history.replaceState({}, '', cleanUrl);
+              
+              // URL 정리
+              if (window.history.replaceState) {
+                window.history.replaceState({}, '', cleanUrl);
+              }
+              
+              // 리다이렉트 전에 잠시 대기 (상태 업데이트를 위해)
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              // 리다이렉트 (전체 페이지 리로드)
+              window.location.href = cleanUrl;
               return null;
             }
           } else if (isKakaoCallback) {
             // 카카오 콜백인데 refresh 실패 시, 에러와 함께 로그인 페이지로 리다이렉트
             console.error('Failed to refresh token after Kakao login');
             dispatch(clearAuth());
-            router.push(`/login?error=login_failed`);
+            window.location.href = `/login?error=login_failed`;
             return null;
           } else {
             // 일반적인 토큰 만료의 경우
@@ -115,6 +126,10 @@ const useAuth = (): UseAuthReturn => {
             return null;
           }
         } catch (refreshError) {
+          console.error('Error during token refresh:', refreshError);
+          if (isKakaoCallback) {
+            window.location.href = '/login?error=token_refresh_failed';
+          }
           console.error('Error during token refresh:', refreshError);
           if (isKakaoCallback) {
             router.push('/login?error=token_refresh_failed');
