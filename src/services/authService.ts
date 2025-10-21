@@ -95,6 +95,7 @@ export async function logout(): Promise<boolean> {
 
 /** 리프레시 */
 export async function refresh(): Promise<RefreshResponse> {
+  console.log("리프레시");
   try {
     const res = await axios.post(
       `${API_BASE_URL}/api/auth/refresh-token`,

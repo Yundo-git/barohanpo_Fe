@@ -1,11 +1,11 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 // Axios 기본 설정
 export const axiosInstance = axios.create({
-  baseURL: 'https://barohanpo.xyz/api',
+  baseURL: "https://barohanpo.xyz/api",
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -16,7 +16,7 @@ let refreshSubscribers: ((token: string) => void)[] = [];
 
 // 리프레시 완료 후 저장된 요청 재시도
 const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach(callback => callback(token));
+  refreshSubscribers.forEach((callback) => callback(token));
   refreshSubscribers = [];
 };
 
@@ -44,7 +44,9 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // 401 에러이고, 리프레시 토큰 요청이 아닌 경우에만 처리
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -62,64 +64,78 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        console.log("axiosconfig 파일");
         // 토큰 갱신 요청
         const response = await axios.post(
-          'https://barohanpo.xyz/api/auth/refresh-token',
+          "https://barohanpo.xyz/api/auth/refresh-token",
           {},
-          { 
+          {
             withCredentials: true,
             headers: {
-              'X-Requested-With': 'XMLHttpRequest',
-              'Accept': 'application/json',
-            }
+              "X-Requested-With": "XMLHttpRequest",
+              Accept: "application/json",
+            },
           }
         );
 
         if (response.status === 200 && response.data?.accessToken) {
           // 새로운 토큰으로 저장 (필요한 경우)
           // saveNewToken(response.data.accessToken);
-          
+
           // 저장된 요청 재시도
           onRefreshed(response.data.accessToken);
-          
+
           // 원래 요청 재시도 (새로운 토큰으로 헤더 업데이트)
           originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
           return axiosInstance(originalRequest);
         }
-        
+
         // 토큰 갱신 실패 시
-        throw new Error('Failed to refresh token');
-        
+        throw new Error("Failed to refresh token");
       } catch (refreshError: any) {
         // 401 에러 처리 (리프레시 토큰 만료 등)
         if (refreshError.response) {
           const { status, headers } = refreshError.response;
-          
+
           // Rate limit 정보 확인
-          const rateLimitRemaining = headers['ratelimit-remaining'];
-          const rateLimitReset = headers['ratelimit-reset'];
-          
+          const rateLimitRemaining = headers["ratelimit-remaining"];
+          const rateLimitReset = headers["ratelimit-reset"];
+
           if (status === 401) {
-            console.error('세션이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요.');
+            console.error(
+              "세션이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요."
+            );
             // 로그아웃 로직 (예: clearAuth())
             // clearAuth();
-            
+
             // 로그인 페이지로 리다이렉트 (Next.js의 router 사용)
-            if (typeof window !== 'undefined') {
+            if (typeof window !== "undefined") {
               // 현재 경로를 쿼리 파라미터로 전달하여 로그인 후 되돌아올 수 있도록 함
-              const currentPath = window.location.pathname + window.location.search;
-              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+              const currentPath =
+                window.location.pathname + window.location.search;
+              window.location.href = `/login?redirect=${encodeURIComponent(
+                currentPath
+              )}`;
             }
           } else if (status === 429) {
             // Rate limit 초과 시
-            const resetTime = rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000) : null;
-            console.error(`요청 한도 초과. 남은 요청: ${rateLimitRemaining || 0}개, ` +
-                         `재설정 시간: ${resetTime?.toLocaleTimeString() || '알 수 없음'}`);
+            const resetTime = rateLimitReset
+              ? new Date(parseInt(rateLimitReset) * 1000)
+              : null;
+            console.error(
+              `요청 한도 초과. 남은 요청: ${rateLimitRemaining || 0}개, ` +
+                `재설정 시간: ${
+                  resetTime?.toLocaleTimeString() || "알 수 없음"
+                }`
+            );
           }
         } else {
-          console.error('토큰 갱신 중 오류가 발생했습니다:', refreshError.message);
+          console.error(
+            "토큰 갱신 중 오류가 발생했습니다:",
+            refreshError.message
+          );
         }
-        
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
