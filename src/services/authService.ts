@@ -106,9 +106,19 @@ export async function refresh(): Promise<RefreshResponse> {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
         },
+        xsrfCookieName: "XSRF-TOKEN",
+        xsrfHeaderName: "X-XSRF-TOKEN",
         validateStatus: (status) => status < 500,
       }
     );
+
+    // Add logging for debugging
+    console.log("리프레시 응답:", {
+      status: res.status,
+      headers: res.headers,
+      data: res.data,
+    });
+    
     if (res.status === 401) {
       return {
         success: false,
