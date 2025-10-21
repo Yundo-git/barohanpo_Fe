@@ -101,9 +101,15 @@ axiosInstance.interceptors.response.use(
           
           if (status === 401) {
             console.error('세션이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요.');
-            // 로그아웃 로직 (예: clearAuth(), redirect to login)
+            // 로그아웃 로직 (예: clearAuth())
             // clearAuth();
-            // window.location.href = '/login';
+            
+            // 로그인 페이지로 리다이렉트 (Next.js의 router 사용)
+            if (typeof window !== 'undefined') {
+              // 현재 경로를 쿼리 파라미터로 전달하여 로그인 후 되돌아올 수 있도록 함
+              const currentPath = window.location.pathname + window.location.search;
+              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+            }
           } else if (status === 429) {
             // Rate limit 초과 시
             const resetTime = rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000) : null;
