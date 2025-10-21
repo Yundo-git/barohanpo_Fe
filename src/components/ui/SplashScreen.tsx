@@ -278,12 +278,12 @@ export default function SplashScreen({
     if (!mounted) return;
 
     // 최대 대기 시간 설정
-    const timeoutId = setTimeout(() => {
-      console.log("[SplashScreen] ⏰ 최대 대기 시간 도달, 강제 종료");
-      void finishSplash();
-    }, maxWaitMs);
+    // const timeoutId = setTimeout(() => {
+    //   console.log("[SplashScreen] ⏰ 최대 대기 시간 도달, 강제 종료");
+    //   void finishSplash();
+    // }, maxWaitMs);
 
-    maxWaitTimerRef.current = timeoutId;
+    // maxWaitTimerRef.current = timeoutId;
 
     // 초기 데이터 로드
     void loadData();
