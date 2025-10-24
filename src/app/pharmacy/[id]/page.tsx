@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { format } from "date-fns";
 import Image from "next/image";
+import BusinessHours from "@/components/pharmacy/BusinessHours";
 
 // Dynamically import the reservation sheet to handle SSR
 const ReservationSheetContent = dynamic(
@@ -46,7 +47,7 @@ export default function PharmacyDetail() {
     (p: Pharmacy) => Number(p.p_id) === pharmacyId
   );
 
-  console.log("pharmacy in detail",pharmacy)
+  console.log("pharmacy in detail", pharmacy);
   // Derive robust numeric coordinates (handle lat/lng or latitude/longitude, string values)
   const derivedLat = pharmacy
     ? Number(
@@ -99,19 +100,18 @@ export default function PharmacyDetail() {
 
   return (
     <div className="min-h-[100dvh] pb-16">
-      {/* 페이지 여백 */}
-      {/* <div className="p-4"> */}
       {/* 중앙 정렬 컨테이너 */}
       <div className="mx-auto w-full max-w-3xl">
         {/* 상단 이미지/기본 정보 */}
         <div className="flex flex-col">
-          <div className="w-full aspect-[5/4]  bg-main flex flex-col justify-center items-center overflow-hidden">
+          <div className="w-full aspect-[5/4] bg-main flex flex-col justify-center items-center overflow-hidden">
             <Image
               src="/logo.svg"
               alt="약국 로고"
               width={80}
               height={80}
               className="mb-4"
+              priority
             />
             <p className="T1_SB_20 text-white text-center leading-tight drop-shadow-md font-medium">
               해당약국 이미지준비중입니다
@@ -133,23 +133,31 @@ export default function PharmacyDetail() {
                   />
                   <span>{pharmacy.address}</span>
                 </div>
-                {typeof pharmacy.distance === 'number' && (
-                  <div className="flex gap-1.5 B2_RG_14 text-subText2 items-center">
-                    <Image
-                      src="/icon/Environment.svg"
-                      alt="거리"
-                      width={16}
-                      height={16}
-                      className="w-4 h-4"
-                      priority
-                    />
-                    <span>
-                      {pharmacy.distance < 1
-                        ? `${Math.round(pharmacy.distance * 1000)}m`
-                        : `${pharmacy.distance.toFixed(1)}km`} 거리
-                    </span>
-                  </div>
-                )}
+                <div className="flex flex-col gap-2">
+                  {typeof pharmacy.distance === "number" && (
+                    <div className="flex gap-1.5 B2_RG_14 text-subText2 items-center">
+                      <Image
+                        src="/icon/Environment.svg"
+                        alt="거리"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4"
+                        priority
+                      />
+                      <span>
+                        {pharmacy.distance < 1
+                          ? `${Math.round(pharmacy.distance * 1000)}m`
+                          : `${pharmacy.distance.toFixed(1)}km`}{" "}
+                        거리
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 영업시간 요약 (오늘) */}
+                  {pharmacy.business_hours_json && (
+                    <BusinessHours businessHours={pharmacy.business_hours_json} />
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -163,14 +171,25 @@ export default function PharmacyDetail() {
                 key: "info",
                 label: "약국 정보",
                 component: (
-                  <div className="p-4">
-                    <h3 className="T3_SB_18">약국 위치</h3>
+                  <div className="p-5">
                     {pharmacy ? (
                       <>
+                        {/*약국정보(etc)이 있는 경우에만 표시 */}
+                        {pharmacy.etc?.trim() && (
+                          <div>
+                            <h3 className="T3_SB_18 pb-6 pt-1">약국정보</h3>
+                            <div>
+                              <p className="B1_RG_15 pb-6">{pharmacy.etc}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        <h3 className="T3_SB_18 py-4">약국 위치</h3>
+
                         <span className="B1_RG_15 text-subText">
                           {pharmacy.address}
                         </span>
-                        <div className="mt-3">
+                        <div className="mt-6">
                           {Number.isFinite(derivedLat) &&
                           Number.isFinite(derivedLng) ? (
                             <StaticLocationMap
