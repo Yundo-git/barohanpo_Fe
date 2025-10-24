@@ -100,22 +100,25 @@ function MyBookContent({ userId }: { userId: number }) {
   }, [loading, reservations, cancelListState, userId, handleRefresh]);
 
   return (
-    <div className="container mx-auto h-full flex flex-col">
-      <Tab
-        // items prop을 통해 탭 내용물을 전달합니다. children은 사용하지 않습니다.
-        items={
-          tabItems as unknown as Array<{
-            key: string;
-            label: string;
-            component: ReactNode;
-          }>
-        }
-        defaultActiveKey="reservations"
-        className="flex-1 flex flex-col min-h-0"
-        onChange={(key: string) =>
-          setActiveTab(key as "reservations" | "canceled")
-        }
-      />
+    <div className="container mx-auto h-[calc(100vh-120px)] flex flex-col pb-4">
+      <div className="flex-1 overflow-y-auto">
+        <Tab
+          // items prop을 통해 탭 내용물을 전달합니다. children은 사용하지 않습니다.
+          items={
+            tabItems as unknown as Array<{
+              key: string;
+              label: string;
+              component: ReactNode;
+            }>
+          }
+          defaultActiveKey="reservations"
+          className="h-full flex flex-col"
+          tabClassName="flex-shrink-0"
+          onChange={(key: string) =>
+            setActiveTab(key as "reservations" | "canceled")
+          }
+        />
+      </div>
     </div>
   );
 }
