@@ -71,6 +71,19 @@ export default function ReservationSheetContent({
     onSuccess: () => {
       setIsReservationComplete(true);
     },
+    onUpdateSlots: (date, time) => {
+      // Update the availableSlots state to mark the reserved time slot as unavailable
+      setAvailableSlots(prev => ({
+        ...prev,
+        [date]: {
+          ...prev[date],
+          [time]: false
+        }
+      }));
+      
+      // Clear the selected time
+      setSelectedTime(null);
+    },
   });
 
   // 오늘 날짜와 시간 계산을 한 번에 메모이제이션
@@ -338,45 +351,26 @@ export default function ReservationSheetContent({
             <div className="bg-white p-4">
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={onClose}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  뒤로
-                </button>
-                <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     if (!userId) {
-                      alert("로그인이 필요합니다.");
+                      alert('로그인이 필요합니다.');
                       return;
                     }
-                    if (!selectedDate || !selectedTime) return;
-
-                    const dateStr = format(selectedDate, "yyyy-MM-dd");
-                    if (!isFutureSlot(dateStr, selectedTime)) {
-                      alert(
-                        "이미 지난 시간대입니다. 다른 시간을 선택해주세요."
-                      );
-                      setSelectedTime(null);
-                      return;
+                    if (selectedDate && selectedTime) {
+                      handleReservation(userId, selectedDate, selectedTime, "");
+                    } else {
+                      onClose();
                     }
-
-                    // handleReservation은 hook에서 제공되므로, 호출시 필요한 값은 보장된 상태에서 호출
-                    handleReservation(userId, selectedDate, selectedTime);
                   }}
-                  disabled={!selectedTime}
-                  className={[
-                    "rounded-md px-4 py-2 text-sm font-medium",
-                    selectedTime
-                      ? "bg-main text-white "
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed",
-                  ].join(" ")}
+                  disabled={!selectedTime || !userId}
+                  className={`px-4 py-2 rounded-md ${!selectedTime || !userId ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-main text-white hover:bg-main-dark'}`}
                 >
-                  {selectedTime
-                    ? `${format(
-                        selectedDate,
-                        "yyyy년 MM월 dd일"
-                      )} ${selectedTime} 예약하기`
-                    : "시간을 선택해주세요"}
+                  {!userId 
+                    ? '로그인이 필요합니다' 
+                    : selectedTime
+                      ? `${format(selectedDate, "yyyy년 MM월 dd일")} ${selectedTime} 예약하기`
+                      : "시간을 선택해주세요"}
                 </button>
               </div>
             </div>
