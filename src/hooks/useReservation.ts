@@ -7,7 +7,6 @@ import { useSendReservationEmail } from "@/hooks/useSendReservationEmail";
 
 interface UseReservationOptions {
   onSuccess?: (date: string, time: string) => void;
-  onUpdateSlots?: (date: string, time: string) => void;
   username?: string;
   pharmacyName?: string;
 }
@@ -17,7 +16,7 @@ export const useReservation = (
   options: UseReservationOptions = {}
 ) => {
   const dispatch = useAppDispatch();
-  const { onSuccess, onUpdateSlots, pharmacyName, username } = options;
+  const { onSuccess, pharmacyName, username } = options; // 🚨 옵션에서 값 분해
 
   const { sendEmail } = useSendReservationEmail();
 
@@ -71,10 +70,6 @@ export const useReservation = (
         memo || "" // 5th: 상담 메모
       );
 
-      if (onUpdateSlots) {
-        onUpdateSlots(formattedDate, formattedTime);
-      }
-      
       if (onSuccess) {
         onSuccess(formattedDate, formattedTime);
       }
