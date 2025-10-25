@@ -111,7 +111,7 @@ export default function UserSignupPage() {
         />
 
         {/* 휴대폰 번호 */}
-        <div className="flex items-center border-b border-gray-300">
+        {/* <div className="flex items-center border-b border-gray-300">
           <input
             type="tel"
             name="phone"
@@ -120,7 +120,7 @@ export default function UserSignupPage() {
             placeholder="휴대폰 번호"
             className="flex-1 p-2 focus:outline-none"
             required
-          />
+          /> */}
           {/* <button
             type="button"
             disabled={isLoading}
@@ -128,7 +128,7 @@ export default function UserSignupPage() {
           >
             인증하기
           </button> */}
-        </div>
+        {/* </div> */}
 
         {/* 인증번호 */}
         {/* <div className="flex items-center border-b border-gray-300">
