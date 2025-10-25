@@ -12,7 +12,8 @@ import dynamic from "next/dynamic";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { format } from "date-fns";
 import Image from "next/image";
-import BusinessHours from "@/components/pharmacy/BusinessHours";
+import PharmacyDetailHeader from "@/components/pharmacy/PharmacyDetailHeader";
+import PharmacyTabs from "@/components/pharmacy/PharmacyTabs";
 
 // Dynamically import the reservation sheet to handle SSR
 const ReservationSheetContent = dynamic(
@@ -103,164 +104,17 @@ export default function PharmacyDetail() {
       {/* 중앙 정렬 컨테이너 */}
       <div className="mx-auto w-full max-w-3xl">
         {/* 상단 이미지/기본 정보 */}
-        <div className="flex flex-col">
-          <div className="w-full aspect-[5/4] bg-main flex flex-col justify-center items-center overflow-hidden">
-            <Image
-              src="/logo.svg"
-              alt="약국 로고"
-              width={80}
-              height={80}
-              className="mb-4"
-              priority
-            />
-            <p className="T1_SB_20 text-white text-center leading-tight drop-shadow-md font-medium">
-              해당약국 이미지준비중입니다
-            </p>
-          </div>
-
-          {pharmacy && (
-            <div className="py-6 px-5">
-              <h1 className="T2_SB_20">{pharmacy.name}</h1>
-              <div className="space-y-2 mt-4">
-                <div className="flex gap-1.5 B2_RG_14 text-subText2 items-center">
-                  <Image
-                    src="/icon/Environment.svg"
-                    alt="주소"
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
-                    priority
-                  />
-                  <span>{pharmacy.address}</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {typeof pharmacy.distance === "number" && (
-                    <div className="flex gap-1.5 B2_RG_14 text-subText2 items-center">
-                      <Image
-                        src="/icon/Environment.svg"
-                        alt="거리"
-                        width={16}
-                        height={16}
-                        className="w-4 h-4"
-                        priority
-                      />
-                      <span>
-                        {pharmacy.distance < 1
-                          ? `${Math.round(pharmacy.distance * 1000)}m`
-                          : `${pharmacy.distance.toFixed(1)}km`}{" "}
-                        거리
-                      </span>
-                    </div>
-                  )}
-
-                  {/* 영업시간 요약 (오늘) */}
-                  {pharmacy.business_hours_json && (
-                    <BusinessHours businessHours={pharmacy.business_hours_json} />
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {pharmacy && <PharmacyDetailHeader pharmacy={pharmacy} />}
 
         {/* 탭 영역 */}
-        <div className="mt-6">
-          <Tabs
-            items={[
-              {
-                key: "info",
-                label: "약국 정보",
-                component: (
-                  <div className="p-5">
-                    {pharmacy ? (
-                      <>
-                        {/*약국정보(etc)이 있는 경우에만 표시 */}
-                        {pharmacy.etc?.trim() && (
-                          <div>
-                            <h3 className="T3_SB_18 pb-6 pt-1">약국정보</h3>
-                            <div>
-                              <p className="B1_RG_15 pb-6">{pharmacy.etc}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        <h3 className="T3_SB_18 py-4">약국 위치</h3>
-
-                        <span className="B1_RG_15 text-subText">
-                          {pharmacy.address}
-                        </span>
-                        <div className="mt-6">
-                          {Number.isFinite(derivedLat) &&
-                          Number.isFinite(derivedLng) ? (
-                            <StaticLocationMap
-                              lat={derivedLat as number}
-                              lng={derivedLng as number}
-                              className="h-48 rounded-lg"
-                            />
-                          ) : (
-                            <div className="h-48 rounded-lg bg-gray-100 flex items-center justify-center text-subText">
-                              위치 좌표를 불러오는 중입니다.
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <p className="B1_RG_15 text-subText">
-                        주소 정보를 불러오는 중입니다.
-                      </p>
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: "reviews",
-                label: "후기",
-                component: (
-                  <div className="p-4">
-                    {isLoading ? (
-                      <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
-                      </div>
-                    ) : error ? (
-                      <div className="text-red-500 text-center py-4">
-                        후기를 불러오는 중 오류가 발생했습니다.
-                      </div>
-                    ) : reviews.length > 0 ? (
-                      <div className="space-y-4">
-                        {reviews.map((review) => (
-                          <ReviewCard
-                            key={review.review_id}
-                            review={review}
-                            showPharmacyName={false}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-[50dvh]">
-                        {/* 아이콘 넣어야함 */}
-                        <Image
-                          src="/icon/Paper.svg"
-                          alt="리뷰 없음"
-                          width={70}
-                          height={70}
-                          priority
-                        />
-                        <h1 className="T3_MD_18 text-subText2">
-                          아직 등록된 리뷰가 없어요.
-                        </h1>
-                      </div>
-                    )}
-                  </div>
-                ),
-              },
-            ]}
-            defaultActiveKey="info"
-            onChange={(key: string) => {
-              // 탭바뀜!
-              console.log(`Tab changed to: ${key}`);
-            }}
-          />
-        </div>
+        <PharmacyTabs
+          pharmacy={pharmacy}
+          derivedLat={derivedLat}
+          derivedLng={derivedLng}
+          reviews={reviews}
+          isLoading={isLoading}
+          error={error}
+        />
 
         <div className="mt-3 px-5">
           <button

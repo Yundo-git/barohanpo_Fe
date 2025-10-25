@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearAuth } from "@/store/userSlice";
 import { logout as logoutApi } from "@/services/authService";
 import type { RootState } from "@/store/store";
-import Profile from "@/components/auth/Profile";
+import UserProfileSection from "@/components/mypage/UserProfileSection";
 import DevelopmentNoticeModal from "@/components/ui/DevelopmentNoticeModal";
 import ReviewListModal from "@/components/Review/ReviewListModal";
 import { useState } from "react";
@@ -64,32 +64,10 @@ export default function MyPage() {
 
   return (
     <div className="flex flex-col  min-h-screen p-5">
-      <section className="flex pt-3 justify-between" onClick={editProfile}>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <div onClick={editProfile}>
-              <Profile
-                version={user?.profileImageVersion}
-                imageUrl={user?.profileImageUrl} //
-                alt="사용자 프로필"
-                size={56}
-                rounded="full"
-                className="w-[4.5rem] h-[4.5rem]"
-              />
-            </div>
-          </div>
-          <h1 className="T2_SB_20">{user?.nickname}</h1>
-        </div>
-        <div className="w-6 h-6 relative">
-          <Image
-            src="/icon/Arrow_Right2.svg"
-            alt="아이콘"
-            fill
-            sizes="1.5rem"
-            className="object-contain"
-          />
-        </div>
-      </section>
+      <UserProfileSection 
+        user={user} 
+        onEditProfile={editProfile} 
+      />
       {/* 유저 내역 */}
       <section className="py-6 flex flex-col gap-4 items-start">
         <div className="flex gap-3 justify-between items-center">
