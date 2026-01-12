@@ -4,12 +4,23 @@ const nextConfig: NextConfig = {
   /* config options here */
   // output: "export",
 
+  // Experimental features configuration
+  experimental: {
+    // Add any valid experimental features here
+  },
+
+  // Remove eslint config as it's no longer supported in next.config.ts
+  // Move to eslint.config.js or .eslintrc.js
+
+  // Allow specific development origins
   allowedDevOrigins: [
-    "http://10.0.2.2:3000", // ← Android 에뮬레이터에서 접근하는 주소
-    "http://192.168.0.21:3000", // ← iOS 에뮬레이터에서 접근하는 주소
+    "http://10.0.2.2:3000", // Android emulator
+    "http://192.168.0.21:3000", // iOS emulator
     "http://192.168.75.49:3000",
-    "https://barohanpo-fe.vercel.app/",
+    "https://barohanpo-fe.vercel.app",
   ],
+
+  // Image configuration
   images: {
     remotePatterns: [
       {
@@ -26,7 +37,7 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
   },
 
-  // Webpack configuration
+  // Webpack configuration with fallbacks
   webpack: (config, { isServer, dev }) => {
     // Fix for WebpackError constructor issue
     config.resolve.fallback = {
@@ -53,11 +64,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // CORS headers for development
   async headers() {
     return [
@@ -74,7 +80,7 @@ const nextConfig: NextConfig = {
             value:
               process.env.NODE_ENV === "development"
                 ? "http://localhost:3000"
-                : "https://barohanpo-fe.vercel.app/",
+                : "https://barohanpo-fe.vercel.app",
           },
           {
             key: "Access-Control-Allow-Methods",
@@ -91,4 +97,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Use webpack for now to avoid Turbopack issues
+export default {
+  ...nextConfig,
+  experimental: {
+    ...nextConfig.experimental,
+    // Disable Turbopack for now
+    turbo: undefined,
+  },
+  // Explicitly set webpack as the bundler
+  webpack: nextConfig.webpack,
+};
