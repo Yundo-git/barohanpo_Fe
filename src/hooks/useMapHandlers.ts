@@ -68,33 +68,70 @@ export const useMapHandlers = ({
   };
 
   const getCurrentPosition = async (): Promise<{
-    coords: { latitude: number; longitude: number };
+    coords: { latitude: number; longitude: number; accuracy?: number };
   }> => {
+    // Default to Seoul City Hall coordinates
+    const defaultPosition = {
+      coords: {
+        latitude: 37.5665,
+        longitude: 126.978,
+        accuracy: 10000, // 10km accuracy
+      },
+    };
+
     try {
       if (isMobile() && window.Capacitor) {
         const position = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 10000,
+          enableHighAccuracy: false, // Lower accuracy for faster response
+          timeout: 15000, // Increased timeout to 15s
           maximumAge: 300000,
+        }).catch((error) => {
+          console.warn(
+            "Error getting position from Capacitor, using default location:",
+            error
+          );
+          return defaultPosition;
         });
         return {
           coords: {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
           },
         };
       } else {
-        return new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000,
-          });
+        return new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              resolve({
+                coords: {
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                  accuracy: position.coords.accuracy,
+                },
+              });
+            },
+            (error) => {
+              console.warn(
+                "Error getting position from browser, using default location:",
+                error
+              );
+              resolve(defaultPosition);
+            },
+            {
+              enableHighAccuracy: false, // Lower accuracy for faster response
+              timeout: 15000, // Increased timeout to 15s
+              maximumAge: 300000,
+            }
+          );
         });
       }
     } catch (error) {
-      console.error("Error getting current position:", error);
-      throw error;
+      console.warn(
+        "Unexpected error in getCurrentPosition, using default location:",
+        error
+      );
+      return defaultPosition;
     }
   };
 

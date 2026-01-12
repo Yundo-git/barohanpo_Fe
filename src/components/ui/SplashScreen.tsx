@@ -16,57 +16,80 @@ import { Geolocation } from "@capacitor/geolocation";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 
-// 💡 getCurrentPosition 함수 (속도 최적화 적용됨)
+// 💡 getCurrentPosition 함수 (속도 최적화 및 오류 처리 강화)
 const getCurrentPosition = async (): Promise<{
   latitude: number;
   longitude: number;
 }> => {
+  // 기본 위치 (서울 시청 좌표)
+  const defaultPosition = {
+    latitude: 37.5665,
+    longitude: 126.978,
+  };
+
   try {
     const options = {
-      enableHighAccuracy: false, // 💡 속도 개선 (false)
-      timeout: 5000, // 💡 타임아웃 5초로 단축
-      maximumAge: 60000, // 💡 1분 이내 캐시 사용
+      enableHighAccuracy: false, // 속도 개선을 위해 정확도 낮춤
+      timeout: 15000, // 타임아웃 15초로 증가
+      maximumAge: 60000, // 1분 이내 캐시 사용
     };
 
     if (Capacitor?.isNativePlatform?.()) {
       console.log("[SplashScreen] 📱 Capacitor Geolocation 사용 (앱)");
-      const position = await Geolocation.getCurrentPosition(options);
-      console.log(
-        "[SplashScreen] 위치 정보:",
-        position.coords.latitude,
-        position.coords.longitude
-      );
-      return {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      };
+      try {
+        const position = await Geolocation.getCurrentPosition(options);
+        console.log(
+          "[SplashScreen] 위치 정보:",
+          position.coords.latitude,
+          position.coords.longitude
+        );
+        return {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+      } catch (error) {
+        console.warn(
+          "[SplashScreen] ❌ 앱 위치 정보 가져오기 실패, 기본 위치 사용:",
+          error
+        );
+        return defaultPosition;
+      }
     } else {
       console.log("[SplashScreen] 🌐 브라우저 Geolocation API 사용 (웹)");
-      return new Promise((resolve, reject) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              console.log(
-                "[SplashScreen] 위치 정보:",
-                position.coords.latitude,
-                position.coords.longitude
-              );
-              resolve({
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-              });
-            },
-            reject,
-            options // 웹 환경에도 동일 옵션 적용
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          console.warn(
+            "[SplashScreen] ❓ 브라우저가 위치 정보를 지원하지 않음, 기본 위치 사용"
           );
-        } else {
-          reject(new Error("Geolocation is not supported by this browser"));
+          return resolve(defaultPosition);
         }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log(
+              "[SplashScreen] 위치 정보:",
+              position.coords.latitude,
+              position.coords.longitude
+            );
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          (error) => {
+            console.warn(
+              "[SplashScreen] 웹 위치 정보 가져오기 실패, 기본 위치 사용:",
+              error
+            );
+            resolve(defaultPosition); // 오류 발생 시 기본 위치 반환
+          },
+          options
+        );
       });
     }
   } catch (error) {
-    console.error("[SplashScreen] ❌ 위치 정보 가져오기 실패:", error);
-    throw error;
+    console.warn("[SplashScreen]  예상치 못한 오류로 기본 위치 사용:", error);
+    return defaultPosition; // 어떤 오류가 발생해도 기본 위치 반환
   }
 };
 

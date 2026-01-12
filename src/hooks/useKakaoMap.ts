@@ -90,7 +90,7 @@ export const useKakaoMap = (
               (resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
                   enableHighAccuracy: true,
-                  timeout: 5000,
+                  timeout: 10000,
                   maximumAge: 0,
                 });
               }
