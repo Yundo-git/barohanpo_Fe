@@ -4,7 +4,6 @@ import { TERMS_CONTENT } from "@/constants/termsContent";
 
 export type TermId = keyof typeof TERMS_CONTENT;
 
-
 interface AgreementItemProps {
   id: TermId;
   label: string;
@@ -76,8 +75,11 @@ const TermsAgreement: React.FC<TermsAgreementProps> = ({
     onAllAgree(checked);
   };
 
-  const handleViewTerm = (id: TermId) => {
+  const handleViewTerm = (id: TermId, shouldCheck = false) => {
     setSelectedTerm(id);
+    if (shouldCheck) {
+      onAgreementChange(id, true);
+    }
   };
 
   const closeBottomSheet = () => {
@@ -94,9 +96,7 @@ const TermsAgreement: React.FC<TermsAgreementProps> = ({
             checked={allChecked}
             onChange={(e) => handleAllAgree(e.target.checked)}
           />
-          <span className="ml-2 text-gray-700 font-medium">
-            약관 전체 동의
-          </span>
+          <span className="ml-2 text-gray-700 font-medium">약관 전체 동의</span>
         </label>
       </div>
 
@@ -117,16 +117,22 @@ const TermsAgreement: React.FC<TermsAgreementProps> = ({
       {/* Bottom Sheet */}
       {selectedTerm && (
         <BottomSheet isOpen={!!selectedTerm} onClose={closeBottomSheet}>
-          <div >
+          <div>
             <h3 className="text-lg font-bold mb-4">
-              {TERMS_CONTENT[selectedTerm]?.title || '약관'}
+              {TERMS_CONTENT[selectedTerm]?.title || "약관"}
             </h3>
             <div className="max-h-[60vh] overflow-y-auto text-sm text-gray-700 whitespace-pre-line">
-              {TERMS_CONTENT[selectedTerm]?.content || '약관 내용이 없습니다.'}
+              {TERMS_CONTENT[selectedTerm]?.content || "약관 내용이 없습니다."}
             </div>
             <div className="mt-6 flex justify-end">
               <button
-                onClick={closeBottomSheet}
+                type="button"
+                onClick={() => {
+                  if (selectedTerm) {
+                    onAgreementChange(selectedTerm, true);
+                  }
+                  closeBottomSheet();
+                }}
                 className="px-4 py-2 bg-main text-white rounded-lg text-sm font-medium"
               >
                 확인

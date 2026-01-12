@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Calendar from "react-calendar";
+import LoginRequiredModal from "@/components/auth/LoginRequiredModal";
 import "react-calendar/dist/Calendar.css";
 import { format, parseISO } from "date-fns";
 import ReservationCompleteSheet from "./ReservationCompleteSheet";
@@ -50,6 +51,7 @@ export default function ReservationSheetContent({
     initialDate ? parseISO(initialDate) : new Date()
   );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [isReservationComplete, setIsReservationComplete] =
     useState<boolean>(false);
 
@@ -277,112 +279,115 @@ export default function ReservationSheetContent({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Calendar */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-100">
-          <Calendar
-            onChange={onDateChange}
-            value={selectedDate}
-            minDate={todayStart}
-            maxDate={maxSelectableDate}
-            calendarType="gregory"
-            locale="ko-KR"
-            /** is_available=0(=그 날짜 내에 미래 true 슬롯이 하나도 없음) 이거나 7일 범위 밖이면 비활성화 */
-            tileDisabled={({ date }) => {
-              const dateStr = format(date, "yyyy-MM-dd");
-              return !enabledDateSet.has(dateStr);
-            }}
-            tileClassName={({ date }) =>
-              // 여기서 Tailwind 유틸 대신 강한 우선순위가 정의된 기존 클래스 사용
-              selectedDate?.toDateString() === date.toDateString()
-                ? "rc-tile--selected"
-                : "hover:bg-gray-50 rounded-full"
-            }
-            formatShortWeekday={(_, date) =>
-              ["일", "월", "화", "수", "목", "금", "토"][date.getDay()]
-            }
-            formatDay={(_, date) => date.getDate().toString()}
-          />
-        </div>
-
-        {/* Time Buttons */}
-        {selectedDate && (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="grid grid-cols-2 gap-3 p-2">
-                {availableTimes.map(({ time, isAvailable }) => {
-                  const selected = selectedTime === time;
-                  return (
-                    <button
-                      key={time}
-                      onClick={() => setSelectedTime(selected ? null : time)}
-                      disabled={!isAvailable}
-                      className={[
-                        "py-2 px-4 rounded-md text-center transition-colors font-medium",
-                        selected
-                          ? "bg-main text-white"
-                          : !isAvailable
-                          ? "bg-gray-50 text-gray-300 border border-gray-200 cursor-not-allowed"
-                          : "bg-white hover:bg-gray-50 text-gray-800 border border-gray-200",
-                      ].join(" ")}
-                    >
-                      {time}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Action */}
-            <div className="bg-white p-4">
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={onClose}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  뒤로
-                </button>
-                <button
-                  onClick={() => {
-                    if (!userId) {
-                      alert("로그인이 필요합니다.");
-                      return;
-                    }
-                    if (!selectedDate || !selectedTime) return;
-
-                    const dateStr = format(selectedDate, "yyyy-MM-dd");
-                    if (!isFutureSlot(dateStr, selectedTime)) {
-                      alert(
-                        "이미 지난 시간대입니다. 다른 시간을 선택해주세요."
-                      );
-                      setSelectedTime(null);
-                      return;
-                    }
-
-                    // handleReservation은 hook에서 제공되므로, 호출시 필요한 값은 보장된 상태에서 호출
-                    handleReservation(userId, selectedDate, selectedTime);
-                  }}
-                  disabled={!selectedTime}
-                  className={[
-                    "rounded-md px-4 py-2 text-sm font-medium",
-                    selectedTime
-                      ? "bg-main text-white "
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed",
-                  ].join(" ")}
-                >
-                  {selectedTime
-                    ? `${format(
-                        selectedDate,
-                        "yyyy년 MM월 dd일"
-                      )} ${selectedTime} 예약하기`
-                    : "시간을 선택해주세요"}
-                </button>
-              </div>
-            </div>
+    <>
+      <LoginRequiredModal isOpen={showLoginModal} onClose={onClose} />
+      <div className="flex flex-col h-full">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Calendar */}
+          <div className="flex-shrink-0 bg-white border-b border-gray-100">
+            <Calendar
+              onChange={onDateChange}
+              value={selectedDate}
+              minDate={todayStart}
+              maxDate={maxSelectableDate}
+              calendarType="gregory"
+              locale="ko-KR"
+              /** is_available=0(=그 날짜 내에 미래 true 슬롯이 하나도 없음) 이거나 7일 범위 밖이면 비활성화 */
+              tileDisabled={({ date }) => {
+                const dateStr = format(date, "yyyy-MM-dd");
+                return !enabledDateSet.has(dateStr);
+              }}
+              tileClassName={({ date }) =>
+                // 여기서 Tailwind 유틸 대신 강한 우선순위가 정의된 기존 클래스 사용
+                selectedDate?.toDateString() === date.toDateString()
+                  ? "rc-tile--selected"
+                  : "hover:bg-gray-50 rounded-full"
+              }
+              formatShortWeekday={(_, date) =>
+                ["일", "월", "화", "수", "목", "금", "토"][date.getDay()]
+              }
+              formatDay={(_, date) => date.getDate().toString()}
+            />
           </div>
-        )}
+
+          {/* Time Buttons */}
+          {selectedDate && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="grid grid-cols-2 gap-3 p-2">
+                  {availableTimes.map(({ time, isAvailable }) => {
+                    const selected = selectedTime === time;
+                    return (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(selected ? null : time)}
+                        disabled={!isAvailable}
+                        className={[
+                          "py-2 px-4 rounded-md text-center transition-colors font-medium",
+                          selected
+                            ? "bg-main text-white"
+                            : !isAvailable
+                            ? "bg-gray-50 text-gray-300 border border-gray-200 cursor-not-allowed"
+                            : "bg-white hover:bg-gray-50 text-gray-800 border border-gray-200",
+                        ].join(" ")}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action */}
+              <div className="bg-white p-4">
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={onClose}
+                    className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    뒤로
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!userId) {
+                        setShowLoginModal(true);
+                        return;
+                      }
+                      if (!selectedDate || !selectedTime) return;
+
+                      const dateStr = format(selectedDate, "yyyy-MM-dd");
+                      if (!isFutureSlot(dateStr, selectedTime)) {
+                        alert(
+                          "이미 지난 시간대입니다. 다른 시간을 선택해주세요."
+                        );
+                        setSelectedTime(null);
+                        return;
+                      }
+
+                      // handleReservation은 hook에서 제공되므로, 호출시 필요한 값은 보장된 상태에서 호출
+                      handleReservation(userId, selectedDate, selectedTime);
+                    }}
+                    disabled={!selectedTime}
+                    className={[
+                      "rounded-md px-4 py-2 text-sm font-medium",
+                      selectedTime
+                        ? "bg-main text-white "
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed",
+                    ].join(" ")}
+                  >
+                    {selectedTime
+                      ? `${format(
+                          selectedDate,
+                          "yyyy년 MM월 dd일"
+                        )} ${selectedTime} 예약하기`
+                      : "시간을 선택해주세요"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
