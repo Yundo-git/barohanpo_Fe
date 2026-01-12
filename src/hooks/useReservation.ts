@@ -54,7 +54,7 @@ export const useReservation = (
 
       // 예약 성공 처리
       const result = await response.json();
-      alert("예약이 완료되었습니다!");
+      // alert("예약이 완료되었습니다!");
       console.log(result);
       console.log(formattedDate);
       console.log(formattedTime);
